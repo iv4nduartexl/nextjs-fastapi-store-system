@@ -394,7 +394,7 @@ export default function POSPage() {
                     type="number"
                     value={item.quantity}
                     min={1}
-                    step={item.unitType === "kg" || item.unitType === "gram" || item.unitType === "liter" ? 0.1 : 1}
+                    step={1}
                     onChange={(e) => updateQty(item.itemId, parseFloat(e.target.value) || 1)}
                     className="w-10 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
                   />

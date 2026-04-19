@@ -75,6 +75,14 @@ export type Page_ItemRead_ = {
   pages?: number | null;
 };
 
+export type Page_PurchaseRead_ = {
+  items: Array<PurchaseRead>;
+  total?: number | null;
+  page: number | null;
+  size: number | null;
+  pages?: number | null;
+};
+
 export type Page_SaleRead_ = {
   items: Array<SaleRead>;
   total?: number | null;
@@ -84,6 +92,59 @@ export type Page_SaleRead_ = {
 };
 
 export type PaymentMethod = "cash" | "card" | "other";
+
+export type PurchaseCreate = {
+  supplier_name?: string | null;
+  reference_number?: string | null;
+  purchase_date?: string | null;
+  payment_method?: PurchasePaymentMethod;
+  payment_status?: PurchasePaymentStatus;
+  tax?: number | string;
+  notes?: string | null;
+  items: Array<PurchaseItemCreate>;
+};
+
+export type PurchaseItemCreate = {
+  item_id?: string | null;
+  item_name: string;
+  unit_type?: string;
+  quantity: number | string;
+  cost_price: number | string;
+  sku?: string | null;
+  category?: string | null;
+};
+
+export type PurchaseItemRead = {
+  id: string;
+  item_id: string | null;
+  item_name: string;
+  unit_type: string;
+  quantity: string;
+  cost_price: string;
+  subtotal: string;
+};
+
+export type PurchasePaymentMethod = "cash" | "card" | "transfer" | "credit";
+
+export type PurchasePaymentStatus = "paid" | "unpaid" | "partial";
+
+export type PurchaseRead = {
+  id: string;
+  supplier_name: string | null;
+  reference_number: string | null;
+  purchase_date: string;
+  created_at: string;
+  status: PurchaseStatus;
+  payment_status: PurchasePaymentStatus;
+  payment_method: PurchasePaymentMethod;
+  subtotal: string;
+  tax: string;
+  total_cost: string;
+  notes: string | null;
+  purchase_items: Array<PurchaseItemRead>;
+};
+
+export type PurchaseStatus = "received" | "partial" | "cancelled";
 
 export type SaleCreate = {
   items: Array<SaleItemCreate>;
@@ -327,3 +388,38 @@ export type GetSaleData = {
 export type GetSaleResponse = SaleRead;
 
 export type GetSaleError = HTTPValidationError;
+
+export type CreatePurchaseData = {
+  body: PurchaseCreate;
+};
+
+export type CreatePurchaseResponse = PurchaseRead;
+
+export type CreatePurchaseError = HTTPValidationError;
+
+export type ListPurchasesData = {
+  query?: {
+    /**
+     * Page number
+     */
+    page?: number;
+    /**
+     * Page size
+     */
+    size?: number;
+  };
+};
+
+export type ListPurchasesResponse = Page_PurchaseRead_;
+
+export type ListPurchasesError = HTTPValidationError;
+
+export type GetPurchaseData = {
+  path: {
+    purchase_id: string;
+  };
+};
+
+export type GetPurchaseResponse = PurchaseRead;
+
+export type GetPurchaseError = HTTPValidationError;

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .utils import simple_generate_unique_route_id
 from app.routes.items import router as items_router
 from app.routes.sales import router as sales_router
+from app.routes.purchases import router as purchases_router
 from app.config import settings
 
 app = FastAPI(
@@ -52,4 +53,5 @@ app.include_router(
 # Include items routes
 app.include_router(items_router, prefix="/items")
 app.include_router(sales_router, prefix="/sales")
+app.include_router(purchases_router, prefix="/purchases")
 add_pagination(app)

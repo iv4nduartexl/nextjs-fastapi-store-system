@@ -33,10 +33,30 @@ class SaleStatus(str, enum.Enum):
     refunded = "refunded"
 
 
+class PurchaseStatus(str, enum.Enum):
+    received = "received"
+    partial = "partial"
+    cancelled = "cancelled"
+
+
+class PurchasePaymentStatus(str, enum.Enum):
+    paid = "paid"
+    unpaid = "unpaid"
+    partial = "partial"
+
+
+class PurchasePaymentMethod(str, enum.Enum):
+    cash = "cash"
+    card = "card"
+    transfer = "transfer"
+    credit = "credit"
+
+
 class User(SQLAlchemyBaseUserTableUUID, Base):
     username = Column(String, unique=True, nullable=True, index=True)
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
     sales = relationship("Sale", back_populates="user")
+    purchases = relationship("Purchase", back_populates="user")
 
 
 class Item(Base):
@@ -55,6 +75,7 @@ class Item(Base):
 
     user = relationship("User", back_populates="items")
     sale_items = relationship("SaleItem", back_populates="item")
+    purchase_items = relationship("PurchaseItem", back_populates="item")
 
 
 class Sale(Base):
@@ -88,3 +109,40 @@ class SaleItem(Base):
 
     sale = relationship("Sale", back_populates="sale_items")
     item = relationship("Item", back_populates="sale_items")
+
+
+class Purchase(Base):
+    __tablename__ = "purchases"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    supplier_name = Column(String, nullable=True)
+    reference_number = Column(String, nullable=True)
+    purchase_date = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    status = Column(Enum(PurchaseStatus), nullable=False, default=PurchaseStatus.received)
+    payment_status = Column(Enum(PurchasePaymentStatus), nullable=False, default=PurchasePaymentStatus.paid)
+    payment_method = Column(Enum(PurchasePaymentMethod), nullable=False, default=PurchasePaymentMethod.cash)
+    subtotal = Column(Numeric(12, 2), nullable=False, default=0)
+    tax = Column(Numeric(12, 2), nullable=False, default=0)
+    total_cost = Column(Numeric(12, 2), nullable=False, default=0)
+    notes = Column(String, nullable=True)
+
+    purchase_items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="purchases")
+
+
+class PurchaseItem(Base):
+    __tablename__ = "purchase_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    purchase_id = Column(UUID(as_uuid=True), ForeignKey("purchases.id"), nullable=False)
+    item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
+    item_name = Column(String, nullable=False)
+    unit_type = Column(String, nullable=False, default="unit")
+    quantity = Column(Numeric(12, 3), nullable=False)
+    cost_price = Column(Numeric(12, 2), nullable=False)
+    subtotal = Column(Numeric(12, 2), nullable=False)
+
+    purchase = relationship("Purchase", back_populates="purchase_items")
+    item = relationship("Item", back_populates="purchase_items")

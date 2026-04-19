@@ -59,6 +59,15 @@ import type {
   GetSaleData,
   GetSaleError,
   GetSaleResponse,
+  CreatePurchaseData,
+  CreatePurchaseError,
+  CreatePurchaseResponse,
+  ListPurchasesData,
+  ListPurchasesError,
+  ListPurchasesResponse,
+  GetPurchaseData,
+  GetPurchaseError,
+  GetPurchaseResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -353,5 +362,53 @@ export const getSale = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/sales/{sale_id}",
+  });
+};
+
+/**
+ * Create Purchase
+ */
+export const createPurchase = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreatePurchaseData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreatePurchaseResponse,
+    CreatePurchaseError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/",
+  });
+};
+
+/**
+ * List Purchases
+ */
+export const listPurchases = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListPurchasesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListPurchasesResponse,
+    ListPurchasesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/",
+  });
+};
+
+/**
+ * Get Purchase
+ */
+export const getPurchase = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetPurchaseData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetPurchaseResponse,
+    GetPurchaseError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/{purchase_id}",
   });
 };

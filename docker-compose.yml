@@ -52,6 +52,8 @@ services:
       NODE_ENV: development
       API_BASE_URL: http://backend:8000
       OPENAPI_OUTPUT_FILE: ./shared-data/openapi.json
+      NEXT_PUBLIC_CURRENCY_SYMBOL: "\u20b2"
+      NEXT_PUBLIC_CURRENCY_DECIMALS: "0"
     volumes:
       - ./nextjs-frontend:/app
       - nextjs-node-modules:/app/node_modules

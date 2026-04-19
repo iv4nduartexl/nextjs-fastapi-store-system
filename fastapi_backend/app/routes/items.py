@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import apaginate
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -24,9 +25,18 @@ async def read_item(
     user: User = Depends(current_active_user),
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Page size"),
+    q: str | None = Query(None, description="Search query (name, SKU, or category)"),
 ):
     params = Params(page=page, size=size)
     query = select(Item).filter(Item.user_id == user.id)
+    if q:
+        query = query.filter(
+            or_(
+                Item.name.ilike(f"%{q}%"),
+                Item.sku.ilike(f"%{q}%"),
+                Item.category.ilike(f"%{q}%"),
+            )
+        )
     return await apaginate(db, query, params, transformer=transform_items)
 
 

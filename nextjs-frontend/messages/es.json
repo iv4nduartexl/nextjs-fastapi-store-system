@@ -64,6 +64,61 @@
       "gram": "Gramo (g)",
       "liter": "Litro (L)",
       "pack": "Paquete / Caja"
+    },
+    "unitAbbr": {
+      "unit": "UN",
+      "kg": "KG",
+      "gram": "G",
+      "liter": "L",
+      "pack": "PKT"
+    }
+  },
+  "sales": {
+    "title": "Ventas",
+    "subtitle": "Ver y administrar el historial de ventas.",
+    "newSale": "Nueva Venta",
+    "noResults": "Aún no hay ventas registradas.",
+    "table": {
+      "date": "Fecha",
+      "items": "Artículos",
+      "total": "Total",
+      "payment": "Pago",
+      "status": "Estado",
+      "actions": "Acciones",
+      "view": "Ver"
+    },
+    "paymentMethod": {
+      "cash": "Efectivo",
+      "card": "Tarjeta",
+      "other": "Otro"
+    },
+    "status": {
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "refunded": "Reembolsada"
+    },
+    "pos": {
+      "title": "Nueva Venta",
+      "searchPlaceholder": "Buscar producto o escanear código…",
+      "noProducts": "No se encontraron productos.",
+      "noPrice": "Sin precio",
+      "cart": "Carrito",
+      "emptyCart": "Carrito vacío. Agrega productos desde la izquierda.",
+      "clearCart": "Limpiar",
+      "subtotal": "Subtotal",
+      "paymentMethod": "Método de Pago",
+      "amountTendered": "Monto Recibido",
+      "change": "Cambio",
+      "completeSale": "Completar Venta",
+      "processing": "Procesando…",
+      "receiptTitle": "¡Venta Completada!",
+      "receiptTotal": "Total",
+      "receiptPayment": "Pago",
+      "receiptChange": "Cambio",
+      "receiptItems": "Artículos",
+      "newSale": "Nueva Venta",
+      "lowStock": "Stock bajo",
+      "outOfStock": "Sin stock"
     }
   },
   "products": {

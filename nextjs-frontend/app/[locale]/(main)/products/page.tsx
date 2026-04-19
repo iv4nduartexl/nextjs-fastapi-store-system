@@ -20,6 +20,7 @@ import Link from "next/link";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
 import { getTranslations } from "next-intl/server";
+import { formatCurrency } from "@/lib/currency";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -93,7 +94,7 @@ export default async function ProductsPage({
                       {item.stock ?? "0"} {lowStock && <span title="Low stock">⚠</span>}
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {item.price != null ? `$${parseFloat(item.price).toFixed(2)}` : "—"}
+                      {item.price != null ? formatCurrency(item.price as unknown as string) : "—"}
                     </TableCell>
                     <TableCell className="text-center">
                       <DropdownMenu>

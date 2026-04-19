@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-import Page from "@/app/password-recovery/confirm/page";
+import Page from "@/app/[locale]/password-recovery/confirm/page";
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
 import { useSearchParams, notFound } from "next/navigation";
 

@@ -75,6 +75,52 @@ export type Page_ItemRead_ = {
   pages?: number | null;
 };
 
+export type Page_SaleRead_ = {
+  items: Array<SaleRead>;
+  total?: number | null;
+  page: number | null;
+  size: number | null;
+  pages?: number | null;
+};
+
+export type PaymentMethod = "cash" | "card" | "other";
+
+export type SaleCreate = {
+  items: Array<SaleItemCreate>;
+  payment_method?: PaymentMethod;
+  amount_tendered?: number | string | null;
+  notes?: string | null;
+};
+
+export type SaleItemCreate = {
+  item_id: string;
+  quantity: number | string;
+};
+
+export type SaleItemRead = {
+  id: string;
+  item_id: string | null;
+  item_name: string;
+  unit_type: string;
+  unit_price: string;
+  quantity: string;
+  subtotal: string;
+};
+
+export type SaleRead = {
+  id: string;
+  created_at: string;
+  total: string;
+  status: SaleStatus;
+  payment_method: PaymentMethod;
+  amount_tendered: string | null;
+  change_given: string | null;
+  notes: string | null;
+  sale_items: Array<SaleItemRead>;
+};
+
+export type SaleStatus = "completed" | "cancelled" | "refunded";
+
 export type UnitType = "unit" | "kg" | "gram" | "liter" | "pack";
 
 export type UserCreate = {
@@ -215,6 +261,10 @@ export type ReadItemData = {
      */
     page?: number;
     /**
+     * Search query (name, SKU, or category)
+     */
+    q?: string | null;
+    /**
      * Page size
      */
     size?: number;
@@ -242,3 +292,38 @@ export type DeleteItemData = {
 export type DeleteItemResponse = unknown;
 
 export type DeleteItemError = HTTPValidationError;
+
+export type CreateSaleData = {
+  body: SaleCreate;
+};
+
+export type CreateSaleResponse = SaleRead;
+
+export type CreateSaleError = HTTPValidationError;
+
+export type ListSalesData = {
+  query?: {
+    /**
+     * Page number
+     */
+    page?: number;
+    /**
+     * Page size
+     */
+    size?: number;
+  };
+};
+
+export type ListSalesResponse = Page_SaleRead_;
+
+export type ListSalesError = HTTPValidationError;
+
+export type GetSaleData = {
+  path: {
+    sale_id: string;
+  };
+};
+
+export type GetSaleResponse = SaleRead;
+
+export type GetSaleError = HTTPValidationError;

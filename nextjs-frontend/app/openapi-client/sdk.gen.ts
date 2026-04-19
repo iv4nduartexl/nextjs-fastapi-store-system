@@ -50,6 +50,15 @@ import type {
   DeleteItemData,
   DeleteItemError,
   DeleteItemResponse,
+  CreateSaleData,
+  CreateSaleError,
+  CreateSaleResponse,
+  ListSalesData,
+  ListSalesError,
+  ListSalesResponse,
+  GetSaleData,
+  GetSaleError,
+  GetSaleResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -296,5 +305,53 @@ export const deleteItem = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/items/{item_id}",
+  });
+};
+
+/**
+ * Create Sale
+ */
+export const createSale = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreateSaleData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateSaleResponse,
+    CreateSaleError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/",
+  });
+};
+
+/**
+ * List Sales
+ */
+export const listSales = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListSalesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListSalesResponse,
+    ListSalesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/",
+  });
+};
+
+/**
+ * Get Sale
+ */
+export const getSale = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetSaleData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSaleResponse,
+    GetSaleError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/{sale_id}",
   });
 };

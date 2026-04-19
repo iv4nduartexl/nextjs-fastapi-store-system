@@ -64,6 +64,61 @@
       "gram": "Gram (g)",
       "liter": "Liter (L)",
       "pack": "Pack / Box"
+    },
+    "unitAbbr": {
+      "unit": "UN",
+      "kg": "KG",
+      "gram": "G",
+      "liter": "L",
+      "pack": "PKT"
+    }
+  },
+  "sales": {
+    "title": "Sales",
+    "subtitle": "View and manage your sales history.",
+    "newSale": "New Sale",
+    "noResults": "No sales recorded yet.",
+    "table": {
+      "date": "Date",
+      "items": "Items",
+      "total": "Total",
+      "payment": "Payment",
+      "status": "Status",
+      "actions": "Actions",
+      "view": "View"
+    },
+    "paymentMethod": {
+      "cash": "Cash",
+      "card": "Card",
+      "other": "Other"
+    },
+    "status": {
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    },
+    "pos": {
+      "title": "New Sale",
+      "searchPlaceholder": "Search product or scan barcode…",
+      "noProducts": "No products found.",
+      "noPrice": "No price",
+      "cart": "Cart",
+      "emptyCart": "Cart is empty. Add products from the left.",
+      "clearCart": "Clear",
+      "subtotal": "Subtotal",
+      "paymentMethod": "Payment Method",
+      "amountTendered": "Amount Received",
+      "change": "Change",
+      "completeSale": "Complete Sale",
+      "processing": "Processing…",
+      "receiptTitle": "Sale Completed!",
+      "receiptTotal": "Total",
+      "receiptPayment": "Payment",
+      "receiptChange": "Change",
+      "receiptItems": "Items",
+      "newSale": "New Sale",
+      "lowStock": "Low stock",
+      "outOfStock": "Out of stock"
     }
   },
   "products": {

@@ -51,7 +51,7 @@ export async function removeItem(id: string) {
   if (error) {
     return { message: error };
   }
-  revalidatePath("/dashboard");
+  revalidatePath("/products");
 }
 
 export async function addItem(prevState: {}, formData: FormData) {
@@ -89,14 +89,15 @@ export async function addItem(prevState: {}, formData: FormData) {
       sku,
       category,
       unit_type: unit_type as import("@/app/openapi-client").UnitType,
-      stock,
-      min_stock,
-      price,
+      stock: parseFloat(stock),
+      min_stock: min_stock ? parseFloat(min_stock) : undefined,
+      price: price ? parseFloat(price) : undefined,
     },
   };
   const { error } = await createItem(input);
   if (error) {
-    return { message: `${error.detail}` };
+    const detail = (error as { detail?: unknown }).detail;
+    return { message: typeof detail === "string" ? detail : JSON.stringify(detail) ?? "Unknown error" };
   }
-  redirect(`/dashboard`);
+  redirect(`/products`);
 }

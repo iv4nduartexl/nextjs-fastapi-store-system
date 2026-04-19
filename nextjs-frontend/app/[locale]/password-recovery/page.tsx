@@ -15,9 +15,11 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 import Link from "next/link";
 import { FormError } from "@/components/ui/FormError";
+import { useTranslations } from "next-intl";
 
 export default function Page() {
   const [state, dispatch] = useActionState(passwordReset, undefined);
+  const t = useTranslations("passwordRecovery");
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
@@ -25,19 +27,16 @@ export default function Page() {
         <Card className="w-full max-w-sm rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-semibold text-gray-800 dark:text-white">
-              Password Recovery
+              {t("title")}
             </CardTitle>
             <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
-              Enter your email to receive instructions to reset your password.
+              {t("description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 p-6">
             <div className="grid gap-3">
-              <Label
-                htmlFor="email"
-                className="text-gray-700 dark:text-gray-300"
-              >
-                Email
+              <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
+                {t("email")}
               </Label>
               <Input
                 id="email"
@@ -48,17 +47,14 @@ export default function Page() {
                 className="border-gray-300 dark:border-gray-600"
               />
             </div>
-            <SubmitButton text="Send" />
+            <SubmitButton text={t("send")} />
             <FormError state={state} />
             <div className="mt-2 text-sm text-center text-blue-500">
               {state?.message && <p>{state.message}</p>}
             </div>
             <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-              <Link
-                href="/login"
-                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500"
-              >
-                Back to login
+              <Link href="/login" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500">
+                {t("backToLogin")}
               </Link>
             </div>
           </CardContent>

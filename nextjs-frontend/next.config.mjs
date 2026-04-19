@@ -1,4 +1,7 @@
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -6,7 +9,7 @@ const nextConfig = {
     if (!isServer) {
       config.plugins.push(
         new ForkTsCheckerWebpackPlugin({
-          async: true, // Run type checking synchronously to block the build
+          async: true,
           typescript: {
             configOverwrite: {
               compilerOptions: {
@@ -21,4 +24,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

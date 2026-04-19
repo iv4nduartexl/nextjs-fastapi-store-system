@@ -15,9 +15,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Suspense } from "react";
 import { FieldError, FormError } from "@/components/ui/FormError";
+import { useTranslations } from "next-intl";
 
 function ResetPasswordForm() {
   const [state, dispatch] = useActionState(passwordResetConfirm, undefined);
+  const t = useTranslations("passwordResetConfirm");
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -29,19 +31,19 @@ function ResetPasswordForm() {
     <form action={dispatch}>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Reset your Password</CardTitle>
+          <CardTitle className="text-2xl">{t("title")}</CardTitle>
           <CardDescription>
-            Enter the new password and confirm it.
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input id="password" name="password" type="password" required />
           </div>
           <FieldError state={state} field="password" />
           <div className="grid gap-2">
-            <Label htmlFor="passwordConfirm">Password Confirm</Label>
+            <Label htmlFor="passwordConfirm">{t("passwordConfirm")}</Label>
             <Input
               id="passwordConfirm"
               name="passwordConfirm"
@@ -57,7 +59,7 @@ function ResetPasswordForm() {
             value={token}
             readOnly
           />
-          <SubmitButton text={"Send"} />
+          <SubmitButton text={t("send")} />
           <FormError state={state} />
         </CardContent>
       </Card>

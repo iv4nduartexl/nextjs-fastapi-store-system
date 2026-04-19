@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Home, Users2, List } from "lucide-react";
 import Image from "next/image";
@@ -17,12 +19,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/components/actions/logout-action";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
   return (
     <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-10 w-16 flex flex-col border-r bg-background p-4">
@@ -61,7 +67,7 @@ export default function DashboardLayout({
                 <BreadcrumbLink asChild>
                   <Link href="/" className="flex items-center gap-2">
                     <Home className="h-4 w-4" />
-                    <span>Home</span>
+                    <span>{t("home")}</span>
                   </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -70,13 +76,14 @@ export default function DashboardLayout({
                 <BreadcrumbLink asChild>
                   <Link href="/dashboard" className="flex items-center gap-2">
                     <List className="h-4 w-4" />
-                    <span>Dashboard</span>
+                    <span>{t("products")}</span>
                   </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="relative">
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 hover:bg-gray-400">
@@ -99,7 +106,7 @@ export default function DashboardLayout({
                     onClick={logout}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Logout
+                    {tCommon("logout")}
                   </button>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -64,15 +64,20 @@ export async function addItem(prevState: {}, formData: FormData) {
 
   const validatedFields = itemSchema.safeParse({
     name: formData.get("name"),
-    description: formData.get("description"),
-    quantity: formData.get("quantity"),
+    description: formData.get("description") || undefined,
+    sku: formData.get("sku") || undefined,
+    category: formData.get("category") || undefined,
+    unit_type: formData.get("unit_type"),
+    stock: formData.get("stock"),
+    min_stock: formData.get("min_stock") || undefined,
+    price: formData.get("price") || undefined,
   });
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { name, description, quantity } = validatedFields.data;
+  const { name, description, sku, category, unit_type, stock, min_stock, price } = validatedFields.data;
 
   const input = {
     headers: {
@@ -81,7 +86,12 @@ export async function addItem(prevState: {}, formData: FormData) {
     body: {
       name,
       description,
-      quantity,
+      sku,
+      category,
+      unit_type: unit_type as import("@/app/openapi-client").UnitType,
+      stock,
+      min_stock,
+      price,
     },
   };
   const { error } = await createItem(input);

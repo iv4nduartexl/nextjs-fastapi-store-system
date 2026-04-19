@@ -1,0 +1,94 @@
+{
+  "home": {
+    "title": "Bienvenido al Sistema de Tienda",
+    "subtitle": "Administra tus productos, inventario y más.",
+    "goToDashboard": "Ir al Panel"
+  },
+  "login": {
+    "title": "Iniciar Sesión",
+    "description": "Ingresa tu correo o nombre de usuario para acceder a tu cuenta.",
+    "emailOrUsername": "Correo / Usuario",
+    "emailOrUsernamePlaceholder": "correo@ejemplo.com o miusuario",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "signIn": "Iniciar Sesión",
+    "noAccount": "¿No tienes cuenta?",
+    "signUp": "Regístrate"
+  },
+  "register": {
+    "title": "Crear Cuenta",
+    "description": "Ingresa tu correo y contraseña para crear tu cuenta.",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "correo@ejemplo.com",
+    "username": "Nombre de usuario",
+    "usernamePlaceholder": "miusuario",
+    "password": "Contraseña",
+    "signUp": "Crear Cuenta",
+    "backToLogin": "Volver al inicio de sesión"
+  },
+  "passwordRecovery": {
+    "title": "Recuperar Contraseña",
+    "description": "Ingresa tu correo para recibir instrucciones de recuperación.",
+    "email": "Correo electrónico",
+    "send": "Enviar",
+    "backToLogin": "Volver al inicio de sesión"
+  },
+  "passwordResetConfirm": {
+    "title": "Restablecer Contraseña",
+    "description": "Ingresa la nueva contraseña y confírmala.",
+    "password": "Contraseña",
+    "passwordConfirm": "Confirmar Contraseña",
+    "send": "Enviar"
+  },
+  "dashboard": {
+    "title": "Bienvenido a tu Panel",
+    "subtitle": "Aquí puedes ver el resumen de tus productos y gestionarlos.",
+    "addNewProduct": "Agregar Producto",
+    "products": "Productos",
+    "noResults": "Sin resultados.",
+    "home": "Inicio",
+    "table": {
+      "name": "Nombre",
+      "sku": "SKU",
+      "category": "Categoría",
+      "soldBy": "Vendido por",
+      "stock": "Stock",
+      "price": "Precio",
+      "actions": "Acciones",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "unitTypes": {
+      "unit": "Unidad / Pieza",
+      "kg": "Kilogramo (kg)",
+      "gram": "Gramo (g)",
+      "liter": "Litro (L)",
+      "pack": "Paquete / Caja"
+    }
+  },
+  "addItem": {
+    "title": "Crear Nuevo Producto",
+    "subtitle": "Ingresa los detalles del nuevo producto.",
+    "name": "Nombre del Producto",
+    "namePlaceholder": "ej. Harina de Trigo",
+    "sku": "SKU / Código de barras",
+    "skuPlaceholder": "ej. HTR-001",
+    "category": "Categoría",
+    "categoryPlaceholder": "ej. Panadería, Lácteos, Bebidas",
+    "soldBy": "Vendido por",
+    "stock": "Stock Actual",
+    "stockPlaceholder": "0.000",
+    "minStock": "Umbral de Stock Mínimo",
+    "minStockPlaceholder": "ej. 5.000",
+    "price": "Precio (por unidad/kg)",
+    "pricePlaceholder": "0.00",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Descripción opcional del producto",
+    "submit": "Crear Producto"
+  },
+  "common": {
+    "required": "requerido",
+    "logout": "Cerrar Sesión",
+    "profile": "Perfil"
+  }
+}

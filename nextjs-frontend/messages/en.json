@@ -1,0 +1,94 @@
+{
+  "home": {
+    "title": "Welcome to the Store System",
+    "subtitle": "Manage your products, stock, and more.",
+    "goToDashboard": "Go to Dashboard"
+  },
+  "login": {
+    "title": "Login",
+    "description": "Enter your email or username below to log in to your account.",
+    "emailOrUsername": "Email / Username",
+    "emailOrUsernamePlaceholder": "m@example.com or johndoe",
+    "password": "Password",
+    "forgotPassword": "Forgot your password?",
+    "signIn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up"
+  },
+  "register": {
+    "title": "Sign Up",
+    "description": "Enter your email and password below to create your account.",
+    "email": "Email",
+    "emailPlaceholder": "m@example.com",
+    "username": "Username",
+    "usernamePlaceholder": "johndoe",
+    "password": "Password",
+    "signUp": "Sign Up",
+    "backToLogin": "Back to login"
+  },
+  "passwordRecovery": {
+    "title": "Password Recovery",
+    "description": "Enter your email to receive instructions to reset your password.",
+    "email": "Email",
+    "send": "Send",
+    "backToLogin": "Back to login"
+  },
+  "passwordResetConfirm": {
+    "title": "Reset your Password",
+    "description": "Enter the new password and confirm it.",
+    "password": "Password",
+    "passwordConfirm": "Confirm Password",
+    "send": "Send"
+  },
+  "dashboard": {
+    "title": "Welcome to your Dashboard",
+    "subtitle": "Here, you can see the overview of your products and manage them.",
+    "addNewProduct": "Add New Product",
+    "products": "Products",
+    "noResults": "No results.",
+    "home": "Home",
+    "table": {
+      "name": "Name",
+      "sku": "SKU",
+      "category": "Category",
+      "soldBy": "Sold By",
+      "stock": "Stock",
+      "price": "Price",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "unitTypes": {
+      "unit": "Unit / Piece",
+      "kg": "Kilogram (kg)",
+      "gram": "Gram (g)",
+      "liter": "Liter (L)",
+      "pack": "Pack / Box"
+    }
+  },
+  "addItem": {
+    "title": "Create New Product",
+    "subtitle": "Enter the details of the new product below.",
+    "name": "Product Name",
+    "namePlaceholder": "e.g. Whole Wheat Flour",
+    "sku": "SKU / Barcode",
+    "skuPlaceholder": "e.g. WWF-001",
+    "category": "Category",
+    "categoryPlaceholder": "e.g. Bakery, Dairy, Beverages",
+    "soldBy": "Sold By",
+    "stock": "Current Stock",
+    "stockPlaceholder": "0.000",
+    "minStock": "Low Stock Threshold",
+    "minStockPlaceholder": "e.g. 5.000",
+    "price": "Price (per unit/kg)",
+    "pricePlaceholder": "0.00",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional product description",
+    "submit": "Create Product"
+  },
+  "common": {
+    "required": "required",
+    "logout": "Logout",
+    "profile": "Profile"
+  }
+}

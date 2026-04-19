@@ -37,13 +37,23 @@ export type HTTPValidationError = {
 export type ItemCreate = {
   name: string;
   description?: string | null;
-  quantity?: number | null;
+  sku?: string | null;
+  category?: string | null;
+  unit_type?: UnitType;
+  stock?: number | string;
+  min_stock?: number | string | null;
+  price?: number | string | null;
 };
 
 export type ItemRead = {
   name: string;
   description?: string | null;
-  quantity?: number | null;
+  sku?: string | null;
+  category?: string | null;
+  unit_type?: UnitType;
+  stock?: string;
+  min_stock?: string | null;
+  price?: string | null;
   id: string;
   user_id: string;
 };
@@ -64,6 +74,8 @@ export type Page_ItemRead_ = {
   size: number | null;
   pages?: number | null;
 };
+
+export type UnitType = "unit" | "kg" | "gram" | "liter" | "pack";
 
 export type UserCreate = {
   email: string;

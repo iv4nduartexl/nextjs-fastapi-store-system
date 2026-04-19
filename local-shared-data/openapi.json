@@ -963,16 +963,71 @@
             ],
             "title": "Description"
           },
-          "quantity": {
+          "sku": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Quantity"
+            "title": "Sku"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "unit_type": {
+            "$ref": "#/components/schemas/UnitType",
+            "default": "unit"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Stock",
+            "default": "0"
+          },
+          "min_stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Stock"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
           }
         },
         "type": "object",
@@ -998,16 +1053,58 @@
             ],
             "title": "Description"
           },
-          "quantity": {
+          "sku": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Quantity"
+            "title": "Sku"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "unit_type": {
+            "$ref": "#/components/schemas/UnitType",
+            "default": "unit"
+          },
+          "stock": {
+            "type": "string",
+            "title": "Stock",
+            "default": "0"
+          },
+          "min_stock": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Stock"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
           },
           "id": {
             "type": "string",
@@ -1093,6 +1190,17 @@
           "size"
         ],
         "title": "Page[ItemRead]"
+      },
+      "UnitType": {
+        "type": "string",
+        "enum": [
+          "unit",
+          "kg",
+          "gram",
+          "liter",
+          "pack"
+        ],
+        "title": "UnitType"
       },
       "UserCreate": {
         "properties": {

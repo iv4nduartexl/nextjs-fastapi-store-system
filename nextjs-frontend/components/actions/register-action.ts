@@ -8,9 +8,11 @@ import { registerSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";
 
 export async function register(prevState: unknown, formData: FormData) {
+  const usernameRaw = formData.get("username") as string;
   const validatedFields = registerSchema.safeParse({
     email: formData.get("email") as string,
     password: formData.get("password") as string,
+    username: usernameRaw || undefined,
   });
 
   if (!validatedFields.success) {
@@ -19,12 +21,13 @@ export async function register(prevState: unknown, formData: FormData) {
     };
   }
 
-  const { email, password } = validatedFields.data;
+  const { email, password, username } = validatedFields.data;
 
   const input = {
     body: {
       email,
       password,
+      ...(username ? { username } : {}),
     },
   };
   try {

@@ -71,6 +71,7 @@ export type UserCreate = {
   is_active?: boolean | null;
   is_superuser?: boolean | null;
   is_verified?: boolean | null;
+  username?: string | null;
 };
 
 export type UserRead = {
@@ -79,6 +80,7 @@ export type UserRead = {
   is_active?: boolean;
   is_superuser?: boolean;
   is_verified?: boolean;
+  username?: string | null;
 };
 
 export type UserUpdate = {
@@ -87,6 +89,7 @@ export type UserUpdate = {
   is_active?: boolean | null;
   is_superuser?: boolean | null;
   is_verified?: boolean | null;
+  username?: string | null;
 };
 
 export type ValidationError = {

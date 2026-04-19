@@ -50,6 +50,22 @@ export default function Page() {
             </div>
             <div className="grid gap-3">
               <Label
+                htmlFor="username"
+                className="text-gray-700 dark:text-gray-300"
+              >
+                Username
+              </Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="johndoe"
+                className="border-gray-300 dark:border-gray-600"
+              />
+              <FieldError state={state} field="username" />
+            </div>
+            <div className="grid gap-3">
+              <Label
                 htmlFor="password"
                 className="text-gray-700 dark:text-gray-300"
               >

@@ -24,6 +24,7 @@ export const passwordResetConfirmSchema = z
 export const registerSchema = z.object({
   password: passwordSchema,
   email: z.string().email({ message: "Invalid email address" }),
+  username: z.string().optional(),
 });
 
 export const loginSchema = z.object({

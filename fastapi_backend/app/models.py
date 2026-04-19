@@ -11,6 +11,7 @@ class Base(DeclarativeBase):
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
+    username = Column(String, unique=True, nullable=True, index=True)
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
 
 

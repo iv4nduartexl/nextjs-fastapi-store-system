@@ -27,7 +27,7 @@ export default function Page() {
               Login
             </CardTitle>
             <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
-              Enter your email below to log in to your account.
+              Enter your email or username below to log in to your account.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 p-6">
@@ -36,13 +36,13 @@ export default function Page() {
                 htmlFor="username"
                 className="text-gray-700 dark:text-gray-300"
               >
-                Username
+                Email / Username
               </Label>
               <Input
                 id="username"
                 name="username"
-                type="email"
-                placeholder="m@example.com"
+                type="text"
+                placeholder="m@example.com or johndoe"
                 required
                 className="border-gray-300 dark:border-gray-600"
               />

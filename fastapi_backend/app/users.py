@@ -9,14 +9,16 @@ from fastapi_users import (
     FastAPIUsers,
     UUIDIDMixin,
     InvalidPasswordException,
+    exceptions,
 )
-
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.future import select
 
 from .config import settings
 from .database import get_user_db
@@ -62,6 +64,40 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         if errors:
             raise InvalidPasswordException(reason=errors)
+
+    async def authenticate(
+        self, credentials: OAuth2PasswordRequestForm
+    ) -> Optional[User]:
+        user: Optional[User] = None
+
+        # Try email first
+        try:
+            user = await self.get_by_email(credentials.username)
+        except exceptions.UserNotExists:
+            pass
+
+        # Fall back to username lookup
+        if user is None:
+            result = await self.user_db.session.execute(
+                select(User).where(User.username == credentials.username)
+            )
+            user = result.scalars().first()
+
+        if user is None:
+            # Mitigate timing attack
+            self.password_helper.hash(credentials.password)
+            return None
+
+        verified, updated_password_hash = self.password_helper.verify_and_update(
+            credentials.password, user.hashed_password
+        )
+        if not verified:
+            return None
+
+        if updated_password_hash is not None:
+            await self.user_db.update(user, {"hashed_password": updated_password_hash})
+
+        return user
 
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):

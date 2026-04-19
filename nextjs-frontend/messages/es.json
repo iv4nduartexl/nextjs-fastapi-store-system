@@ -87,6 +87,27 @@
       "actions": "Acciones",
       "view": "Ver"
     },
+    "detail": {
+      "back": "Volver a Ventas",
+      "saleId": "Venta",
+      "date": "Fecha y Hora",
+      "status": "Estado",
+      "summary": "Resumen de la Transacción",
+      "total": "Total",
+      "payment": "Método de Pago",
+      "tendered": "Monto Recibido",
+      "change": "Cambio Entregado",
+      "items": "Artículos Vendidos",
+      "itemName": "Producto",
+      "unitType": "Unidad",
+      "unitPrice": "Precio Unitario",
+      "qty": "Cant.",
+      "subtotal": "Subtotal",
+      "notes": "Notas",
+      "notFound": "Venta no encontrada.",
+      "itemsUnitSingular": "producto",
+      "itemsUnitPlural": "productos"
+    },
     "paymentMethod": {
       "cash": "Efectivo",
       "card": "Tarjeta",

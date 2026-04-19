@@ -87,6 +87,27 @@
       "actions": "Actions",
       "view": "View"
     },
+    "detail": {
+      "back": "Back to Sales",
+      "saleId": "Sale",
+      "date": "Date & Time",
+      "status": "Status",
+      "summary": "Transaction Summary",
+      "total": "Total",
+      "payment": "Payment Method",
+      "tendered": "Amount Tendered",
+      "change": "Change Given",
+      "items": "Items Sold",
+      "itemName": "Product",
+      "unitType": "Unit",
+      "unitPrice": "Unit Price",
+      "qty": "Qty",
+      "subtotal": "Subtotal",
+      "notes": "Notes",
+      "notFound": "Sale not found.",
+      "itemsUnitSingular": "product",
+      "itemsUnitPlural": "products"
+    },
     "paymentMethod": {
       "cash": "Cash",
       "card": "Card",

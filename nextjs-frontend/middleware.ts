@@ -9,11 +9,11 @@ const intlMiddleware = createMiddleware(routing);
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Check if path is a dashboard route (with or without locale prefix)
-  const isDashboard = /^\/(en|es)?\/dashboard(\/.*)?$/.test(pathname) ||
-    /^\/dashboard(\/.*)?$/.test(pathname);
+  // Check if path is a protected route (with or without locale prefix)
+  const isProtected = /^\/(en|es)?\/(dashboard|products)(\/.*)?$/.test(pathname) ||
+    /^\/(dashboard|products)(\/.*)?$/.test(pathname);
 
-  if (isDashboard) {
+  if (isProtected) {
     const token = request.cookies.get("accessToken");
 
     if (!token) {

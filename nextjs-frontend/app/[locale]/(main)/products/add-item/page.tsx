@@ -13,6 +13,7 @@ const initialState = { message: "" };
 export default function CreateItemPage() {
   const [state, dispatch] = useActionState(addItem, initialState);
   const t = useTranslations("addItem");
+  const tDash = useTranslations("dashboard");
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -97,7 +98,7 @@ export default function CreateItemPage() {
               >
                 {unitTypes.map((u) => (
                   <option key={u} value={u}>
-                    {u === "unit" ? "Unit / Piece" : u.charAt(0).toUpperCase() + u.slice(1)}
+                    {tDash(`unitTypes.${u}`)}
                   </option>
                 ))}
               </select>

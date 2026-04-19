@@ -66,6 +66,11 @@
       "pack": "Paquete / Caja"
     }
   },
+  "products": {
+    "title": "Productos",
+    "subtitle": "Administra el inventario de tu tienda.",
+    "addNewProduct": "Agregar Producto"
+  },
   "addItem": {
     "title": "Crear Nuevo Producto",
     "subtitle": "Ingresa los detalles del nuevo producto.",

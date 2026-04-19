@@ -66,6 +66,11 @@
       "pack": "Pack / Box"
     }
   },
+  "products": {
+    "title": "Products",
+    "subtitle": "Manage your store inventory.",
+    "addNewProduct": "Add New Product"
+  },
   "addItem": {
     "title": "Create New Product",
     "subtitle": "Enter the details of the new product below.",

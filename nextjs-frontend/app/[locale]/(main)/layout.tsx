@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Users2, List } from "lucide-react";
+import { Home, ShoppingBag, LayoutDashboard } from "lucide-react";
 import Image from "next/image";
 
 import {
@@ -49,13 +49,13 @@ export default function DashboardLayout({
             href="/dashboard"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
-            <List className="h-5 w-5" />
+            <LayoutDashboard className="h-5 w-5" />
           </Link>
           <Link
-            href="/customers"
+            href="/products"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
-            <Users2 className="h-5 w-5" />
+            <ShoppingBag className="h-5 w-5" />
           </Link>
         </div>
       </aside>
@@ -75,7 +75,7 @@ export default function DashboardLayout({
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Link href="/dashboard" className="flex items-center gap-2">
-                    <List className="h-4 w-4" />
+                    <LayoutDashboard className="h-4 w-4" />
                     <span>{t("products")}</span>
                   </Link>
                 </BreadcrumbLink>

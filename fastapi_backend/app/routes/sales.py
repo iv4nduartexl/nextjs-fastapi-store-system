@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
-from app.models import Item, Sale, SaleItem, PaymentMethod
+from app.models import Customer, Item, Sale, SaleItem, PaymentMethod
 from app.schemas import SaleCreate, SaleRead
 from app.users import current_active_user
 
@@ -68,6 +68,16 @@ async def create_sale(
     ):
         change_given = (sale_data.amount_tendered - total).quantize(Decimal("0.01"))
 
+    # Validate customer for credit sales
+    if sale_data.payment_method == PaymentMethod.credit:
+        if not sale_data.customer_id:
+            raise HTTPException(status_code=422, detail="customer_id is required for credit sales")
+        cust_result = await db.execute(
+            select(Customer).filter(Customer.id == sale_data.customer_id, Customer.user_id == user.id)
+        )
+        if not cust_result.scalars().first():
+            raise HTTPException(status_code=404, detail="Customer not found")
+
     sale = Sale(
         user_id=user.id,
         total=total,
@@ -75,6 +85,7 @@ async def create_sale(
         amount_tendered=sale_data.amount_tendered,
         change_given=change_given,
         notes=sale_data.notes,
+        customer_id=sale_data.customer_id,
         sale_items=sale_item_objs,
     )
 
@@ -84,10 +95,13 @@ async def create_sale(
     result = await db.execute(
         select(Sale)
         .filter(Sale.id == sale.id)
-        .options(selectinload(Sale.sale_items))
+        .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
     sale = result.scalars().first()
-    return sale
+    sr = SaleRead.model_validate(sale)
+    if sale.customer:
+        sr.customer_name = sale.customer.name
+    return sr
 
 
 @router.get("/", response_model=Page[SaleRead])
@@ -102,14 +116,19 @@ async def list_sales(
         select(Sale)
         .filter(Sale.user_id == user.id)
         .order_by(Sale.created_at.desc())
-        .options(selectinload(Sale.sale_items))
+        .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
-    return await apaginate(
-        db,
-        query,
-        params,
-        transformer=lambda sales: [SaleRead.model_validate(s) for s in sales],
-    )
+
+    def _transform(sales):
+        result = []
+        for s in sales:
+            sr = SaleRead.model_validate(s)
+            if s.customer:
+                sr.customer_name = s.customer.name
+            result.append(sr)
+        return result
+
+    return await apaginate(db, query, params, transformer=_transform)
 
 
 @router.get("/{sale_id}", response_model=SaleRead)
@@ -121,9 +140,12 @@ async def get_sale(
     result = await db.execute(
         select(Sale)
         .filter(Sale.id == sale_id, Sale.user_id == user.id)
-        .options(selectinload(Sale.sale_items))
+        .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
     sale = result.scalars().first()
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
-    return sale
+    sr = SaleRead.model_validate(sale)
+    if sale.customer:
+        sr.customer_name = sale.customer.name
+    return sr

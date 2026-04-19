@@ -111,7 +111,8 @@
     "paymentMethod": {
       "cash": "Efectivo",
       "card": "Tarjeta",
-      "other": "Otro"
+      "other": "Otro",
+      "credit": "Crédito"
     },
     "status": {
       "completed": "Completada",
@@ -139,7 +140,12 @@
       "receiptItems": "Artículos",
       "newSale": "Nueva Venta",
       "lowStock": "Stock bajo",
-      "outOfStock": "Sin stock"
+      "outOfStock": "Sin stock",
+      "selectCustomer": "Seleccionar cliente",
+      "searchCustomer": "Buscar cliente por nombre o teléfono…",
+      "noCustomer": "No se encontró cliente",
+      "searching": "Buscando…",
+      "receiptCustomer": "Cliente crédito"
     }
   },
   "products": {
@@ -277,5 +283,99 @@
     "required": "requerido",
     "logout": "Cerrar Sesión",
     "profile": "Perfil"
+  },
+  "customers": {
+    "title": "Clientes",
+    "subtitle": "Gestiona tus clientes con crédito y controla los saldos pendientes.",
+    "newCustomer": "Nuevo Cliente",
+    "noResults": "Aún no hay clientes. Agrega tu primer cliente con crédito.",    "noSearchResults": "Ningún cliente coincide con tu búsqueda.",    "searchPlaceholder": "Buscar por nombre, teléfono o CI…",
+    "cards": {
+      "total": "Total Clientes",
+      "outstanding": "Total Pendiente",
+      "withBalance": "Con Saldo",
+      "overLimit": "Sobre el Límite"
+    },
+    "table": {
+      "name": "Nombre",
+      "phone": "Teléfono",
+      "idNumber": "CI / RUC",
+      "balance": "Saldo",
+      "creditLimit": "Límite de Crédito",
+      "lastSale": "Última Actividad",
+      "actions": "Acciones",
+      "view": "Ver",
+      "unlimited": "Sin límite"
+    },
+    "form": {
+      "title": "Nuevo Cliente",
+      "editTitle": "Editar Cliente",
+      "subtitle": "Completá los datos del cliente para habilitar ventas a crédito.",
+      "name": "Nombre Completo",
+      "namePlaceholder": "ej. Juan Pérez",
+      "phone": "Teléfono",
+      "phonePlaceholder": "ej. 0981 123 456",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "ej. juan@ejemplo.com",
+      "address": "Dirección",
+      "addressPlaceholder": "ej. Calle San Martín 123",
+      "idNumber": "CI / RUC",
+      "idNumberPlaceholder": "ej. 1234567",
+      "creditLimit": "Límite de Crédito",
+      "creditLimitPlaceholder": "Dejá vacío para sin límite",
+      "notes": "Notas",
+      "notesPlaceholder": "Notas opcionales sobre este cliente…",
+      "submit": "Guardar Cliente",
+      "submitting": "Guardando…",
+      "back": "Volver a Clientes"
+    },
+    "detail": {
+      "back": "Volver a Clientes",
+      "balance": "Saldo Pendiente",
+      "totalCredit": "Total Fiado",
+      "totalPaid": "Total Pagado",
+      "creditLimit": "Límite de Crédito",
+      "unlimited": "Sin límite",
+      "overLimit": "Sobre el límite",
+      "contact": "Contacto",
+      "noPhone": "Sin teléfono",
+      "noEmail": "Sin correo",
+      "noAddress": "Sin dirección",
+      "noId": "—",
+      "creditSales": "Ventas a Crédito",
+      "noCreditSales": "Sin ventas a crédito aún.",
+      "payments": "Pagos Recibidos",
+      "noPayments": "Sin pagos registrados aún.",
+      "recordPayment": "Registrar Pago",
+      "paymentAmount": "Monto",
+      "paymentMaxHint": "La máxima cantidad permitida es",
+      "paymentMethod": "Método",
+      "paymentNotes": "Notas",
+      "paymentNotesPlaceholder": "Nota opcional…",
+      "paymentSubmit": "Registrar Pago",
+      "paymentSubmitting": "Registrando…",
+      "payFull": "Pagar todo",
+      "saleDate": "Fecha",
+      "saleTotal": "Total",
+      "saleItems": "Ítems",
+      "paymentDate": "Fecha",
+      "paymentAmount2": "Monto",
+      "paymentMethodLabel": "Método",
+      "editCustomer": "Editar",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "notes": "Notas"
+    },
+    "paymentMethod": {
+      "cash": "Efectivo",
+      "card": "Tarjeta",
+      "transfer": "Transferencia"
+    },
+    "pos": {
+      "selectCustomer": "Seleccionar cliente…",
+      "searchCustomer": "Buscar cliente por nombre o teléfono…",
+      "noCustomer": "Cliente no encontrado",
+      "creditFor": "Fiado para",
+      "receiptCustomer": "Cliente"
+    }
   }
 }

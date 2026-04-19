@@ -68,6 +68,21 @@ import type {
   GetPurchaseData,
   GetPurchaseError,
   GetPurchaseResponse,
+  ListCustomersData,
+  ListCustomersError,
+  ListCustomersResponse,
+  CreateCustomerData,
+  CreateCustomerError,
+  CreateCustomerResponse,
+  GetCustomerData,
+  GetCustomerError,
+  GetCustomerResponse,
+  UpdateCustomerData,
+  UpdateCustomerError,
+  UpdateCustomerResponse,
+  RecordPaymentData,
+  RecordPaymentError,
+  RecordPaymentResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -410,5 +425,85 @@ export const getPurchase = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/purchases/{purchase_id}",
+  });
+};
+
+/**
+ * List Customers
+ */
+export const listCustomers = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListCustomersData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListCustomersResponse,
+    ListCustomersError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/",
+  });
+};
+
+/**
+ * Create Customer
+ */
+export const createCustomer = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreateCustomerData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateCustomerResponse,
+    CreateCustomerError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/",
+  });
+};
+
+/**
+ * Get Customer
+ */
+export const getCustomer = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetCustomerData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetCustomerResponse,
+    GetCustomerError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/{customer_id}",
+  });
+};
+
+/**
+ * Update Customer
+ */
+export const updateCustomer = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateCustomerData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateCustomerResponse,
+    UpdateCustomerError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/{customer_id}",
+  });
+};
+
+/**
+ * Record Payment
+ */
+export const recordPayment = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<RecordPaymentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    RecordPaymentResponse,
+    RecordPaymentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/{customer_id}/payments",
   });
 };

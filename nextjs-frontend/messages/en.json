@@ -111,7 +111,8 @@
     "paymentMethod": {
       "cash": "Cash",
       "card": "Card",
-      "other": "Other"
+      "other": "Other",
+      "credit": "Credit"
     },
     "status": {
       "completed": "Completed",
@@ -139,7 +140,12 @@
       "receiptItems": "Items",
       "newSale": "New Sale",
       "lowStock": "Low stock",
-      "outOfStock": "Out of stock"
+      "outOfStock": "Out of stock",
+      "selectCustomer": "Select Customer",
+      "searchCustomer": "Search customer by name or phone…",
+      "noCustomer": "No customer found",
+      "searching": "Searching…",
+      "receiptCustomer": "Credit customer"
     }
   },
   "products": {
@@ -277,5 +283,101 @@
     "required": "required",
     "logout": "Logout",
     "profile": "Profile"
+  },
+  "customers": {
+    "title": "Customers",
+    "subtitle": "Manage your credit customers and track outstanding balances.",
+    "newCustomer": "New Customer",
+    "noResults": "No customers yet. Add your first credit customer.",
+    "noSearchResults": "No customers match your search.",
+    "searchPlaceholder": "Search by name, phone or ID\u2026",
+    "cards": {
+      "total": "Total Customers",
+      "outstanding": "Total Outstanding",
+      "withBalance": "With Balance",
+      "overLimit": "Over Limit"
+    },
+    "table": {
+      "name": "Name",
+      "phone": "Phone",
+      "idNumber": "ID / RUC",
+      "balance": "Balance",
+      "creditLimit": "Credit Limit",
+      "lastSale": "Last Activity",
+      "actions": "Actions",
+      "view": "View",
+      "unlimited": "Unlimited"
+    },
+    "form": {
+      "title": "New Customer",
+      "editTitle": "Edit Customer",
+      "subtitle": "Fill in the customer information to enable credit sales.",
+      "name": "Full Name",
+      "namePlaceholder": "e.g. Juan P\u00e9rez",
+      "phone": "Phone",
+      "phonePlaceholder": "e.g. 0981 123 456",
+      "email": "Email",
+      "emailPlaceholder": "e.g. juan@example.com",
+      "address": "Address",
+      "addressPlaceholder": "e.g. Calle San Martin 123",
+      "idNumber": "ID / RUC",
+      "idNumberPlaceholder": "e.g. 1234567",
+      "creditLimit": "Credit Limit",
+      "creditLimitPlaceholder": "Leave empty for no limit",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes about this customer\u2026",
+      "submit": "Save Customer",
+      "submitting": "Saving\u2026",
+      "back": "Back to Customers"
+    },
+    "detail": {
+      "back": "Back to Customers",
+      "balance": "Outstanding Balance",
+      "totalCredit": "Total Credit",
+      "totalPaid": "Total Paid",
+      "creditLimit": "Credit Limit",
+      "unlimited": "No limit",
+      "overLimit": "Over limit",
+      "contact": "Contact",
+      "noPhone": "No phone",
+      "noEmail": "No email",
+      "noAddress": "No address",
+      "noId": "\u2014",
+      "creditSales": "Credit Sales",
+      "noCreditSales": "No credit sales yet.",
+      "payments": "Payments Received",
+      "noPayments": "No payments recorded yet.",
+      "recordPayment": "Record Payment",
+      "paymentAmount": "Amount",
+      "paymentMaxHint": "Maximum allowed:",
+      "paymentMethod": "Method",
+      "paymentNotes": "Notes",
+      "paymentNotesPlaceholder": "Optional note\u2026",
+      "paymentSubmit": "Record Payment",
+      "paymentSubmitting": "Recording\u2026",
+      "payFull": "Pay full",
+      "saleDate": "Date",
+      "saleTotal": "Total",
+      "saleItems": "Items",
+      "paymentDate": "Date",
+      "paymentAmount2": "Amount",
+      "paymentMethodLabel": "Method",
+      "editCustomer": "Edit",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "notes": "Notes"
+    },
+    "paymentMethod": {
+      "cash": "Cash",
+      "card": "Card",
+      "transfer": "Transfer"
+    },
+    "pos": {
+      "selectCustomer": "Select customer\u2026",
+      "searchCustomer": "Search customer by name or phone\u2026",
+      "noCustomer": "No customer found",
+      "creditFor": "Credit for",
+      "receiptCustomer": "Customer"
+    }
   }
 }

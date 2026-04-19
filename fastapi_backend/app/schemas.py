@@ -56,6 +56,7 @@ class SaleCreate(BaseModel):
     payment_method: PaymentMethod = PaymentMethod.cash
     amount_tendered: Decimal | None = None
     notes: str | None = None
+    customer_id: UUID | None = None
 
 
 class SaleItemRead(BaseModel):
@@ -79,9 +80,84 @@ class SaleRead(BaseModel):
     amount_tendered: Decimal | None
     change_given: Decimal | None
     notes: str | None
+    customer_id: UUID | None = None
+    customer_name: str | None = None
     sale_items: list[SaleItemRead]
 
     model_config = {"from_attributes": True}
+
+
+# --- Customers ---
+
+
+class CustomerCreate(BaseModel):
+    name: str
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    id_number: str | None = None
+    credit_limit: Decimal | None = None
+    notes: str | None = None
+
+
+class CustomerUpdate(BaseModel):
+    name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    id_number: str | None = None
+    credit_limit: Decimal | None = None
+    notes: str | None = None
+    is_active: bool | None = None
+
+
+class CustomerRead(BaseModel):
+    id: UUID
+    name: str
+    phone: str | None
+    email: str | None
+    address: str | None
+    id_number: str | None
+    credit_limit: Decimal | None
+    notes: str | None
+    is_active: bool
+    created_at: datetime
+    total_credit: Decimal = Decimal("0")
+    total_paid: Decimal = Decimal("0")
+    balance: Decimal = Decimal("0")
+
+    model_config = {"from_attributes": True}
+
+
+class CustomerPage(BaseModel):
+    items: list[CustomerRead]
+    total: int
+    page: int
+    size: int
+    pages: int
+
+
+class CustomerPaymentCreate(BaseModel):
+    amount: Decimal
+    payment_method: str = "cash"
+    payment_date: datetime | None = None
+    notes: str | None = None
+
+
+class CustomerPaymentRead(BaseModel):
+    id: UUID
+    amount: Decimal
+    payment_method: str
+    payment_date: datetime
+    notes: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CustomerDetailRead(CustomerRead):
+    credit_sales: list[SaleRead] = []
+    payments: list[CustomerPaymentRead] = []
 
 
 # --- Purchases ---

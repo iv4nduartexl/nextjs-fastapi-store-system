@@ -20,7 +20,9 @@ import {
   CheckCircle2,
   PackageX,
   ScanBarcode,
+  Users,
 } from "lucide-react";
+import type { CustomerRead } from "@/components/actions/customers-action";
 
 interface CartItem {
   itemId: string;
@@ -30,7 +32,7 @@ interface CartItem {
   quantity: number;
 }
 
-type PaymentMethod = "cash" | "card" | "other";
+type PaymentMethod = "cash" | "card" | "other" | "credit";
 
 export default function POSPage() {
   const t = useTranslations("sales.pos");
@@ -47,12 +49,36 @@ export default function POSPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [receipt, setReceipt] = useState<SaleRead | null>(null);
 
+  // Credit customer state
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerResults, setCustomerResults] = useState<CustomerRead[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRead | null>(null);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Autofocus search on mount
   useEffect(() => {
     searchRef.current?.focus();
   }, []);
+
+  // Debounced customer search
+  useEffect(() => {
+    if (paymentMethod !== "credit") return;
+    const q = customerSearch.trim();
+    if (!q) { setCustomerResults([]); return; }
+    setLoadingCustomers(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/customers?size=8&q=${encodeURIComponent(q)}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setCustomerResults(data.items ?? []);
+        }
+      } catch { /* silent */ } finally { setLoadingCustomers(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [customerSearch, paymentMethod]);
 
   // Debounced search: fetch from backend only when user has typed something
   useEffect(() => {
@@ -84,7 +110,8 @@ export default function POSPage() {
   const change = tenderedNum - cartTotal;
   const canComplete =
     cart.length > 0 &&
-    (paymentMethod !== "cash" || tenderedNum >= cartTotal);
+    (paymentMethod !== "cash" || tenderedNum >= cartTotal) &&
+    (paymentMethod !== "credit" || selectedCustomer != null);
 
   function addToCart(product: ItemRead) {
     if (!product.price) return;
@@ -139,6 +166,7 @@ export default function POSPage() {
       items: cart.map((c) => ({ item_id: c.itemId, quantity: c.quantity })),
       payment_method: paymentMethod,
       amount_tendered: paymentMethod === "cash" ? tenderedNum : undefined,
+      customer_id: paymentMethod === "credit" ? selectedCustomer?.id : undefined,
     });
     setSubmitting(false);
     if (result.error) {
@@ -147,6 +175,9 @@ export default function POSPage() {
       setReceipt(result.data);
       setCart([]);
       setAmountTendered("");
+      setSelectedCustomer(null);
+      setCustomerSearch("");
+      setCustomerResults([]);
     }
   }
 
@@ -180,6 +211,12 @@ export default function POSPage() {
               <div className="flex justify-between items-center bg-green-50 rounded-lg px-3 py-2">
                 <span className="text-sm font-medium text-green-700">{t("receiptChange")}</span>
                 <span className="text-sm font-bold text-green-700">{formatCurrency(receipt.change_given)}</span>
+              </div>
+            )}
+            {receipt.payment_method === "credit" && receipt.customer_name && (
+              <div className="flex justify-between items-center bg-amber-50 rounded-lg px-3 py-2">
+                <span className="text-sm font-medium text-amber-700">{tSales("pos.receiptCustomer")}</span>
+                <span className="text-sm font-bold text-amber-700">{receipt.customer_name}</span>
               </div>
             )}
           </div>
@@ -437,15 +474,16 @@ export default function POSPage() {
               <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1.5">
                 {t("paymentMethod")}
               </p>
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-4 gap-1.5">
                 {([
                   { method: "cash", Icon: Banknote },
                   { method: "card", Icon: CreditCard },
                   { method: "other", Icon: RefreshCcw },
+                  { method: "credit", Icon: Users },
                 ] as { method: PaymentMethod; Icon: React.ElementType }[]).map(({ method: m, Icon }) => (
                   <button
                     key={m}
-                    onClick={() => setPaymentMethod(m)}
+                    onClick={() => { setPaymentMethod(m); if (m !== "credit") { setSelectedCustomer(null); setCustomerSearch(""); setCustomerResults([]); } }}
                     className={`flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-semibold border-2 transition-all ${
                       paymentMethod === m
                         ? "border-green-500 bg-green-50 text-green-700"
@@ -458,6 +496,73 @@ export default function POSPage() {
                 ))}
               </div>
             </div>
+
+            {/* Credit: customer picker */}
+            {paymentMethod === "credit" && (
+              <div className="space-y-2">
+                <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+                  {tSales("pos.selectCustomer")}
+                </label>
+                {selectedCustomer ? (
+                  <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <div>
+                      <p className="text-sm font-bold text-amber-900">{selectedCustomer.name}</p>
+                      {selectedCustomer.phone && (
+                        <p className="text-xs text-amber-600">{selectedCustomer.phone}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => { setSelectedCustomer(null); setCustomerSearch(""); }}
+                      className="text-amber-400 hover:text-amber-700"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={13} />
+                    <input
+                      type="text"
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      placeholder={tSales("pos.searchCustomer")}
+                      className="w-full h-9 pl-8 pr-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    />
+                    {customerResults.length > 0 && (
+                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                        {customerResults.map((c) => {
+                          const bal = parseFloat(c.balance);
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => { setSelectedCustomer(c); setCustomerSearch(""); setCustomerResults([]); }}
+                              className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-amber-50 transition-colors"
+                            >
+                              <div>
+                                <p className="font-semibold text-gray-800">{c.name}</p>
+                                {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                              </div>
+                              {bal > 0 && (
+                                <span className="text-xs font-mono text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                                  {formatCurrency(bal)}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {loadingCustomers && (
+                      <p className="text-xs text-gray-400 mt-1">{tSales("pos.searching")}</p>
+                    )}
+                    {!loadingCustomers && customerSearch.trim() && customerResults.length === 0 && (
+                      <p className="text-xs text-gray-400 mt-1">{tSales("pos.noCustomer")}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Cash tendered + change */}
             {paymentMethod === "cash" && (

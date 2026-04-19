@@ -2,7 +2,7 @@ import enum
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, String, ForeignKey, Enum, Numeric, DateTime
+from sqlalchemy import Column, String, ForeignKey, Enum, Numeric, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -25,6 +25,7 @@ class PaymentMethod(str, enum.Enum):
     cash = "cash"
     card = "card"
     other = "other"
+    credit = "credit"
 
 
 class SaleStatus(str, enum.Enum):
@@ -57,6 +58,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
     sales = relationship("Sale", back_populates="user")
     purchases = relationship("Purchase", back_populates="user")
+    customers = relationship("Customer", back_populates="user")
 
 
 class Item(Base):
@@ -90,9 +92,11 @@ class Sale(Base):
     amount_tendered = Column(Numeric(10, 2), nullable=True)
     change_given = Column(Numeric(10, 2), nullable=True)
     notes = Column(String, nullable=True)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
 
     sale_items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
     user = relationship("User", back_populates="sales")
+    customer = relationship("Customer", back_populates="sales")
 
 
 class SaleItem(Base):
@@ -146,3 +150,39 @@ class PurchaseItem(Base):
 
     purchase = relationship("Purchase", back_populates="purchase_items")
     item = relationship("Item", back_populates="purchase_items")
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    name = Column(String, nullable=False)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    id_number = Column(String, nullable=True)  # Cédula / RUC
+    credit_limit = Column(Numeric(12, 2), nullable=True)  # NULL = unlimited
+    notes = Column(String, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="customers")
+    sales = relationship("Sale", back_populates="customer")
+    credit_payments = relationship("CustomerPayment", back_populates="customer", cascade="all, delete-orphan")
+
+
+class CustomerPayment(Base):
+    __tablename__ = "customer_payments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    payment_method = Column(String, nullable=False, default="cash")  # cash / card / transfer
+    payment_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    customer = relationship("Customer", back_populates="credit_payments")
+    user = relationship("User")

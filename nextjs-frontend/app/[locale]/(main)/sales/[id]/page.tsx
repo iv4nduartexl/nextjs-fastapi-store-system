@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Receipt,
   Hash,
+  Users,
 } from "lucide-react";
 import { fetchSale, SaleRead } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
@@ -68,6 +69,7 @@ export default async function SaleDetailPage({ params }: Props) {
     cash: Banknote,
     card: CreditCard,
     other: RefreshCcw,
+    credit: Users,
   } as const;
 
   const status = statusConfig[sale.status] ?? statusConfig.completed;

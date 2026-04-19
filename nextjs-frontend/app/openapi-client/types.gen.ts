@@ -22,6 +22,85 @@ export type Body_auth_verify_verify = {
   token: string;
 };
 
+export type CustomerCreate = {
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  id_number?: string | null;
+  credit_limit?: number | string | null;
+  notes?: string | null;
+};
+
+export type CustomerDetailRead = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  id_number: string | null;
+  credit_limit: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  total_credit?: string;
+  total_paid?: string;
+  balance?: string;
+  credit_sales?: Array<SaleRead>;
+  payments?: Array<CustomerPaymentRead>;
+};
+
+export type CustomerPage = {
+  items: Array<CustomerRead>;
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+};
+
+export type CustomerPaymentCreate = {
+  amount: number | string;
+  payment_method?: string;
+  payment_date?: string | null;
+  notes?: string | null;
+};
+
+export type CustomerPaymentRead = {
+  id: string;
+  amount: string;
+  payment_method: string;
+  payment_date: string;
+  notes: string | null;
+  created_at: string;
+};
+
+export type CustomerRead = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  id_number: string | null;
+  credit_limit: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  total_credit?: string;
+  total_paid?: string;
+  balance?: string;
+};
+
+export type CustomerUpdate = {
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  id_number?: string | null;
+  credit_limit?: number | string | null;
+  notes?: string | null;
+  is_active?: boolean | null;
+};
+
 export type ErrorModel = {
   detail:
     | string
@@ -91,7 +170,7 @@ export type Page_SaleRead_ = {
   pages?: number | null;
 };
 
-export type PaymentMethod = "cash" | "card" | "other";
+export type PaymentMethod = "cash" | "card" | "other" | "credit";
 
 export type PurchaseCreate = {
   supplier_name?: string | null;
@@ -151,6 +230,7 @@ export type SaleCreate = {
   payment_method?: PaymentMethod;
   amount_tendered?: number | string | null;
   notes?: string | null;
+  customer_id?: string | null;
 };
 
 export type SaleItemCreate = {
@@ -177,6 +257,8 @@ export type SaleRead = {
   amount_tendered: string | null;
   change_given: string | null;
   notes: string | null;
+  customer_id?: string | null;
+  customer_name?: string | null;
   sale_items: Array<SaleItemRead>;
 };
 
@@ -423,3 +505,56 @@ export type GetPurchaseData = {
 export type GetPurchaseResponse = PurchaseRead;
 
 export type GetPurchaseError = HTTPValidationError;
+
+export type ListCustomersData = {
+  query?: {
+    page?: number;
+    q?: string | null;
+    show_inactive?: boolean;
+    size?: number;
+  };
+};
+
+export type ListCustomersResponse = CustomerPage;
+
+export type ListCustomersError = HTTPValidationError;
+
+export type CreateCustomerData = {
+  body: CustomerCreate;
+};
+
+export type CreateCustomerResponse = CustomerRead;
+
+export type CreateCustomerError = HTTPValidationError;
+
+export type GetCustomerData = {
+  path: {
+    customer_id: string;
+  };
+};
+
+export type GetCustomerResponse = CustomerDetailRead;
+
+export type GetCustomerError = HTTPValidationError;
+
+export type UpdateCustomerData = {
+  body: CustomerUpdate;
+  path: {
+    customer_id: string;
+  };
+};
+
+export type UpdateCustomerResponse = CustomerRead;
+
+export type UpdateCustomerError = HTTPValidationError;
+
+export type RecordPaymentData = {
+  body: CustomerPaymentCreate;
+  path: {
+    customer_id: string;
+  };
+};
+
+export type RecordPaymentResponse = CustomerPaymentRead;
+
+export type RecordPaymentError = HTTPValidationError;

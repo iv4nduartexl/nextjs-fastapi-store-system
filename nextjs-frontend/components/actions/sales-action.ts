@@ -23,10 +23,12 @@ export interface SaleRead {
   created_at: string;
   total: string;
   status: "completed" | "cancelled" | "refunded";
-  payment_method: "cash" | "card" | "other";
+  payment_method: "cash" | "card" | "other" | "credit";
   amount_tendered: string | null;
   change_given: string | null;
   notes: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
   sale_items: SaleItemRead[];
 }
 
@@ -47,9 +49,10 @@ const API = process.env.API_BASE_URL;
 
 export async function createSale(input: {
   items: SaleItemCreate[];
-  payment_method: "cash" | "card" | "other";
+  payment_method: "cash" | "card" | "other" | "credit";
   amount_tendered?: number;
   notes?: string;
+  customer_id?: string;
 }): Promise<{ data?: SaleRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };

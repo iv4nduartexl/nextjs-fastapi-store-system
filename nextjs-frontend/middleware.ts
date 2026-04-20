@@ -10,8 +10,8 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Check if path is a protected route (with or without locale prefix)
-  const isProtected = /^\/(en|es)?\/(dashboard|products|sales|purchases|customers)(\/.*)?$/.test(pathname) ||
-    /^\/(dashboard|products|sales|purchases|customers)(\/.*)?$/.test(pathname);
+  const isProtected = /^\/(en|es)?\/(dashboard|products|sales|purchases|customers|cashbox)(\/.*)?$/.test(pathname) ||
+    /^\/(dashboard|products|sales|purchases|customers|cashbox)(\/.*)?$/.test(pathname);
 
   if (isProtected) {
     const token = request.cookies.get("accessToken");

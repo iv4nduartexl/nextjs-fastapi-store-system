@@ -11,8 +11,10 @@ from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
 from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, UnitType
+from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import PurchaseCreate, PurchaseRead
 from app.users import current_active_user
+from app.routes.cashbox import record_auto_transaction
 
 router = APIRouter(tags=["purchases"])
 
@@ -125,6 +127,25 @@ async def create_purchase(
 
     await db.commit()
     await db.refresh(purchase)
+
+    # Auto-record in cashbox (only for paid purchases, silent if no session open)
+    from app.models import PurchasePaymentStatus
+    if purchase.payment_status == PurchasePaymentStatus.paid:
+        method_map = {"cash": "cash", "card": "card", "transfer": "transfer", "credit": "credit"}
+        pmethod = method_map.get(purchase.payment_method.value, "cash")
+        if pmethod != "credit":
+            await record_auto_transaction(
+                db=db,
+                user_id=user.id,
+                tx_type=CashboxTransactionType.purchase,
+                direction=CashboxTransactionDirection.out,
+                amount=purchase.total_cost,
+                payment_method=pmethod,
+                reference_type="purchase",
+                reference_id=purchase.id,
+                description=f"Purchase{' - ' + purchase.supplier_name if purchase.supplier_name else ''}",
+            )
+            await db.commit()
 
     result = await db.execute(
         select(Purchase)

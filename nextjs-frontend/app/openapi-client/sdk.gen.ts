@@ -83,6 +83,26 @@ import type {
   RecordPaymentData,
   RecordPaymentError,
   RecordPaymentResponse,
+  GetCurrentSessionError,
+  GetCurrentSessionResponse,
+  OpenSessionData,
+  OpenSessionError,
+  OpenSessionResponse,
+  CloseSessionData,
+  CloseSessionError,
+  CloseSessionResponse,
+  AddManualTransactionData,
+  AddManualTransactionError,
+  AddManualTransactionResponse,
+  ListTransactionsData,
+  ListTransactionsError,
+  ListTransactionsResponse,
+  ListSessionsData,
+  ListSessionsError,
+  ListSessionsResponse,
+  GetSessionData,
+  GetSessionError,
+  GetSessionResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -505,5 +525,117 @@ export const recordPayment = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/customers/{customer_id}/payments",
+  });
+};
+
+/**
+ * Get Current Session
+ */
+export const getCurrentSession = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetCurrentSessionResponse,
+    GetCurrentSessionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/session/current",
+  });
+};
+
+/**
+ * Open Session
+ */
+export const openSession = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<OpenSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    OpenSessionResponse,
+    OpenSessionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/session/open",
+  });
+};
+
+/**
+ * Close Session
+ */
+export const closeSession = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CloseSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CloseSessionResponse,
+    CloseSessionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/session/close",
+  });
+};
+
+/**
+ * Add Manual Transaction
+ */
+export const addManualTransaction = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<AddManualTransactionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    AddManualTransactionResponse,
+    AddManualTransactionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/transactions",
+  });
+};
+
+/**
+ * List Transactions
+ */
+export const listTransactions = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListTransactionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListTransactionsResponse,
+    ListTransactionsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/transactions",
+  });
+};
+
+/**
+ * List Sessions
+ */
+export const listSessions = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListSessionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListSessionsResponse,
+    ListSessionsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/sessions",
+  });
+};
+
+/**
+ * Get Session
+ */
+export const getSession = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSessionResponse,
+    GetSessionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/cashbox/sessions/{session_id}",
   });
 };

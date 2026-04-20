@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, ShoppingBag, LayoutDashboard, ShoppingCart, Truck, Users } from "lucide-react";
+import { Home, ShoppingBag, LayoutDashboard, ShoppingCart, Truck, Users, Wallet } from "lucide-react";
 import Image from "next/image";
 
 import {
@@ -74,6 +74,12 @@ export default function DashboardLayout({
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
             <Users className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/cashbox"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <Wallet className="h-5 w-5" />
           </Link>
         </div>
       </aside>

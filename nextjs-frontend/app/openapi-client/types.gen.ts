@@ -22,6 +22,55 @@ export type Body_auth_verify_verify = {
   token: string;
 };
 
+export type CashboxManualTransaction = {
+  type: string;
+  amount: number | string;
+  payment_method?: string;
+  description?: string | null;
+};
+
+export type CashboxSessionClose = {
+  closing_amount_counted: number | string;
+  notes?: string | null;
+};
+
+export type CashboxSessionCreate = {
+  opening_amount?: number | string;
+  notes?: string | null;
+};
+
+export type CashboxSessionRead = {
+  id: string;
+  opening_amount: string;
+  status: string;
+  opened_at: string;
+  closed_at: string | null;
+  closing_amount_counted: string | null;
+  notes: string | null;
+  created_at: string;
+  cash_in?: string;
+  cash_out?: string;
+  card_in?: string;
+  transfer_in?: string;
+  credit_sales?: string;
+  expected_cash_balance?: string;
+  difference?: string | null;
+  transaction_count?: number;
+};
+
+export type CashboxTransactionRead = {
+  id: string;
+  session_id: string | null;
+  type: string;
+  direction: string;
+  amount: string;
+  payment_method: string;
+  reference_type: string | null;
+  reference_id: string | null;
+  description: string | null;
+  created_at: string;
+};
+
 export type CustomerCreate = {
   name: string;
   phone?: string | null;
@@ -558,3 +607,62 @@ export type RecordPaymentData = {
 export type RecordPaymentResponse = CustomerPaymentRead;
 
 export type RecordPaymentError = HTTPValidationError;
+
+export type GetCurrentSessionResponse = CashboxSessionRead;
+
+export type GetCurrentSessionError = unknown;
+
+export type OpenSessionData = {
+  body: CashboxSessionCreate;
+};
+
+export type OpenSessionResponse = CashboxSessionRead;
+
+export type OpenSessionError = HTTPValidationError;
+
+export type CloseSessionData = {
+  body: CashboxSessionClose;
+};
+
+export type CloseSessionResponse = CashboxSessionRead;
+
+export type CloseSessionError = HTTPValidationError;
+
+export type AddManualTransactionData = {
+  body: CashboxManualTransaction;
+};
+
+export type AddManualTransactionResponse = CashboxTransactionRead;
+
+export type AddManualTransactionError = HTTPValidationError;
+
+export type ListTransactionsData = {
+  query?: {
+    limit?: number;
+    session_id?: string | null;
+  };
+};
+
+export type ListTransactionsResponse = Array<CashboxTransactionRead>;
+
+export type ListTransactionsError = HTTPValidationError;
+
+export type ListSessionsData = {
+  query?: {
+    limit?: number;
+  };
+};
+
+export type ListSessionsResponse = Array<CashboxSessionRead>;
+
+export type ListSessionsError = HTTPValidationError;
+
+export type GetSessionData = {
+  path: {
+    session_id: string;
+  };
+};
+
+export type GetSessionResponse = CashboxSessionRead;
+
+export type GetSessionError = HTTPValidationError;

@@ -377,5 +377,108 @@
       "creditFor": "Fiado para",
       "receiptCustomer": "Cliente"
     }
+  },
+  "cashbox": {
+    "title": "Caja",
+    "subtitle": "Controla tu efectivo diario, ventas y gastos.",
+    "noSession": "Sin sesi\u00f3n abierta",
+    "noSessionDesc": "Abre una sesi\u00f3n para comenzar a controlar tu caja.",
+    "openSession": "Abrir Caja",
+    "closeSession": "Cerrar Caja",
+    "sessionOpen": "Sesi\u00f3n Abierta",
+    "sessionClosed": "Sesi\u00f3n Cerrada",
+    "since": "desde",
+    "duration": "Duraci\u00f3n",
+    "expectedCash": "Efectivo Esperado",
+    "openingBalance": "Saldo Inicial",
+    "cashIn": "Entradas (Efectivo)",
+    "cashOut": "Salidas (Efectivo)",
+    "cardIn": "Tarjeta / POS",
+    "transferIn": "Transferencias",
+    "creditSales": "Ventas a Cr\u00e9dito",
+    "totalRevenue": "Ingresos Totales",
+    "netCash": "Efectivo Neto",
+    "addIncome": "+ Ingreso",
+    "addExpense": "- Egreso",
+    "transactions": "Movimientos",
+    "noTransactions": "Sin movimientos en esta sesi\u00f3n.",
+    "all": "Todos",
+    "in": "Entradas",
+    "out": "Salidas",
+    "sessionHistory": "Historial de Sesiones",
+    "noHistory": "Sin sesiones anteriores.",
+    "difference": "Diferencia",
+    "counted": "Contado",
+    "short": "Faltante",
+    "over": "Sobrante",
+    "balanced": "Cuadrado",
+    "openForm": {
+      "title": "Abrir Caja",
+      "opening": "Efectivo Inicial",
+      "openingPlaceholder": "Ingresa el efectivo en la caja",
+      "notes": "Notas (opcional)",
+      "submit": "Abrir Sesi\u00f3n",
+      "submitting": "Abriendo\u2026",
+      "useLast": "Usar cierre anterior:"
+    },
+    "closeForm": {
+      "title": "Cerrar Caja",
+      "expected": "Efectivo Esperado",
+      "counted": "Efectivo Contado",
+      "countedPlaceholder": "Ingresa el conteo f\u00edsico",
+      "differenceOk": "Cuadrado",
+      "differenceShort": "Faltante",
+      "differenceOver": "Sobrante",
+      "notes": "Notas de cierre (opcional)",
+      "submit": "Cerrar Sesi\u00f3n",
+      "submitting": "Cerrando\u2026",
+      "warn": "Esto cerrar\u00e1 la sesi\u00f3n actual. Aseg\u00farate de haber contado el efectivo."
+    },
+    "txForm": {
+      "incomeTitle": "Agregar Ingreso",
+      "expenseTitle": "Agregar Egreso",
+      "amount": "Monto",
+      "method": "M\u00e9todo",
+      "description": "Descripci\u00f3n",
+      "descriptionPlaceholder": "\u00bfPara qu\u00e9 es esto?",
+      "submit": "Guardar",
+      "submitting": "Guardando\u2026"
+    },
+    "txType": {
+      "sale": "Venta",
+      "purchase": "Compra",
+      "income": "Ingreso",
+      "expense": "Egreso",
+      "customer_payment": "Pago de Cliente",
+      "opening": "Saldo Inicial"
+    },
+    "method": {
+      "cash": "Efectivo",
+      "card": "Tarjeta",
+      "transfer": "Transferencia",
+      "credit": "Cr\u00e9dito",
+      "other": "Otro"
+    },
+    "sessionCard": {
+      "open": "Abierta",
+      "closed": "Cerrada"
+    },
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "historyFilter": {
+      "all": "Todos",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "week": "Esta Semana"
+    },
+    "sessionDetail": {
+      "title": "Detalle de Sesi\u00f3n",
+      "openedAt": "Apertura",
+      "closedAt": "Cierre",
+      "transactions": "Movimientos",
+      "noTransactions": "Sin movimientos en esta sesi\u00f3n.",
+      "loading": "Cargando\u2026",
+      "backTo": "Caja"
+    }
   }
 }

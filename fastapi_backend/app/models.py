@@ -186,3 +186,58 @@ class CustomerPayment(Base):
 
     customer = relationship("Customer", back_populates="credit_payments")
     user = relationship("User")
+
+
+class CashboxSessionStatus(str, enum.Enum):
+    open = "open"
+    closed = "closed"
+
+
+class CashboxTransactionType(str, enum.Enum):
+    sale = "sale"
+    purchase = "purchase"
+    income = "income"
+    expense = "expense"
+    customer_payment = "customer_payment"
+    opening = "opening"
+
+
+class CashboxTransactionDirection(str, enum.Enum):
+    in_ = "in"
+    out = "out"
+
+
+class CashboxSession(Base):
+    __tablename__ = "cashbox_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    opening_amount = Column(Numeric(14, 2), nullable=False, default=0)
+    status = Column(Enum(CashboxSessionStatus), nullable=False, default=CashboxSessionStatus.open)
+    opened_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
+    closing_amount_counted = Column(Numeric(14, 2), nullable=True)
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User")
+    transactions = relationship("CashboxTransaction", back_populates="session", cascade="all, delete-orphan")
+
+
+class CashboxTransaction(Base):
+    __tablename__ = "cashbox_transactions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("cashbox_sessions.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    type = Column(Enum(CashboxTransactionType), nullable=False)
+    direction = Column(Enum(CashboxTransactionDirection, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    amount = Column(Numeric(14, 2), nullable=False)
+    payment_method = Column(String, nullable=False, default="cash")
+    reference_type = Column(String, nullable=True)
+    reference_id = Column(UUID(as_uuid=True), nullable=True)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    session = relationship("CashboxSession", back_populates="transactions")
+    user = relationship("User")

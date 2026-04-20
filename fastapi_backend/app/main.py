@@ -8,6 +8,7 @@ from app.routes.items import router as items_router
 from app.routes.sales import router as sales_router
 from app.routes.purchases import router as purchases_router
 from app.routes.customers import router as customers_router
+from app.routes.cashbox import router as cashbox_router
 from app.config import settings
 
 app = FastAPI(
@@ -56,4 +57,5 @@ app.include_router(items_router, prefix="/items")
 app.include_router(sales_router, prefix="/sales")
 app.include_router(purchases_router, prefix="/purchases")
 app.include_router(customers_router, prefix="/customers")
+app.include_router(cashbox_router, prefix="/cashbox")
 add_pagination(app)

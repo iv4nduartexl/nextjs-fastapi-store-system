@@ -379,5 +379,108 @@
       "creditFor": "Credit for",
       "receiptCustomer": "Customer"
     }
+  },
+  "cashbox": {
+    "title": "Cash Box",
+    "subtitle": "Track your daily cash, sales, and expenses.",
+    "noSession": "No session open",
+    "noSessionDesc": "Open a session to start tracking your cash box.",
+    "openSession": "Open Session",
+    "closeSession": "Close Session",
+    "sessionOpen": "Session Open",
+    "sessionClosed": "Session Closed",
+    "since": "since",
+    "duration": "Duration",
+    "expectedCash": "Expected Cash",
+    "openingBalance": "Opening Balance",
+    "cashIn": "Cash In",
+    "cashOut": "Cash Out",
+    "cardIn": "Card / POS",
+    "transferIn": "Transfers",
+    "creditSales": "Credit Sales",
+    "totalRevenue": "Total Revenue",
+    "netCash": "Net Cash",
+    "addIncome": "+ Income",
+    "addExpense": "- Expense",
+    "transactions": "Transactions",
+    "noTransactions": "No transactions yet in this session.",
+    "all": "All",
+    "in": "In",
+    "out": "Out",
+    "sessionHistory": "Session History",
+    "noHistory": "No past sessions.",
+    "difference": "Difference",
+    "counted": "Counted",
+    "short": "Short",
+    "over": "Over",
+    "balanced": "Balanced",
+    "openForm": {
+      "title": "Open Cash Box",
+      "opening": "Opening Cash Amount",
+      "openingPlaceholder": "Enter cash in the drawer",
+      "notes": "Notes (optional)",
+      "submit": "Open Session",
+      "submitting": "Opening\u2026",
+      "useLast": "Use last closing:"
+    },
+    "closeForm": {
+      "title": "Close Session",
+      "expected": "Expected Cash",
+      "counted": "Cash You Counted",
+      "countedPlaceholder": "Enter physical cash count",
+      "differenceOk": "Balanced",
+      "differenceShort": "Short",
+      "differenceOver": "Over",
+      "notes": "Closing notes (optional)",
+      "submit": "Close Session",
+      "submitting": "Closing\u2026",
+      "warn": "This will end the current session. Make sure you\u2019ve counted the cash."
+    },
+    "txForm": {
+      "incomeTitle": "Add Income",
+      "expenseTitle": "Add Expense",
+      "amount": "Amount",
+      "method": "Method",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this for?",
+      "submit": "Save",
+      "submitting": "Saving\u2026"
+    },
+    "txType": {
+      "sale": "Sale",
+      "purchase": "Purchase",
+      "income": "Income",
+      "expense": "Expense",
+      "customer_payment": "Customer Payment",
+      "opening": "Opening Balance"
+    },
+    "method": {
+      "cash": "Cash",
+      "card": "Card",
+      "transfer": "Transfer",
+      "credit": "Credit",
+      "other": "Other"
+    },
+    "sessionCard": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "historyFilter": {
+      "all": "All",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "This Week"
+    },
+    "sessionDetail": {
+      "title": "Session Detail",
+      "openedAt": "Opened",
+      "closedAt": "Closed",
+      "transactions": "Transactions",
+      "noTransactions": "No transactions in this session.",
+      "loading": "Loading\u2026",
+      "backTo": "Cash Box"
+    }
   }
 }

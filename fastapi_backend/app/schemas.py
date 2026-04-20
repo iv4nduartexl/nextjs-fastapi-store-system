@@ -212,3 +212,58 @@ class PurchaseRead(BaseModel):
     purchase_items: list[PurchaseItemRead]
 
     model_config = {"from_attributes": True}
+
+
+class CashboxTransactionRead(BaseModel):
+    id: UUID
+    session_id: UUID | None
+    type: str
+    direction: str
+    amount: Decimal
+    payment_method: str
+    reference_type: str | None
+    reference_id: UUID | None
+    description: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CashboxSessionCreate(BaseModel):
+    opening_amount: Decimal = Decimal("0")
+    notes: str | None = None
+
+
+class CashboxSessionClose(BaseModel):
+    closing_amount_counted: Decimal
+    notes: str | None = None
+
+
+class CashboxSessionRead(BaseModel):
+    id: UUID
+    opening_amount: Decimal
+    status: str
+    opened_at: datetime
+    closed_at: datetime | None
+    closing_amount_counted: Decimal | None
+    notes: str | None
+    created_at: datetime
+    # Computed
+    cash_in: Decimal = Decimal("0")
+    cash_out: Decimal = Decimal("0")
+    card_in: Decimal = Decimal("0")
+    transfer_in: Decimal = Decimal("0")
+    credit_sales: Decimal = Decimal("0")
+    expected_cash_balance: Decimal = Decimal("0")
+    difference: Decimal | None = None
+    transaction_count: int = 0
+
+    model_config = {"from_attributes": True}
+
+
+class CashboxManualTransaction(BaseModel):
+    type: str  # "income" or "expense"
+    amount: Decimal
+    payment_method: str = "cash"
+    description: str | None = None
+

@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
 from app.models import Customer, CustomerPayment, Sale, PaymentMethod, SaleStatus
+from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import (
     CustomerCreate,
     CustomerDetailRead,
@@ -261,4 +262,20 @@ async def record_payment(
     db.add(payment)
     await db.commit()
     await db.refresh(payment)
+
+    # Auto-record in cashbox
+    from app.routes.cashbox import record_auto_transaction
+    await record_auto_transaction(
+        db=db,
+        user_id=user.id,
+        tx_type=CashboxTransactionType.customer_payment,
+        direction=CashboxTransactionDirection.in_,
+        amount=data.amount,
+        payment_method=data.payment_method,
+        reference_type="customer_payment",
+        reference_id=customer.id,
+        description=f"Payment from {customer.name}",
+    )
+    await db.commit()
+
     return CustomerPaymentRead.model_validate(payment)

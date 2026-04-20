@@ -12,6 +12,8 @@ from app.database import User, get_async_session
 from app.models import Customer, Item, Sale, SaleItem, PaymentMethod
 from app.schemas import SaleCreate, SaleRead
 from app.users import current_active_user
+from app.routes.cashbox import record_auto_transaction
+from app.models import CashboxTransactionType, CashboxTransactionDirection
 
 router = APIRouter(tags=["sales"])
 
@@ -90,6 +92,38 @@ async def create_sale(
     )
 
     db.add(sale)
+    await db.commit()
+
+    # Auto-record in cashbox (silent if no session open)
+    if sale_data.payment_method != PaymentMethod.credit:
+        method_map = {
+            PaymentMethod.cash: "cash",
+            PaymentMethod.card: "card",
+            PaymentMethod.other: "transfer",
+        }
+        await record_auto_transaction(
+            db=db,
+            user_id=user.id,
+            tx_type=CashboxTransactionType.sale,
+            direction=CashboxTransactionDirection.in_,
+            amount=total,
+            payment_method=method_map.get(sale_data.payment_method, "other"),
+            reference_type="sale",
+            reference_id=sale.id,
+            description=f"Sale ({len(sale_item_objs)} items)",
+        )
+    else:
+        await record_auto_transaction(
+            db=db,
+            user_id=user.id,
+            tx_type=CashboxTransactionType.sale,
+            direction=CashboxTransactionDirection.in_,
+            amount=total,
+            payment_method="credit",
+            reference_type="sale",
+            reference_id=sale.id,
+            description=f"Credit sale ({len(sale_item_objs)} items)",
+        )
     await db.commit()
 
     result = await db.execute(

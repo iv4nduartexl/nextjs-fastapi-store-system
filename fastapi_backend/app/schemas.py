@@ -171,6 +171,8 @@ class PurchaseItemCreate(BaseModel):
     cost_price: Decimal
     sku: str | None = None
     category: str | None = None
+    sell_price: Decimal | None = None
+    overwrite_sell_price: bool = False
 
 
 class PurchaseCreate(BaseModel):

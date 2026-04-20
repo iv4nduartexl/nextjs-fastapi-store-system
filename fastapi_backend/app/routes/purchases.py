@@ -57,6 +57,7 @@ async def create_purchase(
                 stock=line.quantity,
                 sku=line.sku or None,
                 category=line.category or None,
+                price=line.sell_price if line.sell_price is not None else None,
                 user_id=user.id,
             )
             db.add(new_item)
@@ -121,9 +122,16 @@ async def create_purchase(
     db.add(purchase)
 
     # Increase stock for existing catalog items (new items already have stock set at creation)
+    # Also update sell price when requested
     for line in data.items:
         if line.item_id and line.item_id in items_map:
-            items_map[line.item_id].stock += line.quantity
+            db_item = items_map[line.item_id]
+            db_item.stock += line.quantity
+            if line.sell_price is not None:
+                # If no stock (before this purchase), always overwrite
+                # If stock existed and user confirmed, overwrite too
+                if db_item.stock <= line.quantity or line.overwrite_sell_price:
+                    db_item.price = line.sell_price
 
     await db.commit()
     await db.refresh(purchase)

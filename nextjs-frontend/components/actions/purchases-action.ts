@@ -15,6 +15,8 @@ export interface PurchaseItemCreate {
   cost_price: number;
   sku?: string;
   category?: string;
+  sell_price?: number;
+  overwrite_sell_price?: boolean;
 }
 
 export interface PurchaseCreate {

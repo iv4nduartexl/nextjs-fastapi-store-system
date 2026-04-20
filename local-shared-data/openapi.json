@@ -3311,6 +3311,25 @@
               }
             ],
             "title": "Category"
+          },
+          "sell_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sell Price"
+          },
+          "overwrite_sell_price": {
+            "type": "boolean",
+            "title": "Overwrite Sell Price",
+            "default": false
           }
         },
         "type": "object",

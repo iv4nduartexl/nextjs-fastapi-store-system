@@ -240,6 +240,8 @@ export type PurchaseItemCreate = {
   cost_price: number | string;
   sku?: string | null;
   category?: string | null;
+  sell_price?: number | string | null;
+  overwrite_sell_price?: boolean;
 };
 
 export type PurchaseItemRead = {

@@ -229,7 +229,18 @@
       "costPriceTotalHint": "total",
       "costPriceTotalDesc": "cost price = total for this batch",
       "metaModalTitle": "Extra Details",
-      "metaDone": "Done"
+      "metaDone": "Done",
+      "sellPrice": "Sell Price",
+      "sellPricePlaceholder": "Set sell price",
+      "currentSellPrice": "Current price",
+      "sellPriceOverwriteWarn": "Existing stock has a different price. You will be asked to confirm on submit.",
+      "editSellPrice": "Edit sell price",
+      "details": "Details",
+      "additionalDetailsTitle": "Additional details",
+      "overwritePriceTitle": "Update Sell Price?",
+      "overwritePriceDesc": "Some linked products already have stock at a different sell price. Do you want to update the sell price for all existing stock too?",
+      "overwriteYes": "Yes, update all",
+      "overwriteNo": "No, keep old price"
     },
     "detail": {
       "back": "Back to Purchases",

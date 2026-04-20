@@ -32,8 +32,15 @@ interface LineItem {
   unitType: string;
   quantity: number;
   costPrice: number;
+  sellPrice?: number;
   sku?: string;
   category?: string;
+  // For linked products — used to decide overwrite confirmation
+  existingStock?: number;
+  existingPrice?: number;
+  // Original catalog values — to highlight unchanged fields in blue
+  catalogSku?: string;
+  catalogCategory?: string;
 }
 
 const UNIT_TYPES = ["unit", "kg", "gram", "liter", "pack"];
@@ -74,6 +81,9 @@ export default function NewPurchasePage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [metaModal, setMetaModal] = useState<number | null>(null);
+  // Overwrite confirmation modal
+  const [overwriteModal, setOverwriteModal] = useState(false);
+  const [pendingOverwrites, setPendingOverwrites] = useState<number[]>([]); // line indices
 
   // Product search debounce
   useEffect(() => {
@@ -115,6 +125,13 @@ export default function NewPurchasePage() {
         unitType: product.unit_type ?? "unit",
         quantity: 1,
         costPrice: 0,
+        sellPrice: product.price != null ? Number(product.price) : undefined,
+        existingStock: product.stock != null ? Number(product.stock) : 0,
+        existingPrice: product.price != null ? Number(product.price) : undefined,
+        sku: product.sku ?? undefined,
+        category: product.category ?? undefined,
+        catalogSku: product.sku ?? undefined,
+        catalogCategory: product.category ?? undefined,
       },
     ]);
     setSearchQuery("");
@@ -149,6 +166,29 @@ export default function NewPurchasePage() {
       setErrorMsg("All items need a product name.");
       return;
     }
+
+    // Check if any linked product has existing stock AND a changed sell price
+    const needsConfirm = lines
+      .map((l, i) => ({ l, i }))
+      .filter(({ l }) =>
+        l.itemId &&
+        l.sellPrice !== undefined &&
+        (l.existingStock ?? 0) > 0 &&
+        l.sellPrice !== l.existingPrice
+      )
+      .map(({ i }) => i);
+
+    if (needsConfirm.length > 0 && !overwriteModal) {
+      setPendingOverwrites(needsConfirm);
+      setOverwriteModal(true);
+      return;
+    }
+
+    await doSubmit();
+  }
+
+  async function doSubmit(confirmedOverwrites?: number[]) {
+    const overwriteSet = new Set(confirmedOverwrites ?? []);
     setSubmitting(true);
     setErrorMsg("");
 
@@ -160,14 +200,16 @@ export default function NewPurchasePage() {
       payment_status: paymentStatus,
       tax: taxNum,
       notes: notes || undefined,
-      items: lines.map((l) => ({
+      items: lines.map((l, i) => ({
         item_id: l.itemId,
         item_name: l.itemName,
         unit_type: l.unitType,
         quantity: l.quantity,
-        cost_price: l.costPrice, // gram type: backend treats as total cost
+        cost_price: l.costPrice,
         sku: l.sku || undefined,
         category: l.category || undefined,
+        sell_price: l.sellPrice !== undefined ? l.sellPrice : undefined,
+        overwrite_sell_price: overwriteSet.has(i),
       })),
     });
 
@@ -373,6 +415,9 @@ export default function NewPurchasePage() {
                       <th className="text-right px-5 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-28">
                         {t("form.subtotal")}
                       </th>
+                      <th className="text-center px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-12">
+                        {t("form.details")}
+                      </th>
                       <th className="w-8" />
                     </tr>
                   </thead>
@@ -393,32 +438,20 @@ export default function NewPurchasePage() {
                             ))}
                           </select>
                         </td>
-                        {/* Name + Tag icon */}
+                        {/* Name */}
                         <td className="px-3 py-2">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
                             <Input
                               value={line.itemName}
                               onChange={(e) => updateLine(i, "itemName", e.target.value)}
                               placeholder={t("form.productNamePlaceholder")}
-                              className="h-8 text-sm border-0 bg-transparent p-0 focus:ring-0 font-medium flex-1 min-w-0"
+                              readOnly={!!line.itemId}
+                              className={`h-8 text-sm border-0 bg-transparent p-0 focus:ring-0 font-medium flex-1 min-w-0 ${
+                                line.itemId ? "text-gray-700 cursor-default select-none" : ""
+                              }`}
                             />
-                            {line.itemId ? (
-                              <span className="shrink-0 text-[10px] text-green-600 font-medium whitespace-nowrap">
-                                ✓ {t("detail.linked")}
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                title={t("form.metaModalTitle")}
-                                onClick={() => setMetaModal(i)}
-                                className={`shrink-0 p-1 rounded-md transition-colors ${
-                                  line.sku || line.category
-                                    ? "text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100"
-                                    : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"
-                                }`}
-                              >
-                                <Tag size={13} />
-                              </button>
+                            {line.itemId && (
+                              <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-green-400" title={t("detail.linked")} />
                             )}
                           </div>
                         </td>
@@ -463,6 +496,27 @@ export default function NewPurchasePage() {
                               {formatCurrency(line.costPrice * line.quantity)}
                             </span>
                           )}
+                        </td>
+                        {/* Additional details */}
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => setMetaModal(i)}
+                            title={t("form.additionalDetailsTitle")}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              line.itemId
+                                ? line.sellPrice !== undefined && line.sellPrice !== line.existingPrice
+                                  ? "text-amber-500 bg-amber-50 hover:bg-amber-100"
+                                  : line.sellPrice !== undefined
+                                  ? "text-blue-500 bg-blue-50 hover:bg-blue-100"
+                                  : "text-gray-300 hover:text-blue-500 hover:bg-blue-50"
+                                : line.sku || line.category || line.sellPrice !== undefined
+                                ? "text-amber-500 bg-amber-50 hover:bg-amber-100"
+                                : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                            }`}
+                          >
+                            <Tag size={14} />
+                          </button>
                         </td>
                         {/* Remove */}
                         <td className="pr-3 py-2">
@@ -548,7 +602,7 @@ export default function NewPurchasePage() {
       </div>
 
       {/* ── SKU / Category modal ── */}
-      {metaModal !== null && lines[metaModal] && !lines[metaModal].itemId && (
+      {metaModal !== null && lines[metaModal] && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) setMetaModal(null); }}
@@ -569,39 +623,204 @@ export default function NewPurchasePage() {
               </button>
             </div>
 
-            <div className="px-5 pt-4 pb-0">
-              <p className="text-xs text-gray-400 mb-3 truncate font-medium">
-                {lines[metaModal].itemName || t("form.productNamePlaceholder")}
-              </p>
-            </div>
+            <div className="px-5 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* SKU + Category */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-600">{t("form.sku")}</label>
+                  <Input
+                    value={lines[metaModal].sku ?? ""}
+                    onChange={(e) => updateLine(metaModal!, "sku", e.target.value || undefined)}
+                    placeholder={t("form.skuPlaceholder")}
+                    className={`h-9 text-sm font-mono ${
+                      lines[metaModal].sku && lines[metaModal].sku === lines[metaModal].catalogSku
+                        ? "text-blue-600"
+                        : ""
+                    }`}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-600">{t("form.category")}</label>
+                  <Input
+                    value={lines[metaModal].category ?? ""}
+                    onChange={(e) => updateLine(metaModal!, "category", e.target.value || undefined)}
+                    placeholder={t("form.categoryPlaceholder")}
+                    className={`h-9 text-sm ${
+                      lines[metaModal].category && lines[metaModal].category === lines[metaModal].catalogCategory
+                        ? "text-blue-600"
+                        : ""
+                    }`}
+                  />
+                </div>
+              </div>
 
-            <div className="px-5 pb-5 space-y-4">
+              {/* Unit + Quantity — side by side, always editable */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-600">{t("form.unitType")}</label>
+                  <select
+                    value={lines[metaModal].unitType}
+                    onChange={(e) => updateLine(metaModal!, "unitType", e.target.value)}
+                    className="w-full h-9 text-sm bg-gray-50 rounded-lg border border-gray-200 px-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  >
+                    {UNIT_TYPES.map((u) => (
+                      <option key={u} value={u}>{tDash(`unitAbbr.${u}`)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-600">{t("form.qty")}</label>
+                  <Input
+                    type="number"
+                    min={0.001}
+                    step={lines[metaModal].unitType === "kg" || lines[metaModal].unitType === "gram" || lines[metaModal].unitType === "liter" ? 0.001 : 1}
+                    value={lines[metaModal].quantity}
+                    onChange={(e) => updateLine(metaModal!, "quantity", parseFloat(e.target.value) || 1)}
+                    className="h-9 text-sm text-right font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Product name — editable for new products only */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-600">{t("form.sku")}</label>
-                <Input
-                  autoFocus
-                  value={lines[metaModal].sku ?? ""}
-                  onChange={(e) => updateLine(metaModal!, "sku", e.target.value)}
-                  placeholder={t("form.skuPlaceholder")}
-                  className="h-9 text-sm font-mono"
+                <label className="text-xs font-medium text-gray-600">{t("form.productName")}</label>
+                {lines[metaModal].itemId ? (
+                  <p className="h-9 flex items-center px-3 rounded-lg bg-gray-50 border border-gray-100 text-sm font-medium text-gray-700 truncate">
+                    {lines[metaModal].itemName}
+                    <span className="ml-2 text-[10px] text-green-600 font-semibold shrink-0">✓ {t("detail.linked")}</span>
+                  </p>
+                ) : (
+                  <Input
+                    autoFocus
+                    value={lines[metaModal].itemName}
+                    onChange={(e) => updateLine(metaModal!, "itemName", e.target.value)}
+                    placeholder={t("form.productNamePlaceholder")}
+                    className="h-9 text-sm"
+                  />
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-100" />
+
+              {/* Cost price */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-600">{t("form.costPrice")}</label>
+                {lines[metaModal].unitType === "gram" && (
+                  <p className="text-[11px] text-amber-600">{t("form.costPriceTotalDesc")}</p>
+                )}
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={lines[metaModal].costPrice === 0 ? "" : lines[metaModal].costPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "");
+                    updateLine(metaModal!, "costPrice", raw ? parseInt(raw, 10) : 0);
+                  }}
+                  placeholder="0"
+                  className="w-full h-9 text-sm text-right rounded-lg border border-gray-200 bg-gray-50 px-3 font-mono focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
+
+              {/* Sell price — all products */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-600">{t("form.category")}</label>
-                <Input
-                  value={lines[metaModal].category ?? ""}
-                  onChange={(e) => updateLine(metaModal!, "category", e.target.value)}
-                  placeholder={t("form.categoryPlaceholder")}
-                  className="h-9 text-sm"
-                  onKeyDown={(e) => { if (e.key === "Enter") setMetaModal(null); }}
+                <label className="text-xs font-medium text-blue-600">{t("form.sellPrice")}</label>
+                {lines[metaModal].itemId && lines[metaModal].existingPrice !== undefined && (
+                  <p className="text-[11px] text-gray-400">
+                    {t("form.currentSellPrice")}: {lines[metaModal].existingPrice! > 0 ? formatCurrency(lines[metaModal].existingPrice!) : "—"}
+                  </p>
+                )}
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={lines[metaModal].sellPrice === undefined || lines[metaModal].sellPrice === 0 ? "" : lines[metaModal].sellPrice!.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "");
+                    updateLine(metaModal!, "sellPrice", raw ? parseInt(raw, 10) : undefined);
+                  }}
+                  placeholder={t("form.sellPricePlaceholder")}
+                  className="w-full h-11 text-2xl font-black text-right rounded-xl border border-blue-200 bg-blue-50 px-4 font-mono focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
+                {lines[metaModal].itemId && (lines[metaModal].existingStock ?? 0) > 0 &&
+                  lines[metaModal].sellPrice !== undefined &&
+                  lines[metaModal].sellPrice !== lines[metaModal].existingPrice && (
+                  <p className="text-[11px] text-amber-600 bg-amber-50 rounded-lg px-2 py-1.5">
+                    ⚠ {t("form.sellPriceOverwriteWarn")}
+                  </p>
+                )}
               </div>
+
               <Button
                 onClick={() => setMetaModal(null)}
                 className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold h-10 text-sm"
               >
                 {t("form.metaDone")}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Sell price overwrite confirmation ── */}
+      {overwriteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) { setOverwriteModal(false); } }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Tag size={16} className="text-amber-500" />
+                <h3 className="font-semibold text-gray-800 text-sm">
+                  {t("form.overwritePriceTitle")}
+                </h3>
+              </div>
+              <button onClick={() => setOverwriteModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="px-5 py-5 space-y-4">
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {t("form.overwritePriceDesc")}
+              </p>
+              <div className="space-y-2">
+                {pendingOverwrites.map((idx) => {
+                  const l = lines[idx];
+                  return (
+                    <div key={idx} className="flex items-center justify-between bg-amber-50 rounded-xl px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{l.itemName}</p>
+                        <p className="text-xs text-gray-500">
+                          {t("form.currentSellPrice")}: {l.existingPrice ? formatCurrency(l.existingPrice) : "—"}
+                          {" → "}
+                          <span className="font-bold text-blue-600">{formatCurrency(l.sellPrice ?? 0)}</span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setOverwriteModal(false);
+                    // Keep sell prices but don't overwrite existing stock
+                    doSubmit([]);
+                  }}
+                  className="h-10 text-sm"
+                >
+                  {t("form.overwriteNo")}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setOverwriteModal(false);
+                    doSubmit(pendingOverwrites);
+                  }}
+                  className="h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {t("form.overwriteYes")}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

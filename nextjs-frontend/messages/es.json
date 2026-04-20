@@ -229,7 +229,18 @@
       "costPriceTotalHint": "total",
       "costPriceTotalDesc": "precio de costo = total del lote",
       "metaModalTitle": "Detalles Adicionales",
-      "metaDone": "Listo"
+      "metaDone": "Listo",
+      "sellPrice": "Precio de Venta",
+      "sellPricePlaceholder": "Ingresar precio de venta",
+      "currentSellPrice": "Precio actual",
+      "sellPriceOverwriteWarn": "El stock existente tiene un precio diferente. Se te pedir\u00e1 confirmar al guardar.",
+      "editSellPrice": "Editar precio de venta",
+      "details": "Detalles",
+      "additionalDetailsTitle": "Detalles adicionales",
+      "overwritePriceTitle": "\u00bfActualizar precio de venta?",
+      "overwritePriceDesc": "Algunos productos vinculados ya tienen stock a un precio de venta diferente. \u00bfDeseas actualizar el precio de venta para todo el stock existente tambi\u00e9n?",
+      "overwriteYes": "S\u00ed, actualizar todo",
+      "overwriteNo": "No, conservar precio anterior"
     },
     "detail": {
       "back": "Volver a Compras",

@@ -66,6 +66,13 @@
     "title": "Welcome to your Dashboard",
     "subtitle": "Here, you can see the overview of your products and manage them.",
     "quickAction": "Quick Action",
+    "cashboxBanner": "Cash box is closed",
+    "cashboxBannerDesc": "You must open a cash session before making sales or purchases.",
+    "cashboxBannerCta": "Open Cash Box",
+    "eodReminderTitle": "End of day reminder",
+    "eodReminderDesc": "It's getting late. Don't forget to close the cash box before leaving.",
+    "eodReminderCta": "Close Cash Box",
+    "eodReminderDismiss": "Remind me later",
     "newSale": "New Sale",
     "newSaleDesc": "Open the point of sale and start ringing up items",
     "startSelling": "Start selling",
@@ -192,7 +199,11 @@
       "noCategories": "No categories yet. Add products with categories first.",
       "noCategoryProducts": "No products in this category.",
       "resultsHint": "result · Enter to add first",
-      "resultsHintPlural": "results · Enter to add first"
+      "resultsHintPlural": "results · Enter to add first",
+      "cashboxClosed": "Cash Box is Closed",
+      "cashboxClosedDesc": "You need to open a cash session before you can start a new sale. This keeps your transactions tracked and your books balanced.",
+      "cashboxClosedCta": "Open Cash Box",
+      "cashboxClosedBack": "Back to Dashboard"
     }
   },
   "products": {

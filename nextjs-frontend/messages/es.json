@@ -66,6 +66,13 @@
     "title": "Bienvenido a tu Panel",
     "subtitle": "Aquí puedes ver el resumen de tus productos y gestionarlos.",
     "quickAction": "Acción Rápida",
+    "cashboxBanner": "La caja está cerrada",
+    "cashboxBannerDesc": "Debes abrir una sesión de caja antes de realizar ventas o compras.",
+    "cashboxBannerCta": "Abrir Caja",
+    "eodReminderTitle": "Recordatorio de cierre",
+    "eodReminderDesc": "Ya es tarde. No olvides cerrar la caja antes de terminar el día.",
+    "eodReminderCta": "Cerrar Caja",
+    "eodReminderDismiss": "Recordarme luego",
     "newSale": "Nueva Venta",
     "newSaleDesc": "Abre el punto de venta y comienza a cobrar",
     "startSelling": "Iniciar venta",
@@ -192,7 +199,11 @@
       "noCategories": "Sin categorías. Agrega productos con categoría primero.",
       "noCategoryProducts": "No hay productos en esta categoría.",
       "resultsHint": "resultado · Enter para agregar el primero",
-      "resultsHintPlural": "resultados · Enter para agregar el primero"
+      "resultsHintPlural": "resultados · Enter para agregar el primero",
+      "cashboxClosed": "La Caja está Cerrada",
+      "cashboxClosedDesc": "Debes abrir una sesión de caja antes de iniciar una venta. Esto mantiene tus transacciones registradas y tus cuentas al día.",
+      "cashboxClosedCta": "Abrir Caja",
+      "cashboxClosedBack": "Volver al Panel"
     }
   },
   "products": {

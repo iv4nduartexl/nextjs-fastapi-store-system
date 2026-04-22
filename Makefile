@@ -61,7 +61,8 @@ docker-start-frontend: ## Start the frontend container
 docker-up-test-db: ## Start the test database container
 	$(DOCKER_COMPOSE) up db_test
 
-docker-migrate-db: ## Run database migrations using Alembic
+docker-migrate-db: ## Backup then run database migrations using Alembic
+	@$(MAKE) docker-db-backup
 	$(DOCKER_COMPOSE) run --rm backend alembic upgrade head
 
 docker-db-schema: ## Generate a new migration schema. Usage: make docker-db-schema migration_name="add users"
@@ -72,3 +73,36 @@ docker-test-backend: ## Run tests for the backend
 
 docker-test-frontend: ## Run tests for the frontend
 	$(DOCKER_COMPOSE) run --rm frontend pnpm run test
+
+
+# Database backup/restore
+BACKUP_DIR=backups
+DB_NAME=mydatabase
+DB_USER=postgres
+
+.PHONY: docker-db-backup docker-db-restore docker-migrate-db
+
+docker-db-backup: ## Backup the database. Output: backups/YYYY-MM-DD_HHMMSS.dump
+	@mkdir -p $(BACKUP_DIR)
+	@FILE=$(BACKUP_DIR)/$$(date +%Y-%m-%d_%H%M%S).dump; \
+	$(DOCKER_COMPOSE) exec -T db pg_dump -U $(DB_USER) -Fc $(DB_NAME) > $$FILE && \
+	echo "Backup saved: $$FILE" || (echo "Backup FAILED" && exit 1)
+
+docker-db-restore: ## Restore a backup. Usage: make docker-db-restore FILE=backups/YYYY-MM-DD_HHMMSS.dump
+	@if [ -z "$(FILE)" ]; then echo "Usage: make docker-db-restore FILE=backups/<file>.dump" && exit 1; fi
+	@echo "Restoring $(FILE) into $(DB_NAME)..."
+	$(DOCKER_COMPOSE) exec -T db pg_restore -U $(DB_USER) -d $(DB_NAME) --clean --if-exists < $(FILE)
+	@echo "Restore complete."
+
+setup-gdrive: ## Authenticate rclone with Google Drive (run once). Creates remote named "gdrive"
+	@command -v rclone >/dev/null 2>&1 || (echo "rclone not found. Install: brew install rclone" && exit 1)
+	@echo "Follow the prompts. When asked for remote name, enter: gdrive"
+	rclone config create gdrive drive scope drive
+	@echo "Done! Start sync with: make docker-start-gdrive"
+
+docker-start-gdrive: ## Start the Google Drive sync service
+	$(DOCKER_COMPOSE) --profile gdrive up -d gdrive-sync
+	@echo "gdrive-sync running. Uploads every hour to Google Drive folder: db-backups/"
+
+docker-stop-gdrive: ## Stop the Google Drive sync service
+	$(DOCKER_COMPOSE) --profile gdrive stop gdrive-sync

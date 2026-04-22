@@ -148,6 +148,8 @@ async def list_sales(
     user: User = Depends(current_active_user),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
+    payment_method: str | None = Query(None),
+    status: str | None = Query(None),
 ):
     params = Params(page=page, size=size)
     query = (
@@ -156,6 +158,10 @@ async def list_sales(
         .order_by(Sale.created_at.desc())
         .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
+    if payment_method:
+        query = query.filter(Sale.payment_method == payment_method)
+    if status:
+        query = query.filter(Sale.status == status)
 
     def _transform(sales):
         result = []

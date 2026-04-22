@@ -76,6 +76,11 @@
     "subtitle": "View and manage your sales history.",
     "newSale": "New Sale",
     "noResults": "No sales recorded yet.",
+    "filter": {
+      "clear": "Clear",
+      "allPaymentMethods": "All payment methods",
+      "allStatus": "All status"
+    },
     "table": {
       "date": "Date",
       "items": "Items",
@@ -150,6 +155,8 @@
     "title": "Products",
     "subtitle": "Manage your store inventory.",
     "addNewProduct": "Add New Product",
+    "searchPlaceholder": "Search by name, SKU, category...",
+    "clearFilters": "Clear",
     "editProduct": "Edit Product",
     "description": "Description",
     "minStock": "Min Stock",
@@ -166,6 +173,12 @@
     "subtitle": "Record supplier purchases and track stock costs.",
     "newPurchase": "New Purchase",
     "noResults": "No purchases recorded yet.",
+    "searchPlaceholder": "Search by supplier or reference...",
+    "filter": {
+      "clear": "Clear",
+      "allPaymentStatus": "All payment status",
+      "allStatus": "All status"
+    },
     "table": {
       "date": "Date",
       "supplier": "Supplier",
@@ -302,7 +315,8 @@
   "common": {
     "required": "required",
     "logout": "Logout",
-    "profile": "Profile"
+    "profile": "Profile",
+    "createOption": "Create \"{name}\""
   },
   "customers": {
     "title": "Customers",

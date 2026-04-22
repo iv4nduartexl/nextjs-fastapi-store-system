@@ -524,10 +524,12 @@ export type ListSalesData = {
      * Page number
      */
     page?: number;
+    payment_method?: string | null;
     /**
      * Page size
      */
     size?: number;
+    status?: string | null;
   };
 };
 
@@ -559,10 +561,13 @@ export type ListPurchasesData = {
      * Page number
      */
     page?: number;
+    payment_status?: string | null;
+    q?: string | null;
     /**
      * Page size
      */
     size?: number;
+    status?: string | null;
   };
 };
 

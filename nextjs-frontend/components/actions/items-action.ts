@@ -1,13 +1,15 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { readItem, deleteItem, createItem, updateItem as patchItem } from "@/app/clientService";
+import { readItem, deleteItem, createItem } from "@/app/clientService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { itemSchema } from "@/lib/definitions";
 import { ItemUpdate } from "@/app/openapi-client";
 
-export async function fetchItems(page: number = 1, size: number = 10) {
+const API_BASE_URL = process.env.API_BASE_URL ?? "http://backend:8000";
+
+export async function fetchItems(page: number = 1, size: number = 10, q?: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
 
@@ -19,6 +21,7 @@ export async function fetchItems(page: number = 1, size: number = 10) {
     query: {
       page: page,
       size: size,
+      ...(q ? { q } : {}),
     },
     headers: {
       Authorization: `Bearer ${token}`,
@@ -60,19 +63,23 @@ export async function updateItem(id: string, data: ItemUpdate) {
   const token = cookieStore.get("accessToken")?.value;
   if (!token) return { error: "Unauthorized" };
 
-  const { data: updated, error } = await patchItem({
-    headers: { Authorization: `Bearer ${token}` },
-    path: { item_id: id },
-    body: data,
+  const res = await fetch(`${API_BASE_URL}/items/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
   });
 
-  if (error) {
-    const detail = (error as { detail?: unknown }).detail;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const detail = (err as { detail?: unknown }).detail;
     return { error: typeof detail === "string" ? detail : JSON.stringify(detail) ?? "Failed to update item" };
   }
 
   revalidatePath("/products");
-  return { data: updated };
+  return { data: await res.json() };
 }
 
 export async function addItem(prevState: {}, formData: FormData) {

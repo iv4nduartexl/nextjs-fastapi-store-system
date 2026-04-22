@@ -99,12 +99,20 @@ export async function createPurchase(
 
 export async function fetchPurchases(
   page: number = 1,
-  size: number = 10
+  size: number = 10,
+  q?: string,
+  paymentStatus?: string,
+  status?: string,
 ): Promise<PurchasesPage | { message: string }> {
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };
 
-  const res = await fetch(`${API}/purchases/?page=${page}&size=${size}`, {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (q) params.set("q", q);
+  if (paymentStatus) params.set("payment_status", paymentStatus);
+  if (status) params.set("status", status);
+
+  const res = await fetch(`${API}/purchases/?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface CategoryComboboxProps {
   value: string;
@@ -21,6 +22,7 @@ export function CategoryCombobox({
   className,
   inputClassName,
 }: CategoryComboboxProps) {
+  const t = useTranslations("common");
   const [inputVal, setInputVal] = useState(value);
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -127,7 +129,7 @@ export function CategoryCombobox({
               className="w-full text-left px-4 py-2 text-sm text-green-600 font-medium hover:bg-green-50 transition-colors flex items-center gap-2 border-t border-gray-100"
             >
               <Plus size={13} />
-              Create &ldquo;{trimmed}&rdquo;
+              {t("createOption", { name: trimmed })}
             </button>
           )}
         </div>

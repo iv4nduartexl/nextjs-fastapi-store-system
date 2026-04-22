@@ -7,6 +7,7 @@ from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import apaginate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
@@ -176,6 +177,9 @@ async def list_purchases(
     user: User = Depends(current_active_user),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
+    q: str | None = Query(None),
+    payment_status: str | None = Query(None),
+    status: str | None = Query(None),
 ):
     params = Params(page=page, size=size)
     query = (
@@ -184,6 +188,17 @@ async def list_purchases(
         .filter(Purchase.user_id == user.id)
         .order_by(Purchase.purchase_date.desc())
     )
+    if q:
+        query = query.filter(
+            or_(
+                Purchase.supplier_name.ilike(f"%{q}%"),
+                Purchase.reference_number.ilike(f"%{q}%"),
+            )
+        )
+    if payment_status:
+        query = query.filter(Purchase.payment_status == payment_status)
+    if status:
+        query = query.filter(Purchase.status == status)
     return await apaginate(db, query, params, transformer=transform_purchases)
 
 

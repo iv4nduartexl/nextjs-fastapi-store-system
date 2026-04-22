@@ -76,6 +76,11 @@
     "subtitle": "Ver y administrar el historial de ventas.",
     "newSale": "Nueva Venta",
     "noResults": "Aún no hay ventas registradas.",
+    "filter": {
+      "clear": "Limpiar",
+      "allPaymentMethods": "Todos los métodos de pago",
+      "allStatus": "Todos los estados"
+    },
     "table": {
       "date": "Fecha",
       "items": "Artículos",
@@ -150,6 +155,8 @@
     "title": "Productos",
     "subtitle": "Administra el inventario de tu tienda.",
     "addNewProduct": "Agregar Producto",
+    "searchPlaceholder": "Buscar por nombre, SKU, categoría...",
+    "clearFilters": "Limpiar",
     "editProduct": "Editar Producto",
     "description": "Descripción",
     "minStock": "Stock Mínimo",
@@ -166,6 +173,12 @@
     "subtitle": "Registra compras a proveedores y controla los costos del inventario.",
     "newPurchase": "Nueva Compra",
     "noResults": "Aún no hay compras registradas.",
+    "searchPlaceholder": "Buscar por proveedor o referencia...",
+    "filter": {
+      "clear": "Limpiar",
+      "allPaymentStatus": "Todos los estados de pago",
+      "allStatus": "Todos los estados"
+    },
     "table": {
       "date": "Fecha",
       "supplier": "Proveedor",
@@ -302,7 +315,8 @@
   "common": {
     "required": "requerido",
     "logout": "Cerrar Sesión",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "createOption": "Crear \"{name}\""
   },
   "customers": {
     "title": "Clientes",

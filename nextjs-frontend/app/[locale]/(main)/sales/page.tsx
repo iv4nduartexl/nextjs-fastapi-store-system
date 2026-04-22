@@ -13,18 +13,21 @@ import { formatCurrency } from "@/lib/currency";
 import { fetchSales, SalesPage } from "@/components/actions/sales-action";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
+import { TableFilters } from "@/components/ui/table-filters";
 
 interface SalesPageProps {
-  searchParams: Promise<{ page?: string; size?: string }>;
+  searchParams: Promise<{ page?: string; size?: string; payment_method?: string; status?: string }>;
 }
 
 export default async function SalesHistoryPage({ searchParams }: SalesPageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const size = Number(params.size) || 10;
+  const paymentMethod = params.payment_method ?? undefined;
+  const status = params.status ?? undefined;
   const t = await getTranslations("sales");
 
-  const result = await fetchSales(page, size);
+  const result = await fetchSales(page, size, paymentMethod, status);
   const sales = "message" in result ? null : (result as SalesPage);
   const totalPages = sales ? Math.ceil((sales.total || 0) / size) : 0;
 
@@ -43,9 +46,37 @@ export default async function SalesHistoryPage({ searchParams }: SalesPageProps)
       </div>
 
       <section className="p-6 bg-white rounded-lg shadow-lg">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
           <h3 className="text-lg font-semibold">{t("title")}</h3>
-          <PageSizeSelector currentSize={size} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <TableFilters
+              fields={[
+                {
+                  type: "select",
+                  key: "payment_method",
+                  placeholder: t("filter.allPaymentMethods"),
+                  options: [
+                    { value: "cash", label: t("paymentMethod.cash") },
+                    { value: "card", label: t("paymentMethod.card") },
+                    { value: "credit", label: t("paymentMethod.credit") },
+                    { value: "other", label: t("paymentMethod.other") },
+                  ],
+                },
+                {
+                  type: "select",
+                  key: "status",
+                  placeholder: t("filter.allStatus"),
+                  options: [
+                    { value: "completed", label: t("status.completed") },
+                    { value: "cancelled", label: t("status.cancelled") },
+                    { value: "refunded", label: t("status.refunded") },
+                  ],
+                },
+              ]}
+              clearLabel={t("filter.clear")}
+            />
+            <PageSizeSelector currentSize={size} />
+          </div>
         </div>
 
         <Table className="min-w-full text-sm">

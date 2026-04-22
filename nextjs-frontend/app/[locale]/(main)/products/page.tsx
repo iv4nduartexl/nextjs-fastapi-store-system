@@ -6,11 +6,13 @@ import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
 import { getTranslations } from "next-intl/server";
 import { ProductsTable } from "./ProductsTable";
+import { TableFilters } from "@/components/ui/table-filters";
 
 interface ProductsPageProps {
   searchParams: Promise<{
     page?: string;
     size?: string;
+    q?: string;
   }>;
 }
 
@@ -20,9 +22,10 @@ export default async function ProductsPage({
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const size = Number(params.size) || 10;
+  const q = params.q ?? undefined;
   const t = await getTranslations("products");
 
-  const items = (await fetchItems(page, size)) as ReadItemResponse;
+  const items = (await fetchItems(page, size, q)) as ReadItemResponse;
   const totalPages = Math.ceil((items.total || 0) / size);
 
   return (
@@ -39,9 +42,17 @@ export default async function ProductsPage({
       </div>
 
       <section className="p-6 bg-white rounded-lg shadow-lg mt-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
           <h2 className="text-xl font-semibold">{t("title")}</h2>
-          <PageSizeSelector currentSize={size} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <TableFilters
+              fields={[
+                { type: "search", key: "q", placeholder: t("searchPlaceholder") },
+              ]}
+              clearLabel={t("clearFilters")}
+            />
+            <PageSizeSelector currentSize={size} />
+          </div>
         </div>
 
         <ProductsTable items={items.items ?? []} />

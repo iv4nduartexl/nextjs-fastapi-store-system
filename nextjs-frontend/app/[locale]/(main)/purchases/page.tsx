@@ -14,9 +14,10 @@ import { formatCurrency } from "@/lib/currency";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
 import { Truck } from "lucide-react";
+import { TableFilters } from "@/components/ui/table-filters";
 
 interface Props {
-  searchParams: Promise<{ page?: string; size?: string }>;
+  searchParams: Promise<{ page?: string; size?: string; q?: string; payment_status?: string; status?: string }>;
 }
 
 const PAYMENT_STATUS_STYLE: Record<string, string> = {
@@ -35,9 +36,12 @@ export default async function PurchasesListPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const size = Number(params.size) || 10;
+  const q = params.q ?? undefined;
+  const paymentStatus = params.payment_status ?? undefined;
+  const status = params.status ?? undefined;
   const t = await getTranslations("purchases");
 
-  const result = await fetchPurchases(page, size);
+  const result = await fetchPurchases(page, size, q, paymentStatus, status);
   const data = "message" in result ? null : (result as PurchasesPage);
   const totalPages = data ? Math.ceil((data.total || 0) / size) : 0;
 
@@ -92,9 +96,37 @@ export default async function PurchasesListPage({ searchParams }: Props) {
 
       {/* Table */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 gap-4 flex-wrap">
           <h3 className="font-semibold text-gray-800">{t("title")}</h3>
-          <PageSizeSelector currentSize={size} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <TableFilters
+              fields={[
+                { type: "search", key: "q", placeholder: t("searchPlaceholder") },
+                {
+                  type: "select",
+                  key: "payment_status",
+                  placeholder: t("filter.allPaymentStatus"),
+                  options: [
+                    { value: "paid", label: t("paymentStatus.paid") },
+                    { value: "unpaid", label: t("paymentStatus.unpaid") },
+                    { value: "partial", label: t("paymentStatus.partial") },
+                  ],
+                },
+                {
+                  type: "select",
+                  key: "status",
+                  placeholder: t("filter.allStatus"),
+                  options: [
+                    { value: "received", label: t("status.received") },
+                    { value: "partial", label: t("status.partial") },
+                    { value: "cancelled", label: t("status.cancelled") },
+                  ],
+                },
+              ]}
+              clearLabel={t("filter.clear")}
+            />
+            <PageSizeSelector currentSize={size} />
+          </div>
         </div>
 
         <Table className="min-w-full text-sm">

@@ -105,7 +105,8 @@ export default function POSPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const cartTotal = cart.reduce((sum, c) => sum + c.unitPrice * c.quantity, 0);
+  const cartTotal = cart.reduce((sum, c) =>
+    sum + (c.unitType === "gram" ? c.unitPrice * c.quantity / 1000 : c.unitPrice * c.quantity), 0);
   const tenderedNum = parseFloat(amountTendered) || 0;
   const change = tenderedNum - cartTotal;
   const canComplete =
@@ -119,8 +120,9 @@ export default function POSPage() {
     setCart((prev) => {
       const existing = prev.find((c) => c.itemId === product.id);
       if (existing) {
+        const step = (product.unit_type ?? "unit") === "gram" ? 100 : 1;
         return prev.map((c) =>
-          c.itemId === product.id ? { ...c, quantity: c.quantity + 1 } : c
+          c.itemId === product.id ? { ...c, quantity: c.quantity + step } : c
         );
       }
       return [
@@ -130,7 +132,7 @@ export default function POSPage() {
           name: product.name,
           unitType: product.unit_type ?? "unit",
           unitPrice: price,
-          quantity: 1,
+          quantity: (product.unit_type ?? "unit") === "gram" ? 100 : 1,
         },
       ];
     });
@@ -380,7 +382,7 @@ export default function POSPage() {
             <h3 className="font-semibold text-gray-800">{t("cart")}</h3>
             {cart.length > 0 && (
               <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
-                {cart.reduce((s, c) => s + c.quantity, 0)}
+                {cart.reduce((s, c) => s + (c.unitType === "gram" ? c.quantity / 1000 : c.quantity), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </span>
             )}
           </div>
@@ -412,7 +414,11 @@ export default function POSPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate leading-tight">{item.name}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs text-gray-500">{formatCurrency(item.unitPrice)}</span>
+                    <span className="text-xs text-gray-500">
+                      {item.unitType === "gram"
+                        ? `${formatCurrency(item.unitPrice)}/kg`
+                        : formatCurrency(item.unitPrice)}
+                    </span>
                     <span className="text-[10px] font-bold text-gray-400 bg-gray-200 px-1 py-0.5 rounded leading-none">
                       {tDash(`unitAbbr.${item.unitType}`)}
                     </span>
@@ -422,7 +428,7 @@ export default function POSPage() {
                 {/* Qty controls */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => updateQty(item.itemId, item.quantity - 1)}
+                    onClick={() => updateQty(item.itemId, item.quantity - (item.unitType === "gram" ? 100 : 1))}
                     className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
                   >
                     <Minus size={11} />
@@ -430,13 +436,13 @@ export default function POSPage() {
                   <input
                     type="number"
                     value={item.quantity}
-                    min={1}
-                    step={1}
+                    min={item.unitType === "gram" ? 1 : 1}
+                    step={item.unitType === "gram" ? 100 : 1}
                     onChange={(e) => updateQty(item.itemId, parseFloat(e.target.value) || 1)}
-                    className="w-10 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
+                    className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
                   />
                   <button
-                    onClick={() => updateQty(item.itemId, item.quantity + 1)}
+                    onClick={() => updateQty(item.itemId, item.quantity + (item.unitType === "gram" ? 100 : 1))}
                     className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
                   >
                     <Plus size={11} />
@@ -444,8 +450,10 @@ export default function POSPage() {
                 </div>
 
                 {/* Subtotal */}
-                <span className="text-sm font-semibold text-gray-800 font-mono w-14 text-right shrink-0">
-                  {formatCurrency(item.unitPrice * item.quantity)}
+                <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
+                  {item.unitType === "gram"
+                    ? formatCurrency(item.unitPrice * item.quantity / 1000)
+                    : formatCurrency(item.unitPrice * item.quantity)}
                 </span>
 
                 {/* Remove */}

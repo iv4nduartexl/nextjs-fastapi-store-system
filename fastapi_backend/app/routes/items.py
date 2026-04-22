@@ -9,8 +9,9 @@ from sqlalchemy.future import select
 
 from app.database import User, get_async_session
 from app.models import Item
-from app.schemas import ItemRead, ItemCreate
+from app.schemas import ItemRead, ItemCreate, ItemUpdate
 from app.users import current_active_user
+from app.routes.categories import upsert_category
 
 router = APIRouter(tags=["item"])
 
@@ -28,7 +29,7 @@ async def read_item(
     q: str | None = Query(None, description="Search query (name, SKU, or category)"),
 ):
     params = Params(page=page, size=size)
-    query = select(Item).filter(Item.user_id == user.id)
+    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
     if q:
         query = query.filter(
             or_(
@@ -49,8 +50,36 @@ async def create_item(
     db_item = Item(**item.model_dump(), user_id=user.id)
     db.add(db_item)
     await db.commit()
+    if item.category:
+        await upsert_category(item.category, user.id, db)
+        await db.commit()
     await db.refresh(db_item)
     return db_item
+
+
+@router.patch("/{item_id}", response_model=ItemRead)
+async def update_item(
+    item_id: UUID,
+    data: ItemUpdate,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    result = await db.execute(
+        select(Item).filter(Item.id == item_id, Item.user_id == user.id)
+    )
+    item = result.scalars().first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found or not authorized")
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(item, field, value)
+
+    await db.commit()
+    if data.category:
+        await upsert_category(data.category, user.id, db)
+        await db.commit()
+    await db.refresh(item)
+    return item
 
 
 @router.delete("/{item_id}")
@@ -67,7 +96,7 @@ async def delete_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found or not authorized")
 
-    await db.delete(item)
+    item.is_deleted = True
     await db.commit()
 
     return {"message": "Item successfully deleted"}

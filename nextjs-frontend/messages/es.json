@@ -60,14 +60,12 @@
     },
     "unitTypes": {
       "unit": "Unidad / Pieza",
-      "kg": "Kilogramo (kg)",
-      "gram": "Gramo (g)",
+      "gram": "Gramo (g) — precio por kg",
       "liter": "Litro (L)",
       "pack": "Paquete / Caja"
     },
     "unitAbbr": {
       "unit": "UN",
-      "kg": "KG",
       "gram": "G",
       "liter": "L",
       "pack": "PKT"
@@ -151,7 +149,17 @@
   "products": {
     "title": "Productos",
     "subtitle": "Administra el inventario de tu tienda.",
-    "addNewProduct": "Agregar Producto"
+    "addNewProduct": "Agregar Producto",
+    "editProduct": "Editar Producto",
+    "description": "Descripción",
+    "minStock": "Stock Mínimo",
+    "saveChanges": "Guardar Cambios",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "deleteConfirmTitle": "¿Eliminar Producto?",
+    "deleteConfirmDesc": "Este producto se ocultará de las ventas, pero el historial de compras y ventas se conservará.",
+    "deleteConfirm": "Eliminar",
+    "deleting": "Eliminando..."
   },
   "purchases": {
     "title": "Compras",
@@ -228,6 +236,7 @@
       "categoryPlaceholder": "ej. Lácteos",
       "costPriceTotalHint": "total",
       "costPriceTotalDesc": "precio de costo = total del lote",
+      "perKgHint": "precio por kg (1000g)",
       "metaModalTitle": "Detalles Adicionales",
       "metaDone": "Listo",
       "sellPrice": "Precio de Venta",
@@ -284,7 +293,7 @@
     "stockPlaceholder": "0.000",
     "minStock": "Umbral de Stock Mínimo",
     "minStockPlaceholder": "ej. 5.000",
-    "price": "Precio (por unidad/kg)",
+    "price": "Precio (por unidad / por kg para gramos)",
     "pricePlaceholder": "0.00",
     "description": "Descripción",
     "descriptionPlaceholder": "Descripción opcional del producto",

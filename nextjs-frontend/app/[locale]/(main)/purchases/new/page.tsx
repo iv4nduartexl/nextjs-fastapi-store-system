@@ -25,6 +25,7 @@ import {
   PackageSearch,
   Tag,
 } from "lucide-react";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 
 interface LineItem {
   itemId?: string;
@@ -43,7 +44,7 @@ interface LineItem {
   catalogCategory?: string;
 }
 
-const UNIT_TYPES = ["unit", "kg", "gram", "liter", "pack"];
+const UNIT_TYPES = ["unit", "gram", "liter", "pack"];
 
 const PAYMENT_METHODS: { value: PurchasePaymentMethod; icon: React.ElementType }[] = [
   { value: "cash", icon: Banknote },
@@ -154,8 +155,8 @@ export default function NewPurchasePage() {
   }
 
   const subtotal = lines.reduce((s, l) => {
-    // Gram type: costPrice IS the total for the batch, not per unit
-    return s + (l.unitType === "gram" ? l.costPrice : l.costPrice * l.quantity);
+    // Gram: costPrice is per 1000g (per kg). Subtotal = qty × price / 1000
+    return s + (l.unitType === "gram" ? l.costPrice * l.quantity / 1000 : l.costPrice * l.quantity);
   }, 0);
   const taxNum = parseFloat(tax) || 0;
   const totalCost = subtotal + taxNum;
@@ -460,7 +461,7 @@ export default function NewPurchasePage() {
                           <Input
                             type="number"
                             min={0.001}
-                            step={line.unitType === "kg" || line.unitType === "gram" || line.unitType === "liter" ? 0.001 : 1}
+                            step={line.unitType === "gram" || line.unitType === "liter" ? 0.001 : 1}
                             value={line.quantity}
                             onChange={(e) => updateLine(i, "quantity", parseFloat(e.target.value) || 1)}
                             className="h-8 text-sm text-right font-mono w-full"
@@ -483,13 +484,11 @@ export default function NewPurchasePage() {
                         {/* Line subtotal */}
                         <td className="px-5 py-2 text-right tabular-nums">
                           {line.unitType === "gram" ? (
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md leading-none uppercase tracking-wide">
-                                TOTAL
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="font-mono font-semibold text-gray-800">
+                                {formatCurrency(line.costPrice * line.quantity / 1000)}
                               </span>
-                              <span className="text-[10px] text-amber-600 leading-tight text-right max-w-[7rem]">
-                                {t("form.costPriceTotalDesc")}
-                              </span>
+                              <span className="text-[10px] text-gray-400">{t("form.perKgHint")}</span>
                             </div>
                           ) : (
                             <span className="font-mono font-semibold text-gray-800">
@@ -641,15 +640,15 @@ export default function NewPurchasePage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-600">{t("form.category")}</label>
-                  <Input
+                  <CategoryCombobox
                     value={lines[metaModal].category ?? ""}
-                    onChange={(e) => updateLine(metaModal!, "category", e.target.value || undefined)}
+                    onChange={(v) => updateLine(metaModal!, "category", v || undefined)}
                     placeholder={t("form.categoryPlaceholder")}
-                    className={`h-9 text-sm ${
+                    inputClassName={
                       lines[metaModal].category && lines[metaModal].category === lines[metaModal].catalogCategory
                         ? "text-blue-600"
                         : ""
-                    }`}
+                    }
                   />
                 </div>
               </div>
@@ -673,7 +672,7 @@ export default function NewPurchasePage() {
                   <Input
                     type="number"
                     min={0.001}
-                    step={lines[metaModal].unitType === "kg" || lines[metaModal].unitType === "gram" || lines[metaModal].unitType === "liter" ? 0.001 : 1}
+                    step={lines[metaModal].unitType === "gram" || lines[metaModal].unitType === "liter" ? 0.001 : 1}
                     value={lines[metaModal].quantity}
                     onChange={(e) => updateLine(metaModal!, "quantity", parseFloat(e.target.value) || 1)}
                     className="h-9 text-sm text-right font-mono"
@@ -707,7 +706,7 @@ export default function NewPurchasePage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-gray-600">{t("form.costPrice")}</label>
                 {lines[metaModal].unitType === "gram" && (
-                  <p className="text-[11px] text-amber-600">{t("form.costPriceTotalDesc")}</p>
+                  <p className="text-[11px] text-amber-600">{t("form.perKgHint")}</p>
                 )}
                 <input
                   type="text"

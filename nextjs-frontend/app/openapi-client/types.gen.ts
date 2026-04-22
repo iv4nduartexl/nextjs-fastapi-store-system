@@ -184,6 +184,18 @@ export type ItemRead = {
   price?: string | null;
   id: string;
   user_id: string;
+  is_deleted?: boolean;
+};
+
+export type ItemUpdate = {
+  name?: string | null;
+  description?: string | null;
+  sku?: string | null;
+  category?: string | null;
+  unit_type?: UnitType | null;
+  stock?: number | string | null;
+  min_stock?: number | string | null;
+  price?: number | string | null;
 };
 
 export type login = {
@@ -315,7 +327,7 @@ export type SaleRead = {
 
 export type SaleStatus = "completed" | "cancelled" | "refunded";
 
-export type UnitType = "unit" | "kg" | "gram" | "liter" | "pack";
+export type UnitType = "unit" | "gram" | "liter" | "pack";
 
 export type UserCreate = {
   email: string;
@@ -476,6 +488,17 @@ export type CreateItemData = {
 export type CreateItemResponse = ItemRead;
 
 export type CreateItemError = HTTPValidationError;
+
+export type UpdateItemData = {
+  body: ItemUpdate;
+  path: {
+    item_id: string;
+  };
+};
+
+export type UpdateItemResponse = ItemRead;
+
+export type UpdateItemError = HTTPValidationError;
 
 export type DeleteItemData = {
   path: {
@@ -668,3 +691,17 @@ export type GetSessionData = {
 export type GetSessionResponse = CashboxSessionRead;
 
 export type GetSessionError = HTTPValidationError;
+
+export type SearchCategoriesData = {
+  query?: {
+    limit?: number;
+    /**
+     * Search prefix
+     */
+    q?: string | null;
+  };
+};
+
+export type SearchCategoriesResponse = Array<string>;
+
+export type SearchCategoriesError = HTTPValidationError;

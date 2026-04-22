@@ -15,6 +15,7 @@ from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import PurchaseCreate, PurchaseRead
 from app.users import current_active_user
 from app.routes.cashbox import record_auto_transaction
+from app.routes.categories import upsert_category
 
 router = APIRouter(tags=["purchases"])
 
@@ -69,9 +70,9 @@ async def create_purchase(
     for idx, line in enumerate(data.items):
         quantity = line.quantity
         cost_price = line.cost_price.quantize(Decimal("0.01"))
-        # Gram unit type: cost_price is the TOTAL cost for the batch, not per unit
+        # Gram: cost_price is per 1000g (per kg). Subtotal = qty * cost_price / 1000
         if (line.unit_type or unit_type) == "gram":
-            line_subtotal = cost_price
+            line_subtotal = (quantity * cost_price / Decimal("1000")).quantize(Decimal("0.01"))
         else:
             line_subtotal = (quantity * cost_price).quantize(Decimal("0.01"))
         subtotal += line_subtotal
@@ -135,6 +136,12 @@ async def create_purchase(
 
     await db.commit()
     await db.refresh(purchase)
+
+    # Upsert categories for all lines that have one
+    for line in data.items:
+        if line.category:
+            await upsert_category(line.category, user.id, db)
+    await db.commit()
 
     # Auto-record in cashbox (only for paid purchases, silent if no session open)
     from app.models import PurchasePaymentStatus

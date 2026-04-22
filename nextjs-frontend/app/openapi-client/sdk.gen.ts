@@ -47,6 +47,9 @@ import type {
   CreateItemData,
   CreateItemError,
   CreateItemResponse,
+  UpdateItemData,
+  UpdateItemError,
+  UpdateItemResponse,
   DeleteItemData,
   DeleteItemError,
   DeleteItemResponse,
@@ -103,6 +106,9 @@ import type {
   GetSessionData,
   GetSessionError,
   GetSessionResponse,
+  SearchCategoriesData,
+  SearchCategoriesError,
+  SearchCategoriesResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -333,6 +339,22 @@ export const createItem = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/items/",
+  });
+};
+
+/**
+ * Update Item
+ */
+export const updateItem = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateItemData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateItemResponse,
+    UpdateItemError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/items/{item_id}",
   });
 };
 
@@ -637,5 +659,21 @@ export const getSession = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/cashbox/sessions/{session_id}",
+  });
+};
+
+/**
+ * Search Categories
+ */
+export const searchCategories = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<SearchCategoriesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    SearchCategoriesResponse,
+    SearchCategoriesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/categories/",
   });
 };

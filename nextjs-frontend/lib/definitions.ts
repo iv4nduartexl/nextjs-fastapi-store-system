@@ -32,7 +32,7 @@ export const loginSchema = z.object({
   username: z.string().min(1, { message: "Username is required" }),
 });
 
-export const unitTypes = ["unit", "kg", "gram", "liter", "pack"] as const;
+export const unitTypes = ["unit", "gram", "liter", "pack"] as const;
 export type UnitType = (typeof unitTypes)[number];
 
 export const itemSchema = z.object({

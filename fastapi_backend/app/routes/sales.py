@@ -29,7 +29,7 @@ async def create_sale(
 
     item_ids = [si.item_id for si in sale_data.items]
     result = await db.execute(
-        select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id)
+        select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id, Item.is_deleted == False)
     )
     items_map = {item.id: item for item in result.scalars().all()}
 
@@ -49,7 +49,11 @@ async def create_sale(
             )
         unit_price = item.price
         quantity = si.quantity
-        subtotal = (unit_price * quantity).quantize(Decimal("0.01"))
+        # Gram: price is per 1000g (per kg). Subtotal = qty * price / 1000
+        if item.unit_type.value == "gram":
+            subtotal = (unit_price * quantity / Decimal("1000")).quantize(Decimal("0.01"))
+        else:
+            subtotal = (unit_price * quantity).quantize(Decimal("0.01"))
         total += subtotal
         item.stock = item.stock - quantity
         sale_item_objs.append(

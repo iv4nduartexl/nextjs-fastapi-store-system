@@ -39,8 +39,20 @@ class ItemCreate(ItemBase):
 class ItemRead(ItemBase):
     id: UUID
     user_id: UUID
+    is_deleted: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class ItemUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    sku: str | None = None
+    category: str | None = None
+    unit_type: UnitType | None = None
+    stock: Decimal | None = None
+    min_stock: Decimal | None = None
+    price: Decimal | None = None
 
 
 # --- Sales ---

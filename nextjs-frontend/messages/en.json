@@ -60,14 +60,12 @@
     },
     "unitTypes": {
       "unit": "Unit / Piece",
-      "kg": "Kilogram (kg)",
-      "gram": "Gram (g)",
+      "gram": "Gram (g) — priced per kg",
       "liter": "Liter (L)",
       "pack": "Pack / Box"
     },
     "unitAbbr": {
       "unit": "UN",
-      "kg": "KG",
       "gram": "G",
       "liter": "L",
       "pack": "PKT"
@@ -151,7 +149,17 @@
   "products": {
     "title": "Products",
     "subtitle": "Manage your store inventory.",
-    "addNewProduct": "Add New Product"
+    "addNewProduct": "Add New Product",
+    "editProduct": "Edit Product",
+    "description": "Description",
+    "minStock": "Min Stock",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "deleteConfirmTitle": "Delete Product?",
+    "deleteConfirmDesc": "This product will be hidden from sales but purchase and sale history will be preserved.",
+    "deleteConfirm": "Delete",
+    "deleting": "Deleting..."
   },
   "purchases": {
     "title": "Purchases",
@@ -228,6 +236,7 @@
       "categoryPlaceholder": "e.g. Dairy",
       "costPriceTotalHint": "total",
       "costPriceTotalDesc": "cost price = total for this batch",
+      "perKgHint": "price per kg (1000g)",
       "metaModalTitle": "Extra Details",
       "metaDone": "Done",
       "sellPrice": "Sell Price",
@@ -284,7 +293,7 @@
     "stockPlaceholder": "0.000",
     "minStock": "Low Stock Threshold",
     "minStockPlaceholder": "e.g. 5.000",
-    "price": "Price (per unit/kg)",
+    "price": "Price (per unit / per kg for grams)",
     "pricePlaceholder": "0.00",
     "description": "Description",
     "descriptionPlaceholder": "Optional product description",

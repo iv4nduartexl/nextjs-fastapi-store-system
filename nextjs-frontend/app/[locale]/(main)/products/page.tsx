@@ -1,26 +1,11 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableHeader,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { fetchItems } from "@/components/actions/items-action";
-import { DeleteButton } from "./deleteButton";
 import { ReadItemResponse } from "@/app/openapi-client";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
 import { getTranslations } from "next-intl/server";
-import { formatCurrency } from "@/lib/currency";
+import { ProductsTable } from "./ProductsTable";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -36,7 +21,6 @@ export default async function ProductsPage({
   const page = Number(params.page) || 1;
   const size = Number(params.size) || 10;
   const t = await getTranslations("products");
-  const tTable = await getTranslations("dashboard");
 
   const items = (await fetchItems(page, size)) as ReadItemResponse;
   const totalPages = Math.ceil((items.total || 0) / size);
@@ -60,61 +44,7 @@ export default async function ProductsPage({
           <PageSizeSelector currentSize={size} />
         </div>
 
-        <Table className="min-w-full text-sm">
-          <TableHeader>
-            <TableRow>
-              <TableHead>{tTable("table.name")}</TableHead>
-              <TableHead>{tTable("table.sku")}</TableHead>
-              <TableHead>{tTable("table.category")}</TableHead>
-              <TableHead className="text-center">{tTable("table.soldBy")}</TableHead>
-              <TableHead className="text-right">{tTable("table.stock")}</TableHead>
-              <TableHead className="text-right">{tTable("table.price")}</TableHead>
-              <TableHead className="text-center">{tTable("table.actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!items.items?.length ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center">
-                  {tTable("noResults")}
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.items.map((item, index) => {
-                const lowStock =
-                  item.min_stock != null &&
-                  parseFloat(item.stock ?? "0") <= parseFloat(item.min_stock);
-                return (
-                  <TableRow key={index}>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell className="text-gray-500">{item.sku ?? "—"}</TableCell>
-                    <TableCell>{item.category ?? "—"}</TableCell>
-                    <TableCell className="text-center">{tTable(`unitTypes.${item.unit_type ?? "unit"}`)}</TableCell>
-                    <TableCell className={`text-right font-mono ${lowStock ? "text-red-500 font-semibold" : ""}`}>
-                      {item.stock ?? "0"} {lowStock && <span title="Low stock">⚠</span>}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {item.price != null ? formatCurrency(item.price as unknown as string) : "—"}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="cursor-pointer p-1 text-gray-600 hover:text-gray-800">
-                          <span className="text-lg font-semibold">...</span>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="p-2">
-                          <DropdownMenuItem disabled={true}>
-                            {tTable("table.edit")}
-                          </DropdownMenuItem>
-                          <DeleteButton itemId={item.id} />
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+        <ProductsTable items={items.items ?? []} />
 
         <PagePagination
           currentPage={page}
@@ -127,3 +57,4 @@ export default async function ProductsPage({
     </div>
   );
 }
+

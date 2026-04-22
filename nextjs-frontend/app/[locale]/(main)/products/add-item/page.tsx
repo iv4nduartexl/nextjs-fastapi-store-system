@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addItem } from "@/components/actions/items-action";
@@ -7,12 +8,14 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 import { unitTypes } from "@/lib/definitions";
 import { useTranslations } from "next-intl";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 
 const initialState = { message: "" };
 
 export default function CreateItemPage() {
   const [state, dispatch] = useActionState(addItem, initialState);
   const t = useTranslations("addItem");
+  const [category, setCategory] = useState("");
   const tDash = useTranslations("dashboard");
 
   return (
@@ -72,12 +75,12 @@ export default function CreateItemPage() {
               <Label htmlFor="category" className="text-gray-700 dark:text-gray-300">
                 {t("category")}
               </Label>
-              <Input
-                id="category"
+              <CategoryCombobox
                 name="category"
-                type="text"
+                value={category}
+                onChange={setCategory}
                 placeholder={t("categoryPlaceholder")}
-                className="w-full border-gray-300 dark:border-gray-600"
+                inputClassName="border-gray-300 dark:border-gray-600"
               />
               {state.errors?.category && (
                 <p className="text-red-500 text-sm">{state.errors.category}</p>

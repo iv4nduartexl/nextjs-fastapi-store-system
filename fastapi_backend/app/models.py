@@ -15,7 +15,6 @@ class Base(DeclarativeBase):
 
 class UnitType(str, enum.Enum):
     unit = "unit"
-    kg = "kg"
     gram = "gram"
     liter = "liter"
     pack = "pack"
@@ -61,6 +60,17 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     customers = relationship("Customer", back_populates="user")
 
 
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+
+    from sqlalchemy import UniqueConstraint
+    __table_args__ = (UniqueConstraint("name", "user_id", name="uq_category_name_user"),)
+
+
 class Item(Base):
     __tablename__ = "items"
 
@@ -73,6 +83,7 @@ class Item(Base):
     stock = Column(Numeric(10, 3), nullable=False, default=0)
     min_stock = Column(Numeric(10, 3), nullable=True)
     price = Column(Numeric(10, 2), nullable=True)
+    is_deleted = Column(Boolean, nullable=False, default=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
 
     user = relationship("User", back_populates="items")

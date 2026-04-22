@@ -12,11 +12,13 @@ export async function GET(request: NextRequest) {
   const size = request.nextUrl.searchParams.get("size") ?? "500";
   const page = request.nextUrl.searchParams.get("page") ?? "1";
   const q = request.nextUrl.searchParams.get("q");
+  const category = request.nextUrl.searchParams.get("category");
 
   const url = new URL(`${process.env.API_BASE_URL}/items/`);
   url.searchParams.set("page", page);
   url.searchParams.set("size", size);
   if (q) url.searchParams.set("q", q);
+  if (category) url.searchParams.set("category", category);
 
   const res = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${token}` },

@@ -34,6 +34,117 @@ interface CartItem {
 
 type PaymentMethod = "cash" | "card" | "other" | "credit";
 
+// ── Deterministic color palette for category tiles ──────────────────────────
+const CAT_GRADIENTS = [
+  "from-emerald-400 to-emerald-600",
+  "from-blue-400 to-blue-600",
+  "from-violet-400 to-violet-600",
+  "from-rose-400 to-rose-600",
+  "from-amber-400 to-amber-500",
+  "from-teal-400 to-teal-600",
+  "from-indigo-400 to-indigo-600",
+  "from-orange-400 to-orange-600",
+  "from-cyan-400 to-cyan-600",
+  "from-pink-400 to-pink-600",
+  "from-lime-500 to-lime-600",
+  "from-fuchsia-400 to-fuchsia-600",
+] as const;
+
+function CategoryTile({
+  name,
+  colorIndex,
+  onClick,
+}: {
+  name: string;
+  colorIndex: number;
+  onClick: () => void;
+}) {
+  const gradient = CAT_GRADIENTS[colorIndex % CAT_GRADIENTS.length];
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex flex-col justify-end overflow-hidden h-24 rounded-2xl bg-gradient-to-br ${gradient} shadow-sm hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 p-3.5 text-left`}
+    >
+      {/* Watermark letter */}
+      <span
+        aria-hidden
+        className="absolute -top-2 -right-1 text-[72px] font-black text-white/15 leading-none select-none pointer-events-none"
+      >
+        {name[0].toUpperCase()}
+      </span>
+      {/* Category name */}
+      <span className="relative text-white font-bold text-sm leading-tight drop-shadow-sm line-clamp-2">
+        {name}
+      </span>
+    </button>
+  );
+}
+
+function ProductGrid({
+  products,
+  onAdd,
+  t,
+  tPos,
+}: {
+  products: ItemRead[];
+  onAdd: (p: ItemRead) => void;
+  t: ReturnType<typeof import("next-intl").useTranslations>;
+  tPos: ReturnType<typeof import("next-intl").useTranslations>;
+}) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {products.map((product) => {
+        const hasPrice = product.price != null;
+        const stock = parseFloat((product.stock ?? "0") as unknown as string);
+        const minStock = product.min_stock != null
+          ? parseFloat(product.min_stock as unknown as string)
+          : null;
+        const isLow = minStock != null && stock <= minStock;
+        const isOut = stock <= 0;
+
+        return (
+          <button
+            key={product.id as string}
+            onClick={() => onAdd(product)}
+            disabled={!hasPrice || isOut}
+            className={`group relative flex flex-row items-stretch text-left rounded-xl border overflow-hidden transition-all duration-150 ${
+              !hasPrice || isOut
+                ? "opacity-40 cursor-not-allowed border-gray-200 bg-white"
+                : "cursor-pointer border-gray-200 bg-white hover:border-green-400 hover:shadow-md hover:-translate-y-0.5 active:scale-95 active:shadow-none"
+            }`}
+          >
+            <div className="w-16 shrink-0 bg-gray-100 flex items-center justify-center self-stretch">
+              <span className="text-base font-black text-gray-500 tracking-wide uppercase">
+                {t(`unitAbbr.${product.unit_type ?? "unit"}`)}
+              </span>
+            </div>
+            <div className="flex flex-col flex-1 min-w-0 p-2.5 gap-1">
+              {isOut ? (
+                <span className="self-start text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold leading-none">
+                  {tPos("outOfStock")}
+                </span>
+              ) : isLow ? (
+                <span className="self-start text-[9px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold leading-none">
+                  ⚠ {tPos("lowStock")}
+                </span>
+              ) : null}
+              <span className="font-semibold text-xs leading-snug text-gray-800 line-clamp-2">
+                {product.name}
+              </span>
+              <span className="mt-auto text-green-700 font-bold text-sm tabular-nums">
+                {hasPrice
+                  ? formatCurrency(product.price as unknown as string)
+                  : <span className="text-gray-400 text-xs font-normal">{tPos("noPrice")}</span>
+                }
+              </span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function POSPage() {
   const t = useTranslations("sales.pos");
   const tSales = useTranslations("sales");
@@ -49,6 +160,13 @@ export default function POSPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [receipt, setReceipt] = useState<SaleRead | null>(null);
 
+  // Category browse state
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [categoryProducts, setCategoryProducts] = useState<ItemRead[]>([]);
+  const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
+
   // Credit customer state
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerResults, setCustomerResults] = useState<CustomerRead[]>([]);
@@ -57,9 +175,15 @@ export default function POSPage() {
 
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Autofocus search on mount
+  // Autofocus search on mount + fetch categories
   useEffect(() => {
     searchRef.current?.focus();
+    (async () => {
+      try {
+        const res = await fetch("/api/categories", { cache: "no-store" });
+        if (res.ok) setCategories(await res.json());
+      } catch { /* silent */ } finally { setLoadingCategories(false); }
+    })();
   }, []);
 
   // Debounced customer search
@@ -79,6 +203,18 @@ export default function POSPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [customerSearch, paymentMethod]);
+
+  // Fetch products when a category is selected
+  useEffect(() => {
+    if (!activeCategory) { setCategoryProducts([]); return; }
+    setLoadingCategoryProducts(true);
+    (async () => {
+      try {
+        const res = await fetch(`/api/items?size=100&category=${encodeURIComponent(activeCategory)}`, { cache: "no-store" });
+        if (res.ok) { const d = await res.json(); setCategoryProducts(d.items ?? []); }
+      } catch { /* silent */ } finally { setLoadingCategoryProducts(false); }
+    })();
+  }, [activeCategory]);
 
   // Debounced search: fetch from backend only when user has typed something
   useEffect(() => {
@@ -117,10 +253,10 @@ export default function POSPage() {
   function addToCart(product: ItemRead) {
     if (!product.price) return;
     const price = parseFloat(product.price as unknown as string);
+    const step = (product.unit_type ?? "unit") === "gram" ? 100 : 1;
     setCart((prev) => {
       const existing = prev.find((c) => c.itemId === product.id);
       if (existing) {
-        const step = (product.unit_type ?? "unit") === "gram" ? 100 : 1;
         return prev.map((c) =>
           c.itemId === product.id ? { ...c, quantity: c.quantity + step } : c
         );
@@ -132,12 +268,15 @@ export default function POSPage() {
           name: product.name,
           unitType: product.unit_type ?? "unit",
           unitPrice: price,
-          quantity: (product.unit_type ?? "unit") === "gram" ? 100 : 1,
+          quantity: step,
         },
       ];
     });
-    setSearch("");
-    setTimeout(() => searchRef.current?.focus(), 0);
+    // Only clear search + refocus when in search mode
+    if (search.trim()) {
+      setSearch("");
+      setTimeout(() => searchRef.current?.focus(), 0);
+    }
   }
 
   function updateQty(itemId: string, qty: number) {
@@ -282,92 +421,94 @@ export default function POSPage() {
               </button>
             )}
           </div>
-          {products.length > 0 && (
+
+          {/* Search result count */}
+          {search.trim() && products.length > 0 && (
             <p className="text-[11px] text-gray-400 mt-2 ml-1">
-              {products.length} {products.length === 1 ? "resultado" : "resultados"} · Enter para agregar el primero
+              {products.length} {products.length === 1 ? t("resultsHint") : t("resultsHintPlural")}
             </p>
+          )}
+
+          {/* Category breadcrumb */}
+          {!search.trim() && activeCategory && (
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={() => setActiveCategory(null)}
+                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors"
+              >
+                <X size={12} />
+                {t("allCategories")}
+              </button>
+              <span className="text-gray-300">/</span>
+              <span className="text-xs font-semibold text-gray-700 truncate">{activeCategory}</span>
+            </div>
           )}
         </div>
 
-        {/* Product grid */}
+        {/* Content area: search results | category products | category grid */}
         <div className="flex-1 overflow-y-auto p-4">
-          {loadingProducts ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-28 rounded-xl bg-gray-200 animate-pulse" />
-              ))}
-            </div>
-          ) : products.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
-              {search.trim() ? (
-                <>
-                  <PackageX size={32} className="text-gray-300" />
-                  <p className="text-sm">{t("noProducts")}</p>
-                </>
+
+          {/* ── SEARCH MODE ── */}
+          {search.trim() ? (
+            loadingProducts ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="h-28 rounded-xl bg-gray-200 animate-pulse" />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
+                <PackageX size={32} className="text-gray-300" />
+                <p className="text-sm">{t("noProducts")}</p>
+              </div>
+            ) : (
+              <ProductGrid products={products} onAdd={addToCart} t={tDash} tPos={t} />
+            )
+
+          /* ── CATEGORY PRODUCTS MODE ── */
+          ) : activeCategory ? (
+            loadingCategoryProducts ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-28 rounded-xl bg-gray-200 animate-pulse" />
+                ))}
+              </div>
+            ) : categoryProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
+                <PackageX size={32} className="text-gray-300" />
+                <p className="text-sm">{t("noCategoryProducts")}</p>
+              </div>
+            ) : (
+              <ProductGrid products={categoryProducts} onAdd={addToCart} t={tDash} tPos={t} />
+            )
+
+          /* ── CATEGORY BROWSE MODE ── */
+          ) : (
+            <>
+              {loadingCategories ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
+                  ))}
+                </div>
+              ) : categories.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
+                  <ScanBarcode size={36} className="text-gray-300" />
+                  <p className="text-sm text-center leading-relaxed max-w-[200px]">{t("noCategories")}</p>
+                </div>
               ) : (
                 <>
-                  <ScanBarcode size={36} className="text-gray-300" />
-                  <p className="text-sm text-center leading-relaxed max-w-[180px]">{t("searchPlaceholder")}</p>
+                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-3">
+                    {t("browseCategories")}
+                  </p>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    {categories.map((cat, i) => (
+                      <CategoryTile key={cat} name={cat} colorIndex={i} onClick={() => setActiveCategory(cat)} />
+                    ))}
+                  </div>
                 </>
               )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {products.map((product) => {
-                const hasPrice = product.price != null;
-                const stock = parseFloat((product.stock ?? "0") as unknown as string);
-                const minStock = product.min_stock != null
-                  ? parseFloat(product.min_stock as unknown as string)
-                  : null;
-                const isLow = minStock != null && stock <= minStock;
-                const isOut = stock <= 0;
-
-                return (
-                  <button
-                    key={product.id as string}
-                    onClick={() => addToCart(product)}
-                    disabled={!hasPrice || isOut}
-                    className={`group relative flex flex-row items-stretch text-left rounded-xl border overflow-hidden transition-all duration-150 ${
-                      !hasPrice || isOut
-                        ? "opacity-40 cursor-not-allowed border-gray-200 bg-white"
-                        : "cursor-pointer border-gray-200 bg-white hover:border-green-400 hover:shadow-md hover:-translate-y-0.5 active:scale-95 active:shadow-none"
-                    }`}
-                  >
-                    {/* Unit abbreviation block */}
-                    <div className="w-16 shrink-0 bg-gray-100 flex items-center justify-center self-stretch">
-                      <span className="text-base font-black text-gray-500 tracking-wide uppercase">
-                        {tDash(`unitAbbr.${product.unit_type ?? "unit"}`)}
-                      </span>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col flex-1 min-w-0 p-2.5 gap-1">
-                      {/* Stock badge */}
-                      {isOut ? (
-                        <span className="self-start text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold leading-none">
-                          {t("outOfStock")}
-                        </span>
-                      ) : isLow ? (
-                        <span className="self-start text-[9px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold leading-none">
-                          ⚠ {t("lowStock")}
-                        </span>
-                      ) : null}
-
-                      <span className="font-semibold text-xs leading-snug text-gray-800 line-clamp-2">
-                        {product.name}
-                      </span>
-
-                      <span className="mt-auto text-green-700 font-bold text-sm tabular-nums">
-                        {hasPrice
-                          ? formatCurrency(product.price as unknown as string)
-                          : <span className="text-gray-400 text-xs font-normal">{t("noPrice")}</span>
-                        }
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            </>
           )}
         </div>
       </div>

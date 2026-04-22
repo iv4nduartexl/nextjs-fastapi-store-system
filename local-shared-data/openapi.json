@@ -689,6 +689,42 @@
         ],
         "parameters": [
           {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search query (name, SKU, or category)",
+              "title": "Q"
+            },
+            "description": "Search query (name, SKU, or category)"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact category name",
+              "title": "Category"
+            },
+            "description": "Filter by exact category name"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -714,24 +750,6 @@
               "title": "Size"
             },
             "description": "Page size"
-          },
-          {
-            "name": "q",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search query (name, SKU, or category)",
-              "title": "Q"
-            },
-            "description": "Search query (name, SKU, or category)"
           }
         ],
         "responses": {

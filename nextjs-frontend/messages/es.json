@@ -148,7 +148,13 @@
       "searchCustomer": "Buscar cliente por nombre o teléfono…",
       "noCustomer": "No se encontró cliente",
       "searching": "Buscando…",
-      "receiptCustomer": "Cliente crédito"
+      "receiptCustomer": "Cliente crédito",
+      "allCategories": "Todas las categorías",
+      "browseCategories": "Explora por categoría o busca arriba",
+      "noCategories": "Sin categorías. Agrega productos con categoría primero.",
+      "noCategoryProducts": "No hay productos en esta categoría.",
+      "resultsHint": "resultado · Enter para agregar el primero",
+      "resultsHintPlural": "resultados · Enter para agregar el primero"
     }
   },
   "products": {

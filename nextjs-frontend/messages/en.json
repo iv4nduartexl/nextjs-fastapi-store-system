@@ -148,7 +148,13 @@
       "searchCustomer": "Search customer by name or phone…",
       "noCustomer": "No customer found",
       "searching": "Searching…",
-      "receiptCustomer": "Credit customer"
+      "receiptCustomer": "Credit customer",
+      "allCategories": "All Categories",
+      "browseCategories": "Browse by category or search above",
+      "noCategories": "No categories yet. Add products with categories first.",
+      "noCategoryProducts": "No products in this category.",
+      "resultsHint": "result · Enter to add first",
+      "resultsHintPlural": "results · Enter to add first"
     }
   },
   "products": {

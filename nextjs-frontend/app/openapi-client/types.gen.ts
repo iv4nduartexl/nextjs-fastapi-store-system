@@ -463,6 +463,10 @@ export type UsersDeleteUserError = unknown | HTTPValidationError;
 export type ReadItemData = {
   query?: {
     /**
+     * Filter by exact category name
+     */
+    category?: string | null;
+    /**
      * Page number
      */
     page?: number;

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q");
   const url = new URL(`${process.env.API_BASE_URL}/categories/`);
   if (q) url.searchParams.set("q", q);
-  url.searchParams.set("limit", "30");
+  url.searchParams.set("limit", "100");
 
   const res = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${token}` },

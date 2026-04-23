@@ -72,7 +72,7 @@ async def create_purchase(
         quantity = line.quantity
         cost_price = line.cost_price.quantize(Decimal("0.01"))
         # Gram: cost_price is per 1000g (per kg). Subtotal = qty * cost_price / 1000
-        if (line.unit_type or unit_type) == "gram":
+        if line.unit_type == "gram":
             line_subtotal = (quantity * cost_price / Decimal("1000")).quantize(Decimal("0.01"))
         else:
             line_subtotal = (quantity * cost_price).quantize(Decimal("0.01"))

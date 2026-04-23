@@ -1,0 +1,61 @@
+name: Deploy to Local Server
+
+on:
+  push:
+    branches:
+      - main
+
+# Only one deploy at a time
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 1. Backup DB before any changes ────────────────────────────────────
+      - name: Backup database
+        run: make docker-db-backup
+
+      # ── 2. Rebuild images that changed ─────────────────────────────────────
+      - name: Build updated images
+        run: docker compose build backend frontend
+
+      # ── 3. Restart services with zero-downtime rolling update ──────────────
+      - name: Start / update services
+        run: docker compose up -d --remove-orphans backend frontend db-backup
+
+      # ── 4. Wait for backend to be healthy ──────────────────────────────────
+      - name: Wait for backend health check
+        run: |
+          echo "Waiting for backend…"
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "Backend is up."
+              exit 0
+            fi
+            echo "  attempt $i/30 — sleeping 3s"
+            sleep 3
+          done
+          echo "Backend did not become healthy in time." >&2
+          docker compose logs --tail=50 backend
+          exit 1
+
+      # ── 5. Run database migrations ─────────────────────────────────────────
+      - name: Run database migrations
+        run: docker compose exec -T backend alembic upgrade head
+
+      # ── 6. Summary ─────────────────────────────────────────────────────────
+      - name: Deployment summary
+        run: |
+          echo "✅  Deploy complete."
+          echo "    Commit : ${{ github.sha }}"
+          echo "    Branch : ${{ github.ref_name }}"
+          echo "    Actor  : ${{ github.actor }}"
+          docker compose ps

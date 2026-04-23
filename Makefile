@@ -85,13 +85,13 @@ DB_USER=postgres
 docker-db-backup: ## Backup the database. Output: backups/YYYY-MM-DD_HHMMSS.dump
 	@mkdir -p $(BACKUP_DIR)
 	@FILE=$(BACKUP_DIR)/$$(date +%Y-%m-%d_%H%M%S).dump; \
-	$(DOCKER_COMPOSE) exec -T db pg_dump -U $(DB_USER) -Fc $(DB_NAME) > $$FILE && \
+	$(DOCKER_COMPOSE) exec db pg_dump -U $(DB_USER) -Fc $(DB_NAME) > $$FILE && \
 	echo "Backup saved: $$FILE" || (echo "Backup FAILED" && exit 1)
 
 docker-db-restore: ## Restore a backup. Usage: make docker-db-restore FILE=backups/YYYY-MM-DD_HHMMSS.dump
 	@if [ -z "$(FILE)" ]; then echo "Usage: make docker-db-restore FILE=backups/<file>.dump" && exit 1; fi
 	@echo "Restoring $(FILE) into $(DB_NAME)..."
-	$(DOCKER_COMPOSE) exec -T db pg_restore -U $(DB_USER) -d $(DB_NAME) --clean --if-exists < $(FILE)
+	$(DOCKER_COMPOSE) exec db pg_restore -U $(DB_USER) -d $(DB_NAME) --clean --if-exists < $(FILE)
 	@echo "Restore complete."
 
 setup-gdrive: ## Authenticate rclone with Google Drive (run once). Creates remote named "gdrive"

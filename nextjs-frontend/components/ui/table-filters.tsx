@@ -21,7 +21,10 @@ interface TableFiltersProps {
   clearLabel?: string;
 }
 
-export function TableFilters({ fields, clearLabel = "Clear" }: TableFiltersProps) {
+export function TableFilters({
+  fields,
+  clearLabel = "Clear",
+}: TableFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,7 +45,7 @@ export function TableFilters({ fields, clearLabel = "Clear" }: TableFiltersProps
       params.set("page", "1");
       router.push(`${pathname}?${params.toString()}`);
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
   // Debounce text search updates
@@ -52,7 +55,10 @@ export function TableFilters({ fields, clearLabel = "Clear" }: TableFiltersProps
       if (f.type === "search") {
         const current = searchParams.get(f.key) ?? "";
         if (textValues[f.key] !== current) {
-          const timer = setTimeout(() => pushParams(f.key, textValues[f.key]), 400);
+          const timer = setTimeout(
+            () => pushParams(f.key, textValues[f.key]),
+            400,
+          );
           timers.push(timer);
         }
       }
@@ -89,7 +95,10 @@ export function TableFilters({ fields, clearLabel = "Clear" }: TableFiltersProps
                 type="text"
                 value={textValues[f.key] ?? ""}
                 onChange={(e) =>
-                  setTextValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                  setTextValues((prev) => ({
+                    ...prev,
+                    [f.key]: e.target.value,
+                  }))
                 }
                 placeholder={f.placeholder ?? "Search..."}
                 className="h-9 pl-8 pr-3 text-sm rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 w-52"

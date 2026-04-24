@@ -6,7 +6,8 @@ const API_BASE_URL = process.env.API_BASE_URL;
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
-  if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!token)
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") ?? "";
@@ -21,6 +22,10 @@ export async function GET(request: NextRequest) {
     cache: "no-store",
   });
 
-  if (!res.ok) return NextResponse.json({ error: "Upstream error" }, { status: res.status });
+  if (!res.ok)
+    return NextResponse.json(
+      { error: "Upstream error" },
+      { status: res.status },
+    );
   return NextResponse.json(await res.json());
 }

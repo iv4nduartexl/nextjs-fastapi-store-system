@@ -16,10 +16,17 @@ import { PagePagination } from "@/components/page-pagination";
 import { TableFilters } from "@/components/ui/table-filters";
 
 interface SalesPageProps {
-  searchParams: Promise<{ page?: string; size?: string; payment_method?: string; status?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    size?: string;
+    payment_method?: string;
+    status?: string;
+  }>;
 }
 
-export default async function SalesHistoryPage({ searchParams }: SalesPageProps) {
+export default async function SalesHistoryPage({
+  searchParams,
+}: SalesPageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const size = Number(params.size) || 10;
@@ -85,15 +92,22 @@ export default async function SalesHistoryPage({ searchParams }: SalesPageProps)
               <TableHead>{t("table.date")}</TableHead>
               <TableHead className="text-center">{t("table.items")}</TableHead>
               <TableHead className="text-right">{t("table.total")}</TableHead>
-              <TableHead className="text-center">{t("table.payment")}</TableHead>
+              <TableHead className="text-center">
+                {t("table.payment")}
+              </TableHead>
               <TableHead className="text-center">{t("table.status")}</TableHead>
-              <TableHead className="text-center">{t("table.actions")}</TableHead>
+              <TableHead className="text-center">
+                {t("table.actions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!sales?.items?.length ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-gray-400">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-12 text-gray-400"
+                >
                   {t("noResults")}
                 </TableCell>
               </TableRow>
@@ -120,8 +134,8 @@ export default async function SalesHistoryPage({ searchParams }: SalesPageProps)
                         sale.status === "completed"
                           ? "bg-green-100 text-green-700"
                           : sale.status === "refunded"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
                       }`}
                     >
                       {t(`status.${sale.status}`)}

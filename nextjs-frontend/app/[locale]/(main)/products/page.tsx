@@ -47,7 +47,11 @@ export default async function ProductsPage({
           <div className="flex items-center gap-2 flex-wrap">
             <TableFilters
               fields={[
-                { type: "search", key: "q", placeholder: t("searchPlaceholder") },
+                {
+                  type: "search",
+                  key: "q",
+                  placeholder: t("searchPlaceholder"),
+                },
               ]}
               clearLabel={t("clearFilters")}
             />
@@ -68,4 +72,3 @@ export default async function ProductsPage({
     </div>
   );
 }
-

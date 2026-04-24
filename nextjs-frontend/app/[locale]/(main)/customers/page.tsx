@@ -9,7 +9,11 @@ import {
   Phone,
   CreditCard,
 } from "lucide-react";
-import { fetchCustomers, CustomerPage, CustomerRead } from "@/components/actions/customers-action";
+import {
+  fetchCustomers,
+  CustomerPage,
+  CustomerRead,
+} from "@/components/actions/customers-action";
 import { formatCurrency } from "@/lib/currency";
 import CustomerSearch from "./CustomerSearch";
 
@@ -26,10 +30,17 @@ export default async function CustomersPage({ searchParams }: Props) {
   if ("message" in result) notFound();
   const data = result as CustomerPage;
 
-  const totalOutstanding = data.items.reduce((s, c) => s + parseFloat(c.balance), 0);
-  const withBalance = data.items.filter((c) => parseFloat(c.balance) > 0).length;
+  const totalOutstanding = data.items.reduce(
+    (s, c) => s + parseFloat(c.balance),
+    0,
+  );
+  const withBalance = data.items.filter(
+    (c) => parseFloat(c.balance) > 0,
+  ).length;
   const overLimit = data.items.filter(
-    (c) => c.credit_limit != null && parseFloat(c.balance) > parseFloat(c.credit_limit)
+    (c) =>
+      c.credit_limit != null &&
+      parseFloat(c.balance) > parseFloat(c.credit_limit),
   ).length;
 
   return (
@@ -55,32 +66,55 @@ export default async function CustomersPage({ searchParams }: Props) {
       </div>
 
       {/* Search bar */}
-      <CustomerSearch placeholder={t("searchPlaceholder")} defaultValue={q ?? ""} />
+      <CustomerSearch
+        placeholder={t("searchPlaceholder")}
+        defaultValue={q ?? ""}
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{t("cards.total")}</p>
-          <p className="text-3xl font-black text-gray-900 mt-1 tabular-nums">{data.total}</p>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+            {t("cards.total")}
+          </p>
+          <p className="text-3xl font-black text-gray-900 mt-1 tabular-nums">
+            {data.total}
+          </p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{t("cards.outstanding")}</p>
-          <p className="text-2xl font-black text-red-600 mt-1 tabular-nums">{formatCurrency(totalOutstanding)}</p>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+            {t("cards.outstanding")}
+          </p>
+          <p className="text-2xl font-black text-red-600 mt-1 tabular-nums">
+            {formatCurrency(totalOutstanding)}
+          </p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{t("cards.withBalance")}</p>
-          <p className="text-3xl font-black text-amber-600 mt-1 tabular-nums">{withBalance}</p>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+            {t("cards.withBalance")}
+          </p>
+          <p className="text-3xl font-black text-amber-600 mt-1 tabular-nums">
+            {withBalance}
+          </p>
         </div>
         {overLimit > 0 && (
           <div className="bg-red-50 rounded-2xl border border-red-100 shadow-sm p-4">
-            <p className="text-[10px] font-semibold text-red-400 uppercase tracking-widest">{t("cards.overLimit")}</p>
-            <p className="text-3xl font-black text-red-600 mt-1 tabular-nums">{overLimit}</p>
+            <p className="text-[10px] font-semibold text-red-400 uppercase tracking-widest">
+              {t("cards.overLimit")}
+            </p>
+            <p className="text-3xl font-black text-red-600 mt-1 tabular-nums">
+              {overLimit}
+            </p>
           </div>
         )}
         {overLimit === 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{t("cards.overLimit")}</p>
-            <p className="text-3xl font-black text-gray-900 mt-1 tabular-nums">0</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+              {t("cards.overLimit")}
+            </p>
+            <p className="text-3xl font-black text-gray-900 mt-1 tabular-nums">
+              0
+            </p>
           </div>
         )}
       </div>
@@ -90,7 +124,9 @@ export default async function CustomersPage({ searchParams }: Props) {
         {data.items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
             <Users size={40} className="text-gray-200" />
-            <p className="text-sm">{q ? t("noSearchResults") : t("noResults")}</p>
+            <p className="text-sm">
+              {q ? t("noSearchResults") : t("noResults")}
+            </p>
             {!q && (
               <Link
                 href="/customers/new"
@@ -126,19 +162,28 @@ export default async function CustomersPage({ searchParams }: Props) {
             <tbody className="divide-y divide-gray-50">
               {data.items.map((customer) => {
                 const balance = parseFloat(customer.balance);
-                const limit = customer.credit_limit ? parseFloat(customer.credit_limit) : null;
+                const limit = customer.credit_limit
+                  ? parseFloat(customer.credit_limit)
+                  : null;
                 const isOverLimit = limit !== null && balance > limit;
-                const limitPct = limit ? Math.min(100, (balance / limit) * 100) : 0;
+                const limitPct = limit
+                  ? Math.min(100, (balance / limit) * 100)
+                  : 0;
 
                 return (
-                  <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={customer.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-xs font-bold text-gray-500">
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-800">{customer.name}</p>
+                          <p className="font-semibold text-gray-800">
+                            {customer.name}
+                          </p>
                           {isOverLimit && (
                             <p className="text-[10px] text-red-500 font-semibold flex items-center gap-0.5">
                               <AlertCircle size={9} />
@@ -155,15 +200,23 @@ export default async function CustomersPage({ searchParams }: Props) {
                           {customer.phone}
                         </span>
                       ) : (
-                        <span className="text-gray-300 text-xs">{t("detail.noPhone")}</span>
+                        <span className="text-gray-300 text-xs">
+                          {t("detail.noPhone")}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3.5 text-xs text-gray-500 font-mono hidden md:table-cell">
-                      {customer.id_number ?? <span className="text-gray-300">{t("table.unlimited")}</span>}
+                      {customer.id_number ?? (
+                        <span className="text-gray-300">
+                          {t("table.unlimited")}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex flex-col items-end gap-1">
-                        <span className={`font-bold tabular-nums font-mono ${balance > 0 ? "text-red-600" : "text-gray-400"}`}>
+                        <span
+                          className={`font-bold tabular-nums font-mono ${balance > 0 ? "text-red-600" : "text-gray-400"}`}
+                        >
                           {formatCurrency(balance)}
                         </span>
                         {limit !== null && (
@@ -182,7 +235,9 @@ export default async function CustomersPage({ searchParams }: Props) {
                           {formatCurrency(customer.credit_limit)}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-300">{t("table.unlimited")}</span>
+                        <span className="text-xs text-gray-300">
+                          {t("table.unlimited")}
+                        </span>
                       )}
                     </td>
                     <td className="pr-4 py-3.5 text-right">

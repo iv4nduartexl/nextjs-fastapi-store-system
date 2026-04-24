@@ -49,9 +49,15 @@ export default async function DashboardPage() {
       icon: <Wallet className="w-6 h-6" />,
       label: t("cashbox"),
       desc: t("cashboxDesc"),
-      iconBg: cashboxOpen ? "bg-violet-100 text-violet-600" : "bg-amber-100 text-amber-600",
-      border: cashboxOpen ? "hover:border-violet-300" : "hover:border-amber-400",
-      accent: cashboxOpen ? "group-hover:text-violet-600" : "group-hover:text-amber-600",
+      iconBg: cashboxOpen
+        ? "bg-violet-100 text-violet-600"
+        : "bg-amber-100 text-amber-600",
+      border: cashboxOpen
+        ? "hover:border-violet-300"
+        : "hover:border-amber-400",
+      accent: cashboxOpen
+        ? "group-hover:text-violet-600"
+        : "group-hover:text-amber-600",
       highlight: !cashboxOpen,
     },
     {
@@ -100,8 +106,12 @@ export default async function DashboardPage() {
             <AlertTriangle className="h-5 w-5 text-amber-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-800">{t("cashboxBanner")}</p>
-            <p className="text-xs text-amber-600 leading-snug">{t("cashboxBannerDesc")}</p>
+            <p className="text-sm font-bold text-amber-800">
+              {t("cashboxBanner")}
+            </p>
+            <p className="text-xs text-amber-600 leading-snug">
+              {t("cashboxBannerDesc")}
+            </p>
           </div>
           <div className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors group-hover:bg-amber-600">
             {t("cashboxBannerCta")}

@@ -96,9 +96,10 @@ function ProductGrid({
       {products.map((product) => {
         const hasPrice = product.price != null;
         const stock = parseFloat((product.stock ?? "0") as unknown as string);
-        const minStock = product.min_stock != null
-          ? parseFloat(product.min_stock as unknown as string)
-          : null;
+        const minStock =
+          product.min_stock != null
+            ? parseFloat(product.min_stock as unknown as string)
+            : null;
         const isLow = minStock != null && stock <= minStock;
         const isOut = stock <= 0;
 
@@ -132,10 +133,13 @@ function ProductGrid({
                 {product.name}
               </span>
               <span className="mt-auto text-green-700 font-bold text-sm tabular-nums">
-                {hasPrice
-                  ? formatCurrency(product.price as unknown as string)
-                  : <span className="text-gray-400 text-xs font-normal">{tPos("noPrice")}</span>
-                }
+                {hasPrice ? (
+                  formatCurrency(product.price as unknown as string)
+                ) : (
+                  <span className="text-gray-400 text-xs font-normal">
+                    {tPos("noPrice")}
+                  </span>
+                )}
               </span>
             </div>
           </button>
@@ -170,7 +174,9 @@ export default function POSClient() {
   // Credit customer state
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerResults, setCustomerResults] = useState<CustomerRead[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRead | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRead | null>(
+    null,
+  );
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
@@ -182,7 +188,11 @@ export default function POSClient() {
       try {
         const res = await fetch("/api/categories", { cache: "no-store" });
         if (res.ok) setCategories(await res.json());
-      } catch { /* silent */ } finally { setLoadingCategories(false); }
+      } catch {
+        /* silent */
+      } finally {
+        setLoadingCategories(false);
+      }
     })();
   }, []);
 
@@ -190,29 +200,52 @@ export default function POSClient() {
   useEffect(() => {
     if (paymentMethod !== "credit") return;
     const q = customerSearch.trim();
-    if (!q) { setCustomerResults([]); return; }
+    if (!q) {
+      setCustomerResults([]);
+      return;
+    }
     setLoadingCustomers(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/customers?size=8&q=${encodeURIComponent(q)}`, { cache: "no-store" });
+        const res = await fetch(
+          `/api/customers?size=8&q=${encodeURIComponent(q)}`,
+          { cache: "no-store" },
+        );
         if (res.ok) {
           const data = await res.json();
           setCustomerResults(data.items ?? []);
         }
-      } catch { /* silent */ } finally { setLoadingCustomers(false); }
+      } catch {
+        /* silent */
+      } finally {
+        setLoadingCustomers(false);
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [customerSearch, paymentMethod]);
 
   // Fetch products when a category is selected
   useEffect(() => {
-    if (!activeCategory) { setCategoryProducts([]); return; }
+    if (!activeCategory) {
+      setCategoryProducts([]);
+      return;
+    }
     setLoadingCategoryProducts(true);
     (async () => {
       try {
-        const res = await fetch(`/api/items?size=100&category=${encodeURIComponent(activeCategory)}`, { cache: "no-store" });
-        if (res.ok) { const d = await res.json(); setCategoryProducts(d.items ?? []); }
-      } catch { /* silent */ } finally { setLoadingCategoryProducts(false); }
+        const res = await fetch(
+          `/api/items?size=100&category=${encodeURIComponent(activeCategory)}`,
+          { cache: "no-store" },
+        );
+        if (res.ok) {
+          const d = await res.json();
+          setCategoryProducts(d.items ?? []);
+        }
+      } catch {
+        /* silent */
+      } finally {
+        setLoadingCategoryProducts(false);
+      }
     })();
   }, [activeCategory]);
 
@@ -227,7 +260,10 @@ export default function POSClient() {
     setLoadingProducts(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/items?size=50&q=${encodeURIComponent(q)}`, { cache: "no-store" });
+        const res = await fetch(
+          `/api/items?size=50&q=${encodeURIComponent(q)}`,
+          { cache: "no-store" },
+        );
         if (res.ok) {
           const data = await res.json();
           setProducts(data.items ?? []);
@@ -241,8 +277,14 @@ export default function POSClient() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const cartTotal = cart.reduce((sum, c) =>
-    sum + (c.unitType === "gram" ? c.unitPrice * c.quantity / 1000 : c.unitPrice * c.quantity), 0);
+  const cartTotal = cart.reduce(
+    (sum, c) =>
+      sum +
+      (c.unitType === "gram"
+        ? (c.unitPrice * c.quantity) / 1000
+        : c.unitPrice * c.quantity),
+    0,
+  );
   const tenderedNum = parseFloat(amountTendered) || 0;
   const change = tenderedNum - cartTotal;
   const canComplete =
@@ -258,7 +300,7 @@ export default function POSClient() {
       const existing = prev.find((c) => c.itemId === product.id);
       if (existing) {
         return prev.map((c) =>
-          c.itemId === product.id ? { ...c, quantity: c.quantity + step } : c
+          c.itemId === product.id ? { ...c, quantity: c.quantity + step } : c,
         );
       }
       return [
@@ -284,7 +326,7 @@ export default function POSClient() {
       setCart((prev) => prev.filter((c) => c.itemId !== itemId));
     } else {
       setCart((prev) =>
-        prev.map((c) => (c.itemId === itemId ? { ...c, quantity: qty } : c))
+        prev.map((c) => (c.itemId === itemId ? { ...c, quantity: qty } : c)),
       );
     }
   }
@@ -307,7 +349,8 @@ export default function POSClient() {
       items: cart.map((c) => ({ item_id: c.itemId, quantity: c.quantity })),
       payment_method: paymentMethod,
       amount_tendered: paymentMethod === "cash" ? tenderedNum : undefined,
-      customer_id: paymentMethod === "credit" ? selectedCustomer?.id : undefined,
+      customer_id:
+        paymentMethod === "credit" ? selectedCustomer?.id : undefined,
     });
     setSubmitting(false);
     if (result.error) {
@@ -335,46 +378,70 @@ export default function POSClient() {
           {/* Header */}
           <div className="bg-green-600 px-6 py-5 text-center">
             <CheckCircle2 className="mx-auto mb-2 text-white" size={40} />
-            <h2 className="text-xl font-bold text-white">{t("receiptTitle")}</h2>
+            <h2 className="text-xl font-bold text-white">
+              {t("receiptTitle")}
+            </h2>
           </div>
 
           {/* Summary */}
           <div className="px-6 py-4 space-y-3 border-b">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">{t("receiptTotal")}</span>
-              <span className="text-2xl font-bold text-gray-900">{formatCurrency(receipt.total)}</span>
+              <span className="text-2xl font-bold text-gray-900">
+                {formatCurrency(receipt.total)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">{t("receiptPayment")}</span>
-              <span className="text-sm font-semibold text-gray-700 capitalize">{tSales(`paymentMethod.${receipt.payment_method}`)}</span>
+              <span className="text-sm text-gray-500">
+                {t("receiptPayment")}
+              </span>
+              <span className="text-sm font-semibold text-gray-700 capitalize">
+                {tSales(`paymentMethod.${receipt.payment_method}`)}
+              </span>
             </div>
-            {receipt.change_given != null && Number(receipt.change_given) > 0 && (
-              <div className="flex justify-between items-center bg-green-50 rounded-lg px-3 py-2">
-                <span className="text-sm font-medium text-green-700">{t("receiptChange")}</span>
-                <span className="text-sm font-bold text-green-700">{formatCurrency(receipt.change_given)}</span>
-              </div>
-            )}
+            {receipt.change_given != null &&
+              Number(receipt.change_given) > 0 && (
+                <div className="flex justify-between items-center bg-green-50 rounded-lg px-3 py-2">
+                  <span className="text-sm font-medium text-green-700">
+                    {t("receiptChange")}
+                  </span>
+                  <span className="text-sm font-bold text-green-700">
+                    {formatCurrency(receipt.change_given)}
+                  </span>
+                </div>
+              )}
             {receipt.payment_method === "credit" && receipt.customer_name && (
               <div className="flex justify-between items-center bg-amber-50 rounded-lg px-3 py-2">
-                <span className="text-sm font-medium text-amber-700">{tSales("pos.receiptCustomer")}</span>
-                <span className="text-sm font-bold text-amber-700">{receipt.customer_name}</span>
+                <span className="text-sm font-medium text-amber-700">
+                  {tSales("pos.receiptCustomer")}
+                </span>
+                <span className="text-sm font-bold text-amber-700">
+                  {receipt.customer_name}
+                </span>
               </div>
             )}
           </div>
 
           {/* Items */}
           <div className="px-6 py-4">
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-3">{t("receiptItems")}</p>
+            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-3">
+              {t("receiptItems")}
+            </p>
             <div className="space-y-2">
               {receipt.sale_items.map((si) => (
-                <div key={si.id} className="flex justify-between items-center text-sm">
+                <div
+                  key={si.id}
+                  className="flex justify-between items-center text-sm"
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400 font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
                       ×{parseFloat(si.quantity).toLocaleString()}
                     </span>
                     <span className="text-gray-700">{si.item_name}</span>
                   </div>
-                  <span className="font-semibold text-gray-900 font-mono">{formatCurrency(si.subtotal)}</span>
+                  <span className="font-semibold text-gray-900 font-mono">
+                    {formatCurrency(si.subtotal)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -396,14 +463,15 @@ export default function POSClient() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-0 -m-8">
-
       {/* ── LEFT: Product Search + Grid ── */}
       <div className="flex flex-col flex-1 bg-gray-50 border-r overflow-hidden">
-
         {/* Search header */}
         <div className="px-4 pt-4 pb-3 bg-white border-b">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+            />
             <Input
               ref={searchRef}
               value={search}
@@ -425,7 +493,10 @@ export default function POSClient() {
           {/* Search result count */}
           {search.trim() && products.length > 0 && (
             <p className="text-[11px] text-gray-400 mt-2 ml-1">
-              {products.length} {products.length === 1 ? t("resultsHint") : t("resultsHintPlural")}
+              {products.length}{" "}
+              {products.length === 1
+                ? t("resultsHint")
+                : t("resultsHintPlural")}
             </p>
           )}
 
@@ -440,20 +511,24 @@ export default function POSClient() {
                 {t("allCategories")}
               </button>
               <span className="text-gray-300">/</span>
-              <span className="text-xs font-semibold text-gray-700 truncate">{activeCategory}</span>
+              <span className="text-xs font-semibold text-gray-700 truncate">
+                {activeCategory}
+              </span>
             </div>
           )}
         </div>
 
         {/* Content area: search results | category products | category grid */}
         <div className="flex-1 overflow-y-auto p-4">
-
           {/* ── SEARCH MODE ── */}
           {search.trim() ? (
             loadingProducts ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-28 rounded-xl bg-gray-200 animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-28 rounded-xl bg-gray-200 animate-pulse"
+                  />
                 ))}
               </div>
             ) : products.length === 0 ? (
@@ -462,15 +537,22 @@ export default function POSClient() {
                 <p className="text-sm">{t("noProducts")}</p>
               </div>
             ) : (
-              <ProductGrid products={products} onAdd={addToCart} t={tDash} tPos={t} />
+              <ProductGrid
+                products={products}
+                onAdd={addToCart}
+                t={tDash}
+                tPos={t}
+              />
             )
-
-          /* ── CATEGORY PRODUCTS MODE ── */
-          ) : activeCategory ? (
+          ) : /* ── CATEGORY PRODUCTS MODE ── */
+          activeCategory ? (
             loadingCategoryProducts ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-28 rounded-xl bg-gray-200 animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-28 rounded-xl bg-gray-200 animate-pulse"
+                  />
                 ))}
               </div>
             ) : categoryProducts.length === 0 ? (
@@ -479,22 +561,31 @@ export default function POSClient() {
                 <p className="text-sm">{t("noCategoryProducts")}</p>
               </div>
             ) : (
-              <ProductGrid products={categoryProducts} onAdd={addToCart} t={tDash} tPos={t} />
+              <ProductGrid
+                products={categoryProducts}
+                onAdd={addToCart}
+                t={tDash}
+                tPos={t}
+              />
             )
-
-          /* ── CATEGORY BROWSE MODE ── */
           ) : (
+            /* ── CATEGORY BROWSE MODE ── */
             <>
               {loadingCategories ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
+                    <div
+                      key={i}
+                      className="h-24 rounded-2xl bg-gray-200 animate-pulse"
+                    />
                   ))}
                 </div>
               ) : categories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
                   <ScanBarcode size={36} className="text-gray-300" />
-                  <p className="text-sm text-center leading-relaxed max-w-[200px]">{t("noCategories")}</p>
+                  <p className="text-sm text-center leading-relaxed max-w-[200px]">
+                    {t("noCategories")}
+                  </p>
                 </div>
               ) : (
                 <>
@@ -503,7 +594,12 @@ export default function POSClient() {
                   </p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {categories.map((cat, i) => (
-                      <CategoryTile key={cat} name={cat} colorIndex={i} onClick={() => setActiveCategory(cat)} />
+                      <CategoryTile
+                        key={cat}
+                        name={cat}
+                        colorIndex={i}
+                        onClick={() => setActiveCategory(cat)}
+                      />
                     ))}
                   </div>
                 </>
@@ -515,7 +611,6 @@ export default function POSClient() {
 
       {/* ── RIGHT: Cart + Payment ── */}
       <div className="w-[22rem] flex flex-col bg-white overflow-hidden">
-
         {/* Cart header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b bg-white">
           <div className="flex items-center gap-2">
@@ -523,7 +618,14 @@ export default function POSClient() {
             <h3 className="font-semibold text-gray-800">{t("cart")}</h3>
             {cart.length > 0 && (
               <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
-                {cart.reduce((s, c) => s + (c.unitType === "gram" ? c.quantity / 1000 : c.quantity), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {cart
+                  .reduce(
+                    (s, c) =>
+                      s +
+                      (c.unitType === "gram" ? c.quantity / 1000 : c.quantity),
+                    0,
+                  )
+                  .toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </span>
             )}
           </div>
@@ -553,7 +655,9 @@ export default function POSClient() {
               >
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate leading-tight">{item.name}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate leading-tight">
+                    {item.name}
+                  </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-xs text-gray-500">
                       {item.unitType === "gram"
@@ -569,7 +673,12 @@ export default function POSClient() {
                 {/* Qty controls */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => updateQty(item.itemId, item.quantity - (item.unitType === "gram" ? 100 : 1))}
+                    onClick={() =>
+                      updateQty(
+                        item.itemId,
+                        item.quantity - (item.unitType === "gram" ? 100 : 1),
+                      )
+                    }
                     className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
                   >
                     <Minus size={11} />
@@ -579,11 +688,18 @@ export default function POSClient() {
                     value={item.quantity}
                     min={item.unitType === "gram" ? 1 : 1}
                     step={item.unitType === "gram" ? 100 : 1}
-                    onChange={(e) => updateQty(item.itemId, parseFloat(e.target.value) || 1)}
+                    onChange={(e) =>
+                      updateQty(item.itemId, parseFloat(e.target.value) || 1)
+                    }
                     className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
                   />
                   <button
-                    onClick={() => updateQty(item.itemId, item.quantity + (item.unitType === "gram" ? 100 : 1))}
+                    onClick={() =>
+                      updateQty(
+                        item.itemId,
+                        item.quantity + (item.unitType === "gram" ? 100 : 1),
+                      )
+                    }
                     className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
                   >
                     <Plus size={11} />
@@ -593,7 +709,7 @@ export default function POSClient() {
                 {/* Subtotal */}
                 <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
                   {item.unitType === "gram"
-                    ? formatCurrency(item.unitPrice * item.quantity / 1000)
+                    ? formatCurrency((item.unitPrice * item.quantity) / 1000)
                     : formatCurrency(item.unitPrice * item.quantity)}
                 </span>
 
@@ -613,8 +729,12 @@ export default function POSClient() {
         <div className="border-t bg-white">
           {/* Total */}
           <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
-            <span className="text-sm font-medium text-gray-500">{t("subtotal")}</span>
-            <span className="text-2xl font-bold text-gray-900 tabular-nums">{formatCurrency(cartTotal)}</span>
+            <span className="text-sm font-medium text-gray-500">
+              {t("subtotal")}
+            </span>
+            <span className="text-2xl font-bold text-gray-900 tabular-nums">
+              {formatCurrency(cartTotal)}
+            </span>
           </div>
 
           <div className="px-4 py-3 space-y-3">
@@ -624,15 +744,24 @@ export default function POSClient() {
                 {t("paymentMethod")}
               </p>
               <div className="grid grid-cols-4 gap-1.5">
-                {([
-                  { method: "cash", Icon: Banknote },
-                  { method: "card", Icon: CreditCard },
-                  { method: "other", Icon: RefreshCcw },
-                  { method: "credit", Icon: Users },
-                ] as { method: PaymentMethod; Icon: React.ElementType }[]).map(({ method: m, Icon }) => (
+                {(
+                  [
+                    { method: "cash", Icon: Banknote },
+                    { method: "card", Icon: CreditCard },
+                    { method: "other", Icon: RefreshCcw },
+                    { method: "credit", Icon: Users },
+                  ] as { method: PaymentMethod; Icon: React.ElementType }[]
+                ).map(({ method: m, Icon }) => (
                   <button
                     key={m}
-                    onClick={() => { setPaymentMethod(m); if (m !== "credit") { setSelectedCustomer(null); setCustomerSearch(""); setCustomerResults([]); } }}
+                    onClick={() => {
+                      setPaymentMethod(m);
+                      if (m !== "credit") {
+                        setSelectedCustomer(null);
+                        setCustomerSearch("");
+                        setCustomerResults([]);
+                      }
+                    }}
                     className={`flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-semibold border-2 transition-all ${
                       paymentMethod === m
                         ? "border-green-500 bg-green-50 text-green-700"
@@ -655,13 +784,20 @@ export default function POSClient() {
                 {selectedCustomer ? (
                   <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                     <div>
-                      <p className="text-sm font-bold text-amber-900">{selectedCustomer.name}</p>
+                      <p className="text-sm font-bold text-amber-900">
+                        {selectedCustomer.name}
+                      </p>
                       {selectedCustomer.phone && (
-                        <p className="text-xs text-amber-600">{selectedCustomer.phone}</p>
+                        <p className="text-xs text-amber-600">
+                          {selectedCustomer.phone}
+                        </p>
                       )}
                     </div>
                     <button
-                      onClick={() => { setSelectedCustomer(null); setCustomerSearch(""); }}
+                      onClick={() => {
+                        setSelectedCustomer(null);
+                        setCustomerSearch("");
+                      }}
                       className="text-amber-400 hover:text-amber-700"
                     >
                       <X size={14} />
@@ -669,7 +805,10 @@ export default function POSClient() {
                   </div>
                 ) : (
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={13} />
+                    <Search
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={13}
+                    />
                     <input
                       type="text"
                       value={customerSearch}
@@ -685,12 +824,22 @@ export default function POSClient() {
                             <button
                               key={c.id}
                               type="button"
-                              onClick={() => { setSelectedCustomer(c); setCustomerSearch(""); setCustomerResults([]); }}
+                              onClick={() => {
+                                setSelectedCustomer(c);
+                                setCustomerSearch("");
+                                setCustomerResults([]);
+                              }}
                               className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-amber-50 transition-colors"
                             >
                               <div>
-                                <p className="font-semibold text-gray-800">{c.name}</p>
-                                {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                                <p className="font-semibold text-gray-800">
+                                  {c.name}
+                                </p>
+                                {c.phone && (
+                                  <p className="text-xs text-gray-400">
+                                    {c.phone}
+                                  </p>
+                                )}
                               </div>
                               {bal > 0 && (
                                 <span className="text-xs font-mono text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
@@ -703,11 +852,17 @@ export default function POSClient() {
                       </div>
                     )}
                     {loadingCustomers && (
-                      <p className="text-xs text-gray-400 mt-1">{tSales("pos.searching")}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {tSales("pos.searching")}
+                      </p>
                     )}
-                    {!loadingCustomers && customerSearch.trim() && customerResults.length === 0 && (
-                      <p className="text-xs text-gray-400 mt-1">{tSales("pos.noCustomer")}</p>
-                    )}
+                    {!loadingCustomers &&
+                      customerSearch.trim() &&
+                      customerResults.length === 0 && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {tSales("pos.noCustomer")}
+                        </p>
+                      )}
                   </div>
                 )}
               </div>
@@ -731,11 +886,15 @@ export default function POSClient() {
                 {tenderedNum > 0 && (
                   <div
                     className={`flex justify-between text-sm font-semibold rounded-lg px-3 py-2 ${
-                      change >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+                      change >= 0
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-600"
                     }`}
                   >
                     <span>{t("change")}</span>
-                    <span className="font-mono tabular-nums">{formatCurrency(Math.max(0, change))}</span>
+                    <span className="font-mono tabular-nums">
+                      {formatCurrency(Math.max(0, change))}
+                    </span>
                   </div>
                 )}
               </div>
@@ -743,7 +902,9 @@ export default function POSClient() {
 
             {/* Error */}
             {errorMsg && (
-              <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">{errorMsg}</p>
+              <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">
+                {errorMsg}
+              </p>
             )}
 
             {/* Complete sale */}

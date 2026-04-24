@@ -9,7 +9,10 @@ interface Props {
   defaultValue?: string;
 }
 
-export default function CustomerSearch({ placeholder, defaultValue = "" }: Props) {
+export default function CustomerSearch({
+  placeholder,
+  defaultValue = "",
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

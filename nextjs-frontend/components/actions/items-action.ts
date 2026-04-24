@@ -9,7 +9,11 @@ import { ItemUpdate } from "@/app/openapi-client";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://backend:8000";
 
-export async function fetchItems(page: number = 1, size: number = 10, q?: string) {
+export async function fetchItems(
+  page: number = 1,
+  size: number = 10,
+  q?: string,
+) {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
 
@@ -75,7 +79,12 @@ export async function updateItem(id: string, data: ItemUpdate) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const detail = (err as { detail?: unknown }).detail;
-    return { error: typeof detail === "string" ? detail : JSON.stringify(detail) ?? "Failed to update item" };
+    return {
+      error:
+        typeof detail === "string"
+          ? detail
+          : (JSON.stringify(detail) ?? "Failed to update item"),
+    };
   }
 
   revalidatePath("/products");
@@ -105,7 +114,16 @@ export async function addItem(prevState: {}, formData: FormData) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { name, description, sku, category, unit_type, stock, min_stock, price } = validatedFields.data;
+  const {
+    name,
+    description,
+    sku,
+    category,
+    unit_type,
+    stock,
+    min_stock,
+    price,
+  } = validatedFields.data;
 
   const input = {
     headers: {
@@ -125,7 +143,12 @@ export async function addItem(prevState: {}, formData: FormData) {
   const { error } = await createItem(input);
   if (error) {
     const detail = (error as { detail?: unknown }).detail;
-    return { message: typeof detail === "string" ? detail : JSON.stringify(detail) ?? "Unknown error" };
+    return {
+      message:
+        typeof detail === "string"
+          ? detail
+          : (JSON.stringify(detail) ?? "Unknown error"),
+    };
   }
   redirect(`/products`);
 }

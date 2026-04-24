@@ -35,7 +35,10 @@ export default function Page() {
           </CardHeader>
           <CardContent className="grid gap-6 p-6">
             <div className="grid gap-3">
-              <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="email"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("email")}
               </Label>
               <Input
@@ -53,7 +56,10 @@ export default function Page() {
               {state?.message && <p>{state.message}</p>}
             </div>
             <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-              <Link href="/login" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500">
+              <Link
+                href="/login"
+                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500"
+              >
                 {t("backToLogin")}
               </Link>
             </div>

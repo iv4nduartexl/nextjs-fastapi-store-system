@@ -38,7 +38,11 @@ describe("login action", () => {
     });
 
     expect(cookies).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith("accessToken", "1245token", { maxAge: 86400, httpOnly: true, sameSite: "lax" });
+    expect(mockSet).toHaveBeenCalledWith("accessToken", "1245token", {
+      maxAge: 86400,
+      httpOnly: true,
+      sameSite: "lax",
+    });
   });
 
   it("should should return an error if the server validation fails", async () => {

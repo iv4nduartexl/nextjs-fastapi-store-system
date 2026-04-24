@@ -9,7 +9,10 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { fetchPurchases, PurchasesPage } from "@/components/actions/purchases-action";
+import {
+  fetchPurchases,
+  PurchasesPage,
+} from "@/components/actions/purchases-action";
 import { formatCurrency } from "@/lib/currency";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
@@ -17,7 +20,13 @@ import { Truck } from "lucide-react";
 import { TableFilters } from "@/components/ui/table-filters";
 
 interface Props {
-  searchParams: Promise<{ page?: string; size?: string; q?: string; payment_status?: string; status?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    size?: string;
+    q?: string;
+    payment_status?: string;
+    status?: string;
+  }>;
 }
 
 const PAYMENT_STATUS_STYLE: Record<string, string> = {
@@ -46,8 +55,10 @@ export default async function PurchasesListPage({ searchParams }: Props) {
   const totalPages = data ? Math.ceil((data.total || 0) / size) : 0;
 
   // Aggregate stats for header cards
-  const totalSpent = data?.items.reduce((s, p) => s + parseFloat(p.total_cost), 0) ?? 0;
-  const unpaidCount = data?.items.filter((p) => p.payment_status === "unpaid").length ?? 0;
+  const totalSpent =
+    data?.items.reduce((s, p) => s + parseFloat(p.total_cost), 0) ?? 0;
+  const unpaidCount =
+    data?.items.filter((p) => p.payment_status === "unpaid").length ?? 0;
 
   return (
     <div>
@@ -83,11 +94,17 @@ export default async function PurchasesListPage({ searchParams }: Props) {
               {formatCurrency(totalSpent.toString())}
             </p>
           </div>
-          <div className={`rounded-2xl border shadow-sm p-5 ${unpaidCount > 0 ? "bg-red-50 border-red-100" : "bg-white border-gray-100"}`}>
-            <p className={`text-[11px] font-semibold uppercase tracking-widest mb-1 ${unpaidCount > 0 ? "text-red-400" : "text-gray-400"}`}>
+          <div
+            className={`rounded-2xl border shadow-sm p-5 ${unpaidCount > 0 ? "bg-red-50 border-red-100" : "bg-white border-gray-100"}`}
+          >
+            <p
+              className={`text-[11px] font-semibold uppercase tracking-widest mb-1 ${unpaidCount > 0 ? "text-red-400" : "text-gray-400"}`}
+            >
               {t("paymentStatus.unpaid")}
             </p>
-            <p className={`text-2xl font-black tabular-nums ${unpaidCount > 0 ? "text-red-700" : "text-gray-900"}`}>
+            <p
+              className={`text-2xl font-black tabular-nums ${unpaidCount > 0 ? "text-red-700" : "text-gray-900"}`}
+            >
               {unpaidCount}
             </p>
           </div>
@@ -101,7 +118,11 @@ export default async function PurchasesListPage({ searchParams }: Props) {
           <div className="flex items-center gap-2 flex-wrap">
             <TableFilters
               fields={[
-                { type: "search", key: "q", placeholder: t("searchPlaceholder") },
+                {
+                  type: "search",
+                  key: "q",
+                  placeholder: t("searchPlaceholder"),
+                },
                 {
                   type: "select",
                   key: "payment_status",
@@ -137,16 +158,25 @@ export default async function PurchasesListPage({ searchParams }: Props) {
               <TableHead>{t("table.reference")}</TableHead>
               <TableHead className="text-center">{t("table.items")}</TableHead>
               <TableHead className="text-right">{t("table.total")}</TableHead>
-              <TableHead className="text-center">{t("table.payment")}</TableHead>
-              <TableHead className="text-center">{t("table.paymentStatus")}</TableHead>
+              <TableHead className="text-center">
+                {t("table.payment")}
+              </TableHead>
+              <TableHead className="text-center">
+                {t("table.paymentStatus")}
+              </TableHead>
               <TableHead className="text-center">{t("table.status")}</TableHead>
-              <TableHead className="text-center">{t("table.actions")}</TableHead>
+              <TableHead className="text-center">
+                {t("table.actions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!data?.items?.length ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-16 text-gray-400">
+                <TableCell
+                  colSpan={9}
+                  className="text-center py-16 text-gray-400"
+                >
                   <div className="flex flex-col items-center gap-3">
                     <Truck size={36} className="text-gray-200" />
                     <p>{t("noResults")}</p>
@@ -161,7 +191,9 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                   </TableCell>
                   <TableCell className="font-medium text-gray-800">
                     {purchase.supplier_name ?? (
-                      <span className="text-gray-400 italic text-xs">{t("detail.noSupplier")}</span>
+                      <span className="text-gray-400 italic text-xs">
+                        {t("detail.noSupplier")}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-gray-500">
@@ -179,12 +211,16 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${PAYMENT_STATUS_STYLE[purchase.payment_status] ?? "bg-gray-100 text-gray-700"}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${PAYMENT_STATUS_STYLE[purchase.payment_status] ?? "bg-gray-100 text-gray-700"}`}
+                    >
                       {t(`paymentStatus.${purchase.payment_status}`)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[purchase.status] ?? "bg-gray-100 text-gray-700"}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[purchase.status] ?? "bg-gray-100 text-gray-700"}`}
+                    >
                       {t(`status.${purchase.status}`)}
                     </span>
                   </TableCell>

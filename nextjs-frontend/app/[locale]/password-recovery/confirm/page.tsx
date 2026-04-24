@@ -32,9 +32,7 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">{t("title")}</CardTitle>
-          <CardDescription>
-            {t("description")}
-          </CardDescription>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">

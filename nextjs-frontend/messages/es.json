@@ -377,7 +377,9 @@
     "title": "Clientes",
     "subtitle": "Gestiona tus clientes con crédito y controla los saldos pendientes.",
     "newCustomer": "Nuevo Cliente",
-    "noResults": "Aún no hay clientes. Agrega tu primer cliente con crédito.",    "noSearchResults": "Ningún cliente coincide con tu búsqueda.",    "searchPlaceholder": "Buscar por nombre, teléfono o CI…",
+    "noResults": "Aún no hay clientes. Agrega tu primer cliente con crédito.",
+    "noSearchResults": "Ningún cliente coincide con tu búsqueda.",
+    "searchPlaceholder": "Buscar por nombre, teléfono o CI…",
     "cards": {
       "total": "Total Clientes",
       "outstanding": "Total Pendiente",

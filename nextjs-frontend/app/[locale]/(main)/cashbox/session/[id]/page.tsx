@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { fetchSessionById, fetchTransactions } from "@/components/actions/cashbox-action";
+import {
+  fetchSessionById,
+  fetchTransactions,
+} from "@/components/actions/cashbox-action";
 import SessionDetailClient from "./SessionDetailClient";
 
 interface Props {

@@ -33,7 +33,7 @@ async def read_item(
     q: str | None = Query(None, description="Search query (name, SKU, or category)"),
     category: str | None = Query(None, description="Filter by exact category name"),
 ):
-    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
+    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted is False)
     if q:
         query = query.filter(
             or_(

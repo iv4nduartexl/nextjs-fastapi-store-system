@@ -37,7 +37,10 @@ export default function CreateItemPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="name"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("name")} <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -72,7 +75,10 @@ export default function CreateItemPage() {
 
             {/* Category */}
             <div className="space-y-2">
-              <Label htmlFor="category" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="category"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("category")}
               </Label>
               <CategoryCombobox
@@ -89,7 +95,10 @@ export default function CreateItemPage() {
 
             {/* Unit Type */}
             <div className="space-y-2">
-              <Label htmlFor="unit_type" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="unit_type"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("soldBy")} <span className="text-red-500">*</span>
               </Label>
               <select
@@ -112,7 +121,10 @@ export default function CreateItemPage() {
 
             {/* Stock */}
             <div className="space-y-2">
-              <Label htmlFor="stock" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="stock"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("stock")} <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -132,7 +144,10 @@ export default function CreateItemPage() {
 
             {/* Min Stock */}
             <div className="space-y-2">
-              <Label htmlFor="min_stock" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="min_stock"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("minStock")}
               </Label>
               <Input
@@ -151,7 +166,10 @@ export default function CreateItemPage() {
 
             {/* Price */}
             <div className="space-y-2">
-              <Label htmlFor="price" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="price"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("price")}
               </Label>
               <Input
@@ -170,7 +188,10 @@ export default function CreateItemPage() {
 
             {/* Description — full width */}
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
+              <Label
+                htmlFor="description"
+                className="text-gray-700 dark:text-gray-300"
+              >
                 {t("description")}
               </Label>
               <Input
@@ -181,7 +202,9 @@ export default function CreateItemPage() {
                 className="w-full border-gray-300 dark:border-gray-600"
               />
               {state.errors?.description && (
-                <p className="text-red-500 text-sm">{state.errors.description}</p>
+                <p className="text-red-500 text-sm">
+                  {state.errors.description}
+                </p>
               )}
             </div>
           </div>

@@ -86,7 +86,10 @@ export async function fetchSales(
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };
 
-  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
   if (paymentMethod) params.set("payment_method", paymentMethod);
   if (status) params.set("status", status);
 
@@ -99,7 +102,9 @@ export async function fetchSales(
   return res.json();
 }
 
-export async function fetchSale(id: string): Promise<SaleRead | { message: string }> {
+export async function fetchSale(
+  id: string,
+): Promise<SaleRead | { message: string }> {
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };
 

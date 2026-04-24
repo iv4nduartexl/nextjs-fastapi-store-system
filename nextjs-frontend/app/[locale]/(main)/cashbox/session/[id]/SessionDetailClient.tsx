@@ -91,8 +91,14 @@ function StatCard({
 }) {
   return (
     <div className={`${colorClass} rounded-2xl px-4 py-3`}>
-      <p className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${labelColor}`}>{label}</p>
-      <p className={`text-lg font-black tabular-nums font-mono ${valueColor}`}>{value}</p>
+      <p
+        className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${labelColor}`}
+      >
+        {label}
+      </p>
+      <p className={`text-lg font-black tabular-nums font-mono ${valueColor}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -109,7 +115,11 @@ interface Props {
   locale: string;
 }
 
-export default function SessionDetailClient({ session, transactions, locale }: Props) {
+export default function SessionDetailClient({
+  session,
+  transactions,
+  locale,
+}: Props) {
   const t = useTranslations("cashbox");
   const currentLocale = useLocale();
   const [txFilter, setTxFilter] = useState<TxFilter>("all");
@@ -142,17 +152,32 @@ export default function SessionDetailClient({ session, transactions, locale }: P
     const yest = new Date();
     yest.setDate(yest.getDate() - 1);
     if (isSameDay(d, yest)) return t("yesterday");
-    return d.toLocaleDateString(locale, { weekday: "long", day: "2-digit", month: "long" });
+    return d.toLocaleDateString(locale, {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+    });
   }
 
   const diffColor =
-    diff === null ? "" : diff === 0 ? "text-green-700" : diff < 0 ? "text-red-600" : "text-blue-700";
+    diff === null
+      ? ""
+      : diff === 0
+        ? "text-green-700"
+        : diff < 0
+          ? "text-red-600"
+          : "text-blue-700";
   const diffBg =
-    diff === null ? "bg-gray-50" : diff === 0 ? "bg-green-50" : diff < 0 ? "bg-red-50" : "bg-blue-50";
+    diff === null
+      ? "bg-gray-50"
+      : diff === 0
+        ? "bg-green-50"
+        : diff < 0
+          ? "bg-red-50"
+          : "bg-blue-50";
 
   return (
     <div className="space-y-5 pb-10">
-
       {/* ── Top nav bar ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <Link
@@ -164,9 +189,7 @@ export default function SessionDetailClient({ session, transactions, locale }: P
         </Link>
         <span
           className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${
-            isOpen
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-100 text-gray-500"
+            isOpen ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
           }`}
         >
           {isOpen ? <Unlock size={11} /> : <Lock size={11} />}
@@ -176,7 +199,9 @@ export default function SessionDetailClient({ session, transactions, locale }: P
 
       {/* ── Session header ───────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className={`h-1 w-full ${isOpen ? "bg-green-500" : "bg-gray-300"}`} />
+        <div
+          className={`h-1 w-full ${isOpen ? "bg-green-500" : "bg-gray-300"}`}
+        />
         <div className="px-6 py-5">
           <p className="text-xs font-bold uppercase text-gray-400 tracking-widest mb-1">
             {t("sessionDetail.title")}
@@ -234,10 +259,13 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                       })}
                       {" · "}
                       <span className="font-normal text-gray-500">
-                        {new Date(session.closed_at).toLocaleDateString(locale, {
-                          day: "2-digit",
-                          month: "short",
-                        })}
+                        {new Date(session.closed_at).toLocaleDateString(
+                          locale,
+                          {
+                            day: "2-digit",
+                            month: "short",
+                          },
+                        )}
                       </span>
                     </p>
                   </div>
@@ -272,7 +300,11 @@ export default function SessionDetailClient({ session, transactions, locale }: P
       <div className="grid grid-cols-3 gap-3">
         {/* Row 1: Opening | Expected Cash | Counted */}
         <StatCard label={t("openingBalance")} value={formatCurrency(opening)} />
-        <StatCard label={t("expectedCash")} value={formatCurrency(expectedCash)} valueColor="text-gray-900" />
+        <StatCard
+          label={t("expectedCash")}
+          value={formatCurrency(expectedCash)}
+          valueColor="text-gray-900"
+        />
         <StatCard
           label={t("counted")}
           value={counted !== null ? formatCurrency(counted) : "—"}
@@ -301,8 +333,8 @@ export default function SessionDetailClient({ session, transactions, locale }: P
             diff === null
               ? "—"
               : diff === 0
-              ? "✓ " + t("balanced")
-              : (diff < 0 ? "▼ " : "▲ ") + formatCurrency(Math.abs(diff))
+                ? "✓ " + t("balanced")
+                : (diff < 0 ? "▼ " : "▲ ") + formatCurrency(Math.abs(diff))
           }
           colorClass={diffBg}
           valueColor={diffColor || "text-gray-300"}
@@ -384,7 +416,8 @@ export default function SessionDetailClient({ session, transactions, locale }: P
 
                 {items.map((tx) => {
                   const Icon = TX_ICONS[tx.type] ?? Wallet;
-                  const MethodIcon = METHOD_ICONS[tx.payment_method] ?? Banknote;
+                  const MethodIcon =
+                    METHOD_ICONS[tx.payment_method] ?? Banknote;
                   const isIn = tx.direction === "in";
                   const amount = parseFloat(tx.amount);
                   const isOpening = tx.type === "opening";
@@ -394,10 +427,11 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                     tx.reference_type === "sale" && tx.reference_id
                       ? `/${currentLocale}/sales/${tx.reference_id}`
                       : tx.reference_type === "purchase" && tx.reference_id
-                      ? `/${currentLocale}/purchases/${tx.reference_id}`
-                      : tx.reference_type === "customer_payment" && tx.reference_id
-                      ? `/${currentLocale}/customers/${tx.reference_id}`
-                      : null;
+                        ? `/${currentLocale}/purchases/${tx.reference_id}`
+                        : tx.reference_type === "customer_payment" &&
+                            tx.reference_id
+                          ? `/${currentLocale}/customers/${tx.reference_id}`
+                          : null;
 
                   const isManual =
                     tx.type === "income" || tx.type === "expense";
@@ -410,8 +444,8 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                           isOpening
                             ? "bg-gray-100"
                             : isIn
-                            ? "bg-green-100"
-                            : "bg-red-100"
+                              ? "bg-green-100"
+                              : "bg-red-100"
                         }`}
                       >
                         <Icon
@@ -420,8 +454,8 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                             isOpening
                               ? "text-gray-500"
                               : isIn
-                              ? "text-green-600"
-                              : "text-red-500"
+                                ? "text-green-600"
+                                : "text-red-500"
                           }
                         />
                       </div>
@@ -433,7 +467,10 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                             {tx.description ?? t(`txType.${tx.type}`)}
                           </p>
                           {detailHref && (
-                            <ExternalLink size={11} className="text-gray-400 shrink-0" />
+                            <ExternalLink
+                              size={11}
+                              className="text-gray-400 shrink-0"
+                            />
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -442,8 +479,8 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                               isOpening
                                 ? "bg-gray-100 text-gray-500"
                                 : isIn
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-600"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-600"
                             }`}
                           >
                             {t(`txType.${tx.type}`)}
@@ -456,7 +493,10 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                         {/* Prominent notes for manual income/expense */}
                         {isManual && tx.description && (
                           <div className="flex items-start gap-1 mt-1.5">
-                            <FileText size={10} className="text-gray-400 mt-0.5 shrink-0" />
+                            <FileText
+                              size={10}
+                              className="text-gray-400 mt-0.5 shrink-0"
+                            />
                             <p className="text-[11px] text-gray-500 italic leading-snug">
                               {tx.description}
                             </p>
@@ -471,8 +511,8 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                             isOpening
                               ? "text-gray-600"
                               : isIn
-                              ? "text-green-600"
-                              : "text-red-500"
+                                ? "text-green-600"
+                                : "text-red-500"
                           }`}
                         >
                           {isOpening ? "" : isIn ? "+" : "-"}
@@ -518,17 +558,21 @@ export default function SessionDetailClient({ session, transactions, locale }: P
             </span>
             <div className="flex items-center gap-4">
               <span className="text-xs font-bold text-green-600">
-                +{formatCurrency(
+                +
+                {formatCurrency(
                   filtered
-                    .filter((tx) => tx.direction === "in" && tx.type !== "opening")
-                    .reduce((s, tx) => s + parseFloat(tx.amount), 0)
+                    .filter(
+                      (tx) => tx.direction === "in" && tx.type !== "opening",
+                    )
+                    .reduce((s, tx) => s + parseFloat(tx.amount), 0),
                 )}
               </span>
               <span className="text-xs font-bold text-red-500">
-                -{formatCurrency(
+                -
+                {formatCurrency(
                   filtered
                     .filter((tx) => tx.direction === "out")
-                    .reduce((s, tx) => s + parseFloat(tx.amount), 0)
+                    .reduce((s, tx) => s + parseFloat(tx.amount), 0),
                 )}
               </span>
             </div>

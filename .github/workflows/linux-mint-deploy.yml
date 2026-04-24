@@ -1,0 +1,21 @@
+name: Clean Deploy to Mint
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Only deploy. No tests to keep it clean.
+      - name: Run with Docker Compose
+        run: |
+          docker compose down
+          docker compose up --build -d
+          docker image prune -f

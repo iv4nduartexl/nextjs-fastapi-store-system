@@ -72,7 +72,7 @@ async function getToken() {
 const API = process.env.API_BASE_URL;
 
 export async function createPurchase(
-  input: PurchaseCreate
+  input: PurchaseCreate,
 ): Promise<{ data?: PurchaseRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };
@@ -88,7 +88,10 @@ export async function createPurchase(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    return { error: typeof err.detail === "string" ? err.detail : `Error ${res.status}` };
+    return {
+      error:
+        typeof err.detail === "string" ? err.detail : `Error ${res.status}`,
+    };
   }
 
   const data: PurchaseRead = await res.json();
@@ -107,7 +110,10 @@ export async function fetchPurchases(
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };
 
-  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
   if (q) params.set("q", q);
   if (paymentStatus) params.set("payment_status", paymentStatus);
   if (status) params.set("status", status);
@@ -122,7 +128,7 @@ export async function fetchPurchases(
 }
 
 export async function fetchPurchase(
-  id: string
+  id: string,
 ): Promise<PurchaseRead | { message: string }> {
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };

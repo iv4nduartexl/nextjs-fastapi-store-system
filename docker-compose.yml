@@ -2,13 +2,11 @@ services:
   backend:
     build:
       context: fastapi_backend
-    user: appuser
     environment:
       - OPENAPI_OUTPUT_FILE=./shared-data/openapi.json
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/mydatabase
       - TEST_DATABASE_URL=postgresql+asyncpg://postgres:password@db:5433/testdatabase
       - MAIL_SERVER=mailhog
-      - PYTHONDONTWRITEBYTECODE=1
     ports:
       - "8000:8000"
     networks:

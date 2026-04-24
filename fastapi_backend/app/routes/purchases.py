@@ -32,9 +32,7 @@ async def create_purchase(
     user: User = Depends(current_active_user),
 ):
     if not data.items:
-        raise HTTPException(
-            status_code=422, detail="Purchase must have at least one item"
-        )
+        raise HTTPException(status_code=422, detail="Purchase must have at least one item")
 
     # Resolve item references for items that link to existing catalog entries
     item_ids = [i.item_id for i in data.items if i.item_id is not None]
@@ -74,10 +72,8 @@ async def create_purchase(
         quantity = line.quantity
         cost_price = line.cost_price.quantize(Decimal("0.01"))
         # Gram: cost_price is per 1000g (per kg). Subtotal = qty * cost_price / 1000
-        if line.unit_type == "gram":
-            line_subtotal = (quantity * cost_price / Decimal("1000")).quantize(
-                Decimal("0.01")
-            )
+        if (line.unit_type or unit_type) == "gram":
+            line_subtotal = (quantity * cost_price / Decimal("1000")).quantize(Decimal("0.01"))
         else:
             line_subtotal = (quantity * cost_price).quantize(Decimal("0.01"))
         subtotal += line_subtotal
@@ -150,14 +146,8 @@ async def create_purchase(
 
     # Auto-record in cashbox (only for paid purchases, silent if no session open)
     from app.models import PurchasePaymentStatus
-
     if purchase.payment_status == PurchasePaymentStatus.paid:
-        method_map = {
-            "cash": "cash",
-            "card": "card",
-            "transfer": "transfer",
-            "credit": "credit",
-        }
+        method_map = {"cash": "cash", "card": "card", "transfer": "transfer", "credit": "credit"}
         pmethod = method_map.get(purchase.payment_method.value, "cash")
         if pmethod != "credit":
             await record_auto_transaction(

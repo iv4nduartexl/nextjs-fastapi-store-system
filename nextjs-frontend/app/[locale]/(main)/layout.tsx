@@ -1,15 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Home,
-  ShoppingBag,
-  LayoutDashboard,
-  ShoppingCart,
-  Truck,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { Home, ShoppingBag, LayoutDashboard, ShoppingCart, Truck, Users, Wallet } from "lucide-react";
 import Image from "next/image";
 
 import {

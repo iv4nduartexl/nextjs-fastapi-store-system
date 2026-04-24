@@ -40,7 +40,7 @@ export function CategoryCombobox({
       try {
         const res = await fetch(
           `/api/categories${q ? `?q=${encodeURIComponent(q)}` : ""}`,
-          { cache: "no-store" },
+          { cache: "no-store" }
         );
         if (res.ok) {
           const data: string[] = await res.json();
@@ -56,10 +56,7 @@ export function CategoryCombobox({
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
@@ -81,17 +78,14 @@ export function CategoryCombobox({
   }
 
   const trimmed = inputVal.trim();
-  const exactMatch = suggestions.some(
-    (s) => s.toLowerCase() === trimmed.toLowerCase(),
-  );
+  const exactMatch = suggestions.some((s) => s.toLowerCase() === trimmed.toLowerCase());
   const showCreate = trimmed.length > 0 && !exactMatch;
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative${className ? ` ${className}` : ""}`}
-    >
-      {name && <input type="hidden" name={name} value={inputVal} />}
+    <div ref={containerRef} className={`relative${className ? ` ${className}` : ""}`}>
+      {name && (
+        <input type="hidden" name={name} value={inputVal} />
+      )}
       <div className="relative">
         <input
           type="text"

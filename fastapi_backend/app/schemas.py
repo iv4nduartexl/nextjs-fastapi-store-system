@@ -6,14 +6,7 @@ from fastapi_users import schemas
 from pydantic import BaseModel
 from uuid import UUID
 
-from app.models import (
-    UnitType,
-    PaymentMethod,
-    SaleStatus,
-    PurchaseStatus,
-    PurchasePaymentStatus,
-    PurchasePaymentMethod,
-)
+from app.models import UnitType, PaymentMethod, SaleStatus, PurchaseStatus, PurchasePaymentStatus, PurchasePaymentMethod
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
@@ -287,3 +280,4 @@ class CashboxManualTransaction(BaseModel):
     amount: Decimal
     payment_method: str = "cash"
     description: str | None = None
+

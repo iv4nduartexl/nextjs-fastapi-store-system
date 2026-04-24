@@ -69,17 +69,14 @@ async function getToken() {
 const API = process.env.API_BASE_URL;
 
 export async function createCustomer(
-  data: CustomerCreate,
+  data: CustomerCreate
 ): Promise<{ data?: CustomerRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };
 
   const res = await fetch(`${API}/customers/`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   });
 
@@ -94,15 +91,12 @@ export async function createCustomer(
 export async function fetchCustomers(
   page = 1,
   size = 20,
-  q?: string,
+  q?: string
 ): Promise<CustomerPage | { message: string }> {
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };
 
-  const params = new URLSearchParams({
-    page: String(page),
-    size: String(size),
-  });
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (q) params.set("q", q);
 
   const res = await fetch(`${API}/customers/?${params}`, {
@@ -115,7 +109,7 @@ export async function fetchCustomers(
 }
 
 export async function fetchCustomer(
-  id: string,
+  id: string
 ): Promise<CustomerDetailRead | { message: string }> {
   const token = await getToken();
   if (!token) return { message: "Not authenticated" };
@@ -131,17 +125,14 @@ export async function fetchCustomer(
 
 export async function updateCustomer(
   id: string,
-  data: CustomerUpdate,
+  data: CustomerUpdate
 ): Promise<{ data?: CustomerRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };
 
   const res = await fetch(`${API}/customers/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   });
 
@@ -156,17 +147,14 @@ export async function updateCustomer(
 
 export async function recordPayment(
   customerId: string,
-  data: CustomerPaymentCreate,
+  data: CustomerPaymentCreate
 ): Promise<{ data?: CustomerPaymentRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };
 
   const res = await fetch(`${API}/customers/${customerId}/payments`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   });
 

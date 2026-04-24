@@ -41,9 +41,8 @@ async def _build_customer_read(
     total_credit = Decimal(str(credit_result.scalar()))
 
     paid_result = await db.execute(
-        select(func.coalesce(func.sum(CustomerPayment.amount), 0)).where(
-            CustomerPayment.customer_id == customer.id
-        )
+        select(func.coalesce(func.sum(CustomerPayment.amount), 0))
+        .where(CustomerPayment.customer_id == customer.id)
     )
     total_paid = Decimal(str(paid_result.scalar()))
 
@@ -66,10 +65,7 @@ async def _batch_balances(customer_ids: list[UUID], db: AsyncSession) -> dict:
     credits = {row.customer_id: Decimal(str(row.tc)) for row in credit_result}
 
     paid_result = await db.execute(
-        select(
-            CustomerPayment.customer_id,
-            func.coalesce(func.sum(CustomerPayment.amount), 0).label("tp"),
-        )
+        select(CustomerPayment.customer_id, func.coalesce(func.sum(CustomerPayment.amount), 0).label("tp"))
         .where(CustomerPayment.customer_id.in_(customer_ids))
         .group_by(CustomerPayment.customer_id)
     )
@@ -95,7 +91,7 @@ async def list_customers(
 ):
     base = select(Customer).where(Customer.user_id == user.id)
     if not show_inactive:
-        base = base.where(Customer.is_active.is_(True))
+        base = base.where(Customer.is_active == True)
     if q:
         base = base.where(
             or_(
@@ -168,8 +164,7 @@ async def get_customer(
         raise HTTPException(status_code=404, detail="Customer not found")
 
     credit_sales = [
-        s
-        for s in customer.sales
+        s for s in customer.sales
         if s.payment_method == PaymentMethod.credit and s.status != SaleStatus.cancelled
     ]
     total_credit = sum(s.total for s in credit_sales) or Decimal("0")
@@ -185,9 +180,7 @@ async def get_customer(
     ]
     detail.payments = [
         CustomerPaymentRead.model_validate(p)
-        for p in sorted(
-            customer.credit_payments, key=lambda x: x.payment_date, reverse=True
-        )
+        for p in sorted(customer.credit_payments, key=lambda x: x.payment_date, reverse=True)
     ]
     return detail
 
@@ -220,9 +213,7 @@ async def update_customer(
     return await _build_customer_read(customer, db)
 
 
-@router.post(
-    "/{customer_id}/payments", response_model=CustomerPaymentRead, status_code=201
-)
+@router.post("/{customer_id}/payments", response_model=CustomerPaymentRead, status_code=201)
 async def record_payment(
     customer_id: UUID,
     data: CustomerPaymentCreate,
@@ -274,7 +265,6 @@ async def record_payment(
 
     # Auto-record in cashbox
     from app.routes.cashbox import record_auto_transaction
-
     await record_auto_transaction(
         db=db,
         user_id=user.id,

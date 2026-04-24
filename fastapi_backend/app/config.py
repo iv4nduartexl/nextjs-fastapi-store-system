@@ -1,4 +1,4 @@
-import json
+from typing import Set
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -35,18 +35,8 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # CORS — stored as raw string to avoid pydantic-settings JSON-parsing issues.
-    # Accepts JSON array ("[\"http://a.com\"]") or comma-separated ("http://a.com,http://b.com").
-    CORS_ORIGINS: str = "*"
-
-    @property
-    def cors_origins(self) -> list[str]:
-        v = self.CORS_ORIGINS.strip()
-        if not v:
-            return []
-        if v.startswith("["):
-            return json.loads(v)
-        return [s.strip() for s in v.split(",") if s.strip()]
+    # CORS
+    CORS_ORIGINS: Set[str]
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

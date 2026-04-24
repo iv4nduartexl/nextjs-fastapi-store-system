@@ -10,6 +10,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "a1b2c3d4e5f6"
 down_revision: Union[str, None] = "f1a2b3c4d5e6"
@@ -22,8 +23,7 @@ def upgrade() -> None:
     op.execute(sa.text("ALTER TYPE paymentmethod ADD VALUE IF NOT EXISTS 'credit'"))
 
     # 2. Create customers table
-    op.execute(
-        sa.text("""
+    op.execute(sa.text("""
         CREATE TABLE customers (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
@@ -37,14 +37,12 @@ def upgrade() -> None:
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-    """)
-    )
+    """))
     op.execute(sa.text("CREATE INDEX ix_customers_user_id ON customers (user_id)"))
     op.execute(sa.text("CREATE INDEX ix_customers_name ON customers (user_id, name)"))
 
     # 3. Create customer_payments table
-    op.execute(
-        sa.text("""
+    op.execute(sa.text("""
         CREATE TABLE customer_payments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
@@ -55,20 +53,15 @@ def upgrade() -> None:
             notes VARCHAR,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-    """)
-    )
-    op.execute(
-        sa.text(
-            "CREATE INDEX ix_customer_payments_customer_id ON customer_payments (customer_id)"
-        )
-    )
+    """))
+    op.execute(sa.text(
+        "CREATE INDEX ix_customer_payments_customer_id ON customer_payments (customer_id)"
+    ))
 
     # 4. Add customer_id to sales
-    op.execute(
-        sa.text(
-            "ALTER TABLE sales ADD COLUMN customer_id UUID REFERENCES customers(id) ON DELETE SET NULL"
-        )
-    )
+    op.execute(sa.text(
+        "ALTER TABLE sales ADD COLUMN customer_id UUID REFERENCES customers(id) ON DELETE SET NULL"
+    ))
     op.execute(sa.text("CREATE INDEX ix_sales_customer_id ON sales (customer_id)"))
 
 

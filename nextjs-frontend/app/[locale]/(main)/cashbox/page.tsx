@@ -14,7 +14,9 @@ export default async function CashboxPage() {
     fetchSessions(50),
   ]);
 
-  const transactions = session ? await fetchTransactions(session.id, 100) : [];
+  const transactions = session
+    ? await fetchTransactions(session.id, 100)
+    : [];
 
   // Past sessions excludes the currently open one
   const history = pastSessions.filter((s) => s.status !== "open");

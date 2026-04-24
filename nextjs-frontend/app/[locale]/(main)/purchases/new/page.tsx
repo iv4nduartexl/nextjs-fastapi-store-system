@@ -46,10 +46,7 @@ interface LineItem {
 
 const UNIT_TYPES = ["unit", "gram", "liter", "pack"];
 
-const PAYMENT_METHODS: {
-  value: PurchasePaymentMethod;
-  icon: React.ElementType;
-}[] = [
+const PAYMENT_METHODS: { value: PurchasePaymentMethod; icon: React.ElementType }[] = [
   { value: "cash", icon: Banknote },
   { value: "card", icon: CreditCard },
   { value: "transfer", icon: ArrowRightLeft },
@@ -67,12 +64,10 @@ export default function NewPurchasePage() {
   const [supplierName, setSupplierName] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(
-    new Date().toISOString().slice(0, 10),
+    new Date().toISOString().slice(0, 10)
   );
-  const [paymentMethod, setPaymentMethod] =
-    useState<PurchasePaymentMethod>("cash");
-  const [paymentStatus, setPaymentStatus] =
-    useState<PurchasePaymentStatus>("paid");
+  const [paymentMethod, setPaymentMethod] = useState<PurchasePaymentMethod>("cash");
+  const [paymentStatus, setPaymentStatus] = useState<PurchasePaymentStatus>("paid");
   const [tax, setTax] = useState("0");
   const [notes, setNotes] = useState("");
 
@@ -94,25 +89,16 @@ export default function NewPurchasePage() {
   // Product search debounce
   useEffect(() => {
     const q = searchQuery.trim();
-    if (!q) {
-      setSearchResults([]);
-      setSearchOpen(false);
-      return;
-    }
+    if (!q) { setSearchResults([]); setSearchOpen(false); return; }
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api/items?size=20&q=${encodeURIComponent(q)}`,
-          { cache: "no-store" },
-        );
+        const res = await fetch(`/api/items?size=20&q=${encodeURIComponent(q)}`, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setSearchResults(data.items ?? []);
           setSearchOpen(true);
         }
-      } catch {
-        /* silent */
-      }
+      } catch { /* silent */ }
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -121,10 +107,8 @@ export default function NewPurchasePage() {
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        searchRef.current &&
-        !searchRef.current.contains(e.target as Node)
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        searchRef.current && !searchRef.current.contains(e.target as Node)
       ) {
         setSearchOpen(false);
       }
@@ -144,8 +128,7 @@ export default function NewPurchasePage() {
         costPrice: 0,
         sellPrice: product.price != null ? Number(product.price) : undefined,
         existingStock: product.stock != null ? Number(product.stock) : 0,
-        existingPrice:
-          product.price != null ? Number(product.price) : undefined,
+        existingPrice: product.price != null ? Number(product.price) : undefined,
         sku: product.sku ?? undefined,
         category: product.category ?? undefined,
         catalogSku: product.sku ?? undefined,
@@ -159,25 +142,12 @@ export default function NewPurchasePage() {
   function addBlankLine() {
     setLines((prev) => [
       ...prev,
-      {
-        itemName: "",
-        unitType: "unit",
-        quantity: 1,
-        costPrice: 0,
-        sku: "",
-        category: "",
-      },
+      { itemName: "", unitType: "unit", quantity: 1, costPrice: 0, sku: "", category: "" },
     ]);
   }
 
-  function updateLine<K extends keyof LineItem>(
-    index: number,
-    field: K,
-    value: LineItem[K],
-  ) {
-    setLines((prev) =>
-      prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)),
-    );
+  function updateLine<K extends keyof LineItem>(index: number, field: K, value: LineItem[K]) {
+    setLines((prev) => prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)));
   }
 
   function removeLine(index: number) {
@@ -186,21 +156,13 @@ export default function NewPurchasePage() {
 
   const subtotal = lines.reduce((s, l) => {
     // Gram: costPrice is per 1000g (per kg). Subtotal = qty × price / 1000
-    return (
-      s +
-      (l.unitType === "gram"
-        ? (l.costPrice * l.quantity) / 1000
-        : l.costPrice * l.quantity)
-    );
+    return s + (l.unitType === "gram" ? l.costPrice * l.quantity / 1000 : l.costPrice * l.quantity);
   }, 0);
   const taxNum = parseFloat(tax) || 0;
   const totalCost = subtotal + taxNum;
 
   async function handleSubmit() {
-    if (lines.length === 0) {
-      setErrorMsg(t("form.noItems"));
-      return;
-    }
+    if (lines.length === 0) { setErrorMsg(t("form.noItems")); return; }
     if (lines.some((l) => !l.itemName.trim())) {
       setErrorMsg("All items need a product name.");
       return;
@@ -209,12 +171,11 @@ export default function NewPurchasePage() {
     // Check if any linked product has existing stock AND a changed sell price
     const needsConfirm = lines
       .map((l, i) => ({ l, i }))
-      .filter(
-        ({ l }) =>
-          l.itemId &&
-          l.sellPrice !== undefined &&
-          (l.existingStock ?? 0) > 0 &&
-          l.sellPrice !== l.existingPrice,
+      .filter(({ l }) =>
+        l.itemId &&
+        l.sellPrice !== undefined &&
+        (l.existingStock ?? 0) > 0 &&
+        l.sellPrice !== l.existingPrice
       )
       .map(({ i }) => i);
 
@@ -286,9 +247,7 @@ export default function NewPurchasePage() {
             </h2>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">
-                {t("form.supplierName")}
-              </label>
+              <label className="text-xs font-medium text-gray-600">{t("form.supplierName")}</label>
               <Input
                 value={supplierName}
                 onChange={(e) => setSupplierName(e.target.value)}
@@ -298,9 +257,7 @@ export default function NewPurchasePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">
-                {t("form.referenceNumber")}
-              </label>
+              <label className="text-xs font-medium text-gray-600">{t("form.referenceNumber")}</label>
               <Input
                 value={referenceNumber}
                 onChange={(e) => setReferenceNumber(e.target.value)}
@@ -310,9 +267,7 @@ export default function NewPurchasePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">
-                {t("form.purchaseDate")}
-              </label>
+              <label className="text-xs font-medium text-gray-600">{t("form.purchaseDate")}</label>
               <Input
                 type="date"
                 value={purchaseDate}
@@ -346,9 +301,7 @@ export default function NewPurchasePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">
-                {t("form.paymentStatus")}
-              </label>
+              <label className="text-xs font-medium text-gray-600">{t("form.paymentStatus")}</label>
               <div className="flex gap-2">
                 {PAYMENT_STATUSES.map((s) => (
                   <button
@@ -360,8 +313,8 @@ export default function NewPurchasePage() {
                         ? s === "paid"
                           ? "border-green-500 bg-green-50 text-green-700"
                           : s === "unpaid"
-                            ? "border-red-400 bg-red-50 text-red-700"
-                            : "border-amber-400 bg-amber-50 text-amber-700"
+                          ? "border-red-400 bg-red-50 text-red-700"
+                          : "border-amber-400 bg-amber-50 text-amber-700"
                         : "border-gray-200 text-gray-500 hover:border-gray-300"
                     }`}
                   >
@@ -374,9 +327,7 @@ export default function NewPurchasePage() {
 
           {/* Notes */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
-              {t("form.notes")}
-            </label>
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">{t("form.notes")}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -400,10 +351,7 @@ export default function NewPurchasePage() {
             {/* Product search */}
             <div className="px-5 pt-4 pb-2 relative">
               <div className="relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={14}
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <Input
                   ref={searchRef}
                   value={searchQuery}
@@ -413,10 +361,7 @@ export default function NewPurchasePage() {
                 />
                 {searchQuery && (
                   <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSearchOpen(false);
-                    }}
+                    onClick={() => { setSearchQuery(""); setSearchOpen(false); }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X size={13} />
@@ -441,14 +386,8 @@ export default function NewPurchasePage() {
                         {tDash(`unitAbbr.${p.unit_type ?? "unit"}`)}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-800 truncate">
-                          {p.name}
-                        </p>
-                        {p.category && (
-                          <p className="text-xs text-gray-400 truncate">
-                            {p.category}
-                          </p>
-                        )}
+                        <p className="font-medium text-gray-800 truncate">{p.name}</p>
+                        {p.category && <p className="text-xs text-gray-400 truncate">{p.category}</p>}
                       </div>
                     </button>
                   ))}
@@ -490,9 +429,7 @@ export default function NewPurchasePage() {
                         <td className="px-5 py-2">
                           <select
                             value={line.unitType}
-                            onChange={(e) =>
-                              updateLine(i, "unitType", e.target.value)
-                            }
+                            onChange={(e) => updateLine(i, "unitType", e.target.value)}
                             className="w-14 text-[11px] font-black text-gray-500 bg-gray-100 rounded-lg text-center py-1.5 px-1 border-0 focus:ring-1 focus:ring-green-400 appearance-none"
                           >
                             {UNIT_TYPES.map((u) => (
@@ -507,22 +444,15 @@ export default function NewPurchasePage() {
                           <div className="flex items-center gap-1.5">
                             <Input
                               value={line.itemName}
-                              onChange={(e) =>
-                                updateLine(i, "itemName", e.target.value)
-                              }
+                              onChange={(e) => updateLine(i, "itemName", e.target.value)}
                               placeholder={t("form.productNamePlaceholder")}
                               readOnly={!!line.itemId}
                               className={`h-8 text-sm border-0 bg-transparent p-0 focus:ring-0 font-medium flex-1 min-w-0 ${
-                                line.itemId
-                                  ? "text-gray-700 cursor-default select-none"
-                                  : ""
+                                line.itemId ? "text-gray-700 cursor-default select-none" : ""
                               }`}
                             />
                             {line.itemId && (
-                              <span
-                                className="shrink-0 w-1.5 h-1.5 rounded-full bg-green-400"
-                                title={t("detail.linked")}
-                              />
+                              <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-green-400" title={t("detail.linked")} />
                             )}
                           </div>
                         </td>
@@ -531,20 +461,9 @@ export default function NewPurchasePage() {
                           <Input
                             type="number"
                             min={0.001}
-                            step={
-                              line.unitType === "gram" ||
-                              line.unitType === "liter"
-                                ? 0.001
-                                : 1
-                            }
+                            step={line.unitType === "gram" || line.unitType === "liter" ? 0.001 : 1}
                             value={line.quantity}
-                            onChange={(e) =>
-                              updateLine(
-                                i,
-                                "quantity",
-                                parseFloat(e.target.value) || 1,
-                              )
-                            }
+                            onChange={(e) => updateLine(i, "quantity", parseFloat(e.target.value) || 1)}
                             className="h-8 text-sm text-right font-mono w-full"
                           />
                         </td>
@@ -553,20 +472,10 @@ export default function NewPurchasePage() {
                           <input
                             type="text"
                             inputMode="numeric"
-                            value={
-                              line.costPrice === 0
-                                ? ""
-                                : line.costPrice.toLocaleString(undefined, {
-                                    maximumFractionDigits: 0,
-                                  })
-                            }
+                            value={line.costPrice === 0 ? "" : line.costPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                             onChange={(e) => {
                               const raw = e.target.value.replace(/\D/g, "");
-                              updateLine(
-                                i,
-                                "costPrice",
-                                raw ? parseInt(raw, 10) : 0,
-                              );
+                              updateLine(i, "costPrice", raw ? parseInt(raw, 10) : 0);
                             }}
                             placeholder="0"
                             className="h-8 text-sm text-right font-mono w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
@@ -577,13 +486,9 @@ export default function NewPurchasePage() {
                           {line.unitType === "gram" ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="font-mono font-semibold text-gray-800">
-                                {formatCurrency(
-                                  (line.costPrice * line.quantity) / 1000,
-                                )}
+                                {formatCurrency(line.costPrice * line.quantity / 1000)}
                               </span>
-                              <span className="text-[10px] text-gray-400">
-                                {t("form.perKgHint")}
-                              </span>
+                              <span className="text-[10px] text-gray-400">{t("form.perKgHint")}</span>
                             </div>
                           ) : (
                             <span className="font-mono font-semibold text-gray-800">
@@ -599,17 +504,14 @@ export default function NewPurchasePage() {
                             title={t("form.additionalDetailsTitle")}
                             className={`p-1.5 rounded-lg transition-colors ${
                               line.itemId
-                                ? line.sellPrice !== undefined &&
-                                  line.sellPrice !== line.existingPrice
+                                ? line.sellPrice !== undefined && line.sellPrice !== line.existingPrice
                                   ? "text-amber-500 bg-amber-50 hover:bg-amber-100"
                                   : line.sellPrice !== undefined
-                                    ? "text-blue-500 bg-blue-50 hover:bg-blue-100"
-                                    : "text-gray-300 hover:text-blue-500 hover:bg-blue-50"
-                                : line.sku ||
-                                    line.category ||
-                                    line.sellPrice !== undefined
-                                  ? "text-amber-500 bg-amber-50 hover:bg-amber-100"
-                                  : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                                  ? "text-blue-500 bg-blue-50 hover:bg-blue-100"
+                                  : "text-gray-300 hover:text-blue-500 hover:bg-blue-50"
+                                : line.sku || line.category || line.sellPrice !== undefined
+                                ? "text-amber-500 bg-amber-50 hover:bg-amber-100"
+                                : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"
                             }`}
                           >
                             <Tag size={14} />
@@ -659,9 +561,7 @@ export default function NewPurchasePage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>{t("form.subtotalLabel")}</span>
-                <span className="font-mono tabular-nums">
-                  {formatCurrency(subtotal)}
-                </span>
+                <span className="font-mono tabular-nums">{formatCurrency(subtotal)}</span>
               </div>
 
               <div className="flex items-center justify-between text-gray-600">
@@ -681,16 +581,12 @@ export default function NewPurchasePage() {
 
               <div className="flex justify-between pt-3 border-t border-gray-200 font-bold text-gray-900">
                 <span>{t("form.totalLabel")}</span>
-                <span className="text-xl font-black tabular-nums">
-                  {formatCurrency(totalCost)}
-                </span>
+                <span className="text-xl font-black tabular-nums">{formatCurrency(totalCost)}</span>
               </div>
             </div>
 
             {errorMsg && (
-              <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">
-                {errorMsg}
-              </p>
+              <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">{errorMsg}</p>
             )}
 
             <Button
@@ -708,9 +604,7 @@ export default function NewPurchasePage() {
       {metaModal !== null && lines[metaModal] && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setMetaModal(null);
-          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setMetaModal(null); }}
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -732,37 +626,26 @@ export default function NewPurchasePage() {
               {/* SKU + Category */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-600">
-                    {t("form.sku")}
-                  </label>
+                  <label className="text-xs font-medium text-gray-600">{t("form.sku")}</label>
                   <Input
                     value={lines[metaModal].sku ?? ""}
-                    onChange={(e) =>
-                      updateLine(metaModal!, "sku", e.target.value || undefined)
-                    }
+                    onChange={(e) => updateLine(metaModal!, "sku", e.target.value || undefined)}
                     placeholder={t("form.skuPlaceholder")}
                     className={`h-9 text-sm font-mono ${
-                      lines[metaModal].sku &&
-                      lines[metaModal].sku === lines[metaModal].catalogSku
+                      lines[metaModal].sku && lines[metaModal].sku === lines[metaModal].catalogSku
                         ? "text-blue-600"
                         : ""
                     }`}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-600">
-                    {t("form.category")}
-                  </label>
+                  <label className="text-xs font-medium text-gray-600">{t("form.category")}</label>
                   <CategoryCombobox
                     value={lines[metaModal].category ?? ""}
-                    onChange={(v) =>
-                      updateLine(metaModal!, "category", v || undefined)
-                    }
+                    onChange={(v) => updateLine(metaModal!, "category", v || undefined)}
                     placeholder={t("form.categoryPlaceholder")}
                     inputClassName={
-                      lines[metaModal].category &&
-                      lines[metaModal].category ===
-                        lines[metaModal].catalogCategory
+                      lines[metaModal].category && lines[metaModal].category === lines[metaModal].catalogCategory
                         ? "text-blue-600"
                         : ""
                     }
@@ -773,44 +656,25 @@ export default function NewPurchasePage() {
               {/* Unit + Quantity — side by side, always editable */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-600">
-                    {t("form.unitType")}
-                  </label>
+                  <label className="text-xs font-medium text-gray-600">{t("form.unitType")}</label>
                   <select
                     value={lines[metaModal].unitType}
-                    onChange={(e) =>
-                      updateLine(metaModal!, "unitType", e.target.value)
-                    }
+                    onChange={(e) => updateLine(metaModal!, "unitType", e.target.value)}
                     className="w-full h-9 text-sm bg-gray-50 rounded-lg border border-gray-200 px-2 focus:outline-none focus:ring-2 focus:ring-green-400"
                   >
                     {UNIT_TYPES.map((u) => (
-                      <option key={u} value={u}>
-                        {tDash(`unitAbbr.${u}`)}
-                      </option>
+                      <option key={u} value={u}>{tDash(`unitAbbr.${u}`)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-600">
-                    {t("form.qty")}
-                  </label>
+                  <label className="text-xs font-medium text-gray-600">{t("form.qty")}</label>
                   <Input
                     type="number"
                     min={0.001}
-                    step={
-                      lines[metaModal].unitType === "gram" ||
-                      lines[metaModal].unitType === "liter"
-                        ? 0.001
-                        : 1
-                    }
+                    step={lines[metaModal].unitType === "gram" || lines[metaModal].unitType === "liter" ? 0.001 : 1}
                     value={lines[metaModal].quantity}
-                    onChange={(e) =>
-                      updateLine(
-                        metaModal!,
-                        "quantity",
-                        parseFloat(e.target.value) || 1,
-                      )
-                    }
+                    onChange={(e) => updateLine(metaModal!, "quantity", parseFloat(e.target.value) || 1)}
                     className="h-9 text-sm text-right font-mono"
                   />
                 </div>
@@ -818,23 +682,17 @@ export default function NewPurchasePage() {
 
               {/* Product name — editable for new products only */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-600">
-                  {t("form.productName")}
-                </label>
+                <label className="text-xs font-medium text-gray-600">{t("form.productName")}</label>
                 {lines[metaModal].itemId ? (
                   <p className="h-9 flex items-center px-3 rounded-lg bg-gray-50 border border-gray-100 text-sm font-medium text-gray-700 truncate">
                     {lines[metaModal].itemName}
-                    <span className="ml-2 text-[10px] text-green-600 font-semibold shrink-0">
-                      ✓ {t("detail.linked")}
-                    </span>
+                    <span className="ml-2 text-[10px] text-green-600 font-semibold shrink-0">✓ {t("detail.linked")}</span>
                   </p>
                 ) : (
                   <Input
                     autoFocus
                     value={lines[metaModal].itemName}
-                    onChange={(e) =>
-                      updateLine(metaModal!, "itemName", e.target.value)
-                    }
+                    onChange={(e) => updateLine(metaModal!, "itemName", e.target.value)}
                     placeholder={t("form.productNamePlaceholder")}
                     className="h-9 text-sm"
                   />
@@ -846,31 +704,17 @@ export default function NewPurchasePage() {
 
               {/* Cost price */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-600">
-                  {t("form.costPrice")}
-                </label>
+                <label className="text-xs font-medium text-gray-600">{t("form.costPrice")}</label>
                 {lines[metaModal].unitType === "gram" && (
-                  <p className="text-[11px] text-amber-600">
-                    {t("form.perKgHint")}
-                  </p>
+                  <p className="text-[11px] text-amber-600">{t("form.perKgHint")}</p>
                 )}
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={
-                    lines[metaModal].costPrice === 0
-                      ? ""
-                      : lines[metaModal].costPrice.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })
-                  }
+                  value={lines[metaModal].costPrice === 0 ? "" : lines[metaModal].costPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");
-                    updateLine(
-                      metaModal!,
-                      "costPrice",
-                      raw ? parseInt(raw, 10) : 0,
-                    );
+                    updateLine(metaModal!, "costPrice", raw ? parseInt(raw, 10) : 0);
                   }}
                   placeholder="0"
                   className="w-full h-9 text-sm text-right rounded-lg border border-gray-200 bg-gray-50 px-3 font-mono focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -879,49 +723,30 @@ export default function NewPurchasePage() {
 
               {/* Sell price — all products */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-blue-600">
-                  {t("form.sellPrice")}
-                </label>
-                {lines[metaModal].itemId &&
-                  lines[metaModal].existingPrice !== undefined && (
-                    <p className="text-[11px] text-gray-400">
-                      {t("form.currentSellPrice")}:{" "}
-                      {lines[metaModal].existingPrice! > 0
-                        ? formatCurrency(lines[metaModal].existingPrice!)
-                        : "—"}
-                    </p>
-                  )}
+                <label className="text-xs font-medium text-blue-600">{t("form.sellPrice")}</label>
+                {lines[metaModal].itemId && lines[metaModal].existingPrice !== undefined && (
+                  <p className="text-[11px] text-gray-400">
+                    {t("form.currentSellPrice")}: {lines[metaModal].existingPrice! > 0 ? formatCurrency(lines[metaModal].existingPrice!) : "—"}
+                  </p>
+                )}
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={
-                    lines[metaModal].sellPrice === undefined ||
-                    lines[metaModal].sellPrice === 0
-                      ? ""
-                      : lines[metaModal].sellPrice!.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })
-                  }
+                  value={lines[metaModal].sellPrice === undefined || lines[metaModal].sellPrice === 0 ? "" : lines[metaModal].sellPrice!.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");
-                    updateLine(
-                      metaModal!,
-                      "sellPrice",
-                      raw ? parseInt(raw, 10) : undefined,
-                    );
+                    updateLine(metaModal!, "sellPrice", raw ? parseInt(raw, 10) : undefined);
                   }}
                   placeholder={t("form.sellPricePlaceholder")}
                   className="w-full h-11 text-2xl font-black text-right rounded-xl border border-blue-200 bg-blue-50 px-4 font-mono focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
-                {lines[metaModal].itemId &&
-                  (lines[metaModal].existingStock ?? 0) > 0 &&
+                {lines[metaModal].itemId && (lines[metaModal].existingStock ?? 0) > 0 &&
                   lines[metaModal].sellPrice !== undefined &&
-                  lines[metaModal].sellPrice !==
-                    lines[metaModal].existingPrice && (
-                    <p className="text-[11px] text-amber-600 bg-amber-50 rounded-lg px-2 py-1.5">
-                      ⚠ {t("form.sellPriceOverwriteWarn")}
-                    </p>
-                  )}
+                  lines[metaModal].sellPrice !== lines[metaModal].existingPrice && (
+                  <p className="text-[11px] text-amber-600 bg-amber-50 rounded-lg px-2 py-1.5">
+                    ⚠ {t("form.sellPriceOverwriteWarn")}
+                  </p>
+                )}
               </div>
 
               <Button
@@ -938,11 +763,7 @@ export default function NewPurchasePage() {
       {overwriteModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setOverwriteModal(false);
-            }
-          }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setOverwriteModal(false); } }}
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -952,10 +773,7 @@ export default function NewPurchasePage() {
                   {t("form.overwritePriceTitle")}
                 </h3>
               </div>
-              <button
-                onClick={() => setOverwriteModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={() => setOverwriteModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={16} />
               </button>
             </div>
@@ -967,23 +785,13 @@ export default function NewPurchasePage() {
                 {pendingOverwrites.map((idx) => {
                   const l = lines[idx];
                   return (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between bg-amber-50 rounded-xl px-4 py-2.5"
-                    >
+                    <div key={idx} className="flex items-center justify-between bg-amber-50 rounded-xl px-4 py-2.5">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                          {l.itemName}
-                        </p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">{l.itemName}</p>
                         <p className="text-xs text-gray-500">
-                          {t("form.currentSellPrice")}:{" "}
-                          {l.existingPrice
-                            ? formatCurrency(l.existingPrice)
-                            : "—"}
+                          {t("form.currentSellPrice")}: {l.existingPrice ? formatCurrency(l.existingPrice) : "—"}
                           {" → "}
-                          <span className="font-bold text-blue-600">
-                            {formatCurrency(l.sellPrice ?? 0)}
-                          </span>
+                          <span className="font-bold text-blue-600">{formatCurrency(l.sellPrice ?? 0)}</span>
                         </p>
                       </div>
                     </div>

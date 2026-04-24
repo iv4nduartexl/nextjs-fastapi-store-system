@@ -68,10 +68,7 @@ class Category(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
 
     from sqlalchemy import UniqueConstraint
-
-    __table_args__ = (
-        UniqueConstraint("name", "user_id", name="uq_category_name_user"),
-    )
+    __table_args__ = (UniqueConstraint("name", "user_id", name="uq_category_name_user"),)
 
 
 class Item(Base):
@@ -99,22 +96,16 @@ class Sale(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     total = Column(Numeric(10, 2), nullable=False)
     status = Column(Enum(SaleStatus), nullable=False, default=SaleStatus.completed)
-    payment_method = Column(
-        Enum(PaymentMethod), nullable=False, default=PaymentMethod.cash
-    )
+    payment_method = Column(Enum(PaymentMethod), nullable=False, default=PaymentMethod.cash)
     amount_tendered = Column(Numeric(10, 2), nullable=True)
     change_given = Column(Numeric(10, 2), nullable=True)
     notes = Column(String, nullable=True)
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
 
-    sale_items = relationship(
-        "SaleItem", back_populates="sale", cascade="all, delete-orphan"
-    )
+    sale_items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
     user = relationship("User", back_populates="sales")
     customer = relationship("Customer", back_populates="sales")
 
@@ -142,29 +133,17 @@ class Purchase(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
     supplier_name = Column(String, nullable=True)
     reference_number = Column(String, nullable=True)
-    purchase_date = Column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    status = Column(
-        Enum(PurchaseStatus), nullable=False, default=PurchaseStatus.received
-    )
-    payment_status = Column(
-        Enum(PurchasePaymentStatus), nullable=False, default=PurchasePaymentStatus.paid
-    )
-    payment_method = Column(
-        Enum(PurchasePaymentMethod), nullable=False, default=PurchasePaymentMethod.cash
-    )
+    purchase_date = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    status = Column(Enum(PurchaseStatus), nullable=False, default=PurchaseStatus.received)
+    payment_status = Column(Enum(PurchasePaymentStatus), nullable=False, default=PurchasePaymentStatus.paid)
+    payment_method = Column(Enum(PurchasePaymentMethod), nullable=False, default=PurchasePaymentMethod.cash)
     subtotal = Column(Numeric(12, 2), nullable=False, default=0)
     tax = Column(Numeric(12, 2), nullable=False, default=0)
     total_cost = Column(Numeric(12, 2), nullable=False, default=0)
     notes = Column(String, nullable=True)
 
-    purchase_items = relationship(
-        "PurchaseItem", back_populates="purchase", cascade="all, delete-orphan"
-    )
+    purchase_items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
     user = relationship("User", back_populates="purchases")
 
 
@@ -197,15 +176,11 @@ class Customer(Base):
     credit_limit = Column(Numeric(12, 2), nullable=True)  # NULL = unlimited
     notes = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="customers")
     sales = relationship("Sale", back_populates="customer")
-    credit_payments = relationship(
-        "CustomerPayment", back_populates="customer", cascade="all, delete-orphan"
-    )
+    credit_payments = relationship("CustomerPayment", back_populates="customer", cascade="all, delete-orphan")
 
 
 class CustomerPayment(Base):
@@ -215,16 +190,10 @@ class CustomerPayment(Base):
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
-    payment_method = Column(
-        String, nullable=False, default="cash"
-    )  # cash / card / transfer
-    payment_date = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    payment_method = Column(String, nullable=False, default="cash")  # cash / card / transfer
+    payment_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     notes = Column(String, nullable=True)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     customer = relationship("Customer", back_populates="credit_payments")
     user = relationship("User")
@@ -255,50 +224,31 @@ class CashboxSession(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
     opening_amount = Column(Numeric(14, 2), nullable=False, default=0)
-    status = Column(
-        Enum(CashboxSessionStatus), nullable=False, default=CashboxSessionStatus.open
-    )
-    opened_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    status = Column(Enum(CashboxSessionStatus), nullable=False, default=CashboxSessionStatus.open)
+    opened_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     closed_at = Column(DateTime(timezone=True), nullable=True)
     closing_amount_counted = Column(Numeric(14, 2), nullable=True)
     notes = Column(String, nullable=True)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User")
-    transactions = relationship(
-        "CashboxTransaction", back_populates="session", cascade="all, delete-orphan"
-    )
+    transactions = relationship("CashboxTransaction", back_populates="session", cascade="all, delete-orphan")
 
 
 class CashboxTransaction(Base):
     __tablename__ = "cashbox_transactions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    session_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("cashbox_sessions.id", ondelete="SET NULL"),
-        nullable=True,
-    )
+    session_id = Column(UUID(as_uuid=True), ForeignKey("cashbox_sessions.id", ondelete="SET NULL"), nullable=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
     type = Column(Enum(CashboxTransactionType), nullable=False)
-    direction = Column(
-        Enum(
-            CashboxTransactionDirection, values_callable=lambda x: [e.value for e in x]
-        ),
-        nullable=False,
-    )
+    direction = Column(Enum(CashboxTransactionDirection, values_callable=lambda x: [e.value for e in x]), nullable=False)
     amount = Column(Numeric(14, 2), nullable=False)
     payment_method = Column(String, nullable=False, default="cash")
     reference_type = Column(String, nullable=True)
     reference_id = Column(UUID(as_uuid=True), nullable=True)
     description = Column(String, nullable=True)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     session = relationship("CashboxSession", back_populates="transactions")
     user = relationship("User")

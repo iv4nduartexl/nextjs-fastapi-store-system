@@ -24,24 +24,20 @@ def upgrade() -> None:
         "categories",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column(
-            "user_id", UUID(as_uuid=True), sa.ForeignKey("user.id"), nullable=False
-        ),
+        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("user.id"), nullable=False),
         sa.UniqueConstraint("name", "user_id", name="uq_category_name_user"),
     )
     op.create_index("ix_categories_user_id", "categories", ["user_id"])
 
     # Seed from existing item categories
-    op.execute(
-        sa.text("""
+    op.execute(sa.text("""
         INSERT INTO categories (id, name, user_id)
         SELECT gen_random_uuid(), category, user_id
         FROM items
         WHERE category IS NOT NULL AND category != ''
         GROUP BY category, user_id
         ON CONFLICT ON CONSTRAINT uq_category_name_user DO NOTHING
-    """)
-    )
+    """))
 
 
 def downgrade() -> None:

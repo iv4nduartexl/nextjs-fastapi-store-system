@@ -118,7 +118,7 @@ export async function addManualTransaction(data: {
 
 export async function fetchTransactions(
   sessionId?: string,
-  limit = 100,
+  limit = 100
 ): Promise<CashboxTransactionRead[]> {
   const headers = await getAuthHeaders();
   const params = new URLSearchParams({ limit: String(limit) });
@@ -141,17 +141,12 @@ export async function fetchSessions(limit = 20): Promise<CashboxSessionRead[]> {
   return res.json();
 }
 
-export async function fetchSessionById(
-  id: string,
-): Promise<CashboxSessionRead | null> {
+export async function fetchSessionById(id: string): Promise<CashboxSessionRead | null> {
   const headers = await getAuthHeaders();
-  const res = await fetch(
-    `${API_BASE_URL}/cashbox/sessions/${encodeURIComponent(id)}`,
-    {
-      headers,
-      cache: "no-store",
-    },
-  );
+  const res = await fetch(`${API_BASE_URL}/cashbox/sessions/${encodeURIComponent(id)}`, {
+    headers,
+    cache: "no-store",
+  });
   if (!res.ok) return null;
   return res.json();
 }

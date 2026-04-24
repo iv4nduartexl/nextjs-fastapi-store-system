@@ -82,6 +82,7 @@ export default async function SaleDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+
       {/* Back + header */}
       <div>
         <Link
@@ -99,14 +100,11 @@ export default async function SaleDetailPage({ params }: Props) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 leading-tight">
-                {t("detail.saleId")}{" "}
-                <span className="font-mono text-gray-500">#{shortId}</span>
+                {t("detail.saleId")} <span className="font-mono text-gray-500">#{shortId}</span>
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5 text-sm text-gray-500">
                 <CalendarDays size={13} />
-                <span>
-                  {dateStr} · {timeStr}
-                </span>
+                <span>{dateStr} · {timeStr}</span>
               </div>
             </div>
           </div>
@@ -122,9 +120,7 @@ export default async function SaleDetailPage({ params }: Props) {
       </div>
 
       {/* Summary cards */}
-      <div
-        className={`grid gap-4 ${hasCashDetails ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}
-      >
+      <div className={`grid gap-4 ${hasCashDetails ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
         {/* Total */}
         <div className="col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-1">
           <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
@@ -160,11 +156,7 @@ export default async function SaleDetailPage({ params }: Props) {
               {sale.sale_items.length}
             </span>
             <span className="text-sm text-gray-400 mb-0.5">
-              {t(
-                sale.sale_items.length === 1
-                  ? "detail.itemsUnitSingular"
-                  : "detail.itemsUnitPlural",
-              )}
+              {t(sale.sale_items.length === 1 ? "detail.itemsUnitSingular" : "detail.itemsUnitPlural")}
             </span>
           </div>
         </div>
@@ -177,9 +169,7 @@ export default async function SaleDetailPage({ params }: Props) {
                 {t("detail.tendered")}
               </span>
               <span className="text-xl font-bold text-gray-800 tabular-nums mt-auto">
-                {sale.amount_tendered
-                  ? formatCurrency(sale.amount_tendered)
-                  : "—"}
+                {sale.amount_tendered ? formatCurrency(sale.amount_tendered) : "—"}
               </span>
             </div>
             <div className="bg-green-50 rounded-2xl border border-green-100 shadow-sm p-5 flex flex-col gap-1">
@@ -224,10 +214,7 @@ export default async function SaleDetailPage({ params }: Props) {
               const abbr = tDash(`unitAbbr.${item.unit_type ?? "unit"}`);
               const qty = parseFloat(item.quantity);
               return (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   {/* Unit abbr block */}
                   <td className="px-5 py-3">
                     <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 text-[13px] font-black text-gray-500">
@@ -235,9 +222,7 @@ export default async function SaleDetailPage({ params }: Props) {
                     </span>
                   </td>
                   <td className="px-3 py-3">
-                    <p className="font-medium text-gray-800">
-                      {item.item_name}
-                    </p>
+                    <p className="font-medium text-gray-800">{item.item_name}</p>
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-gray-600 tabular-nums">
                     {formatCurrency(item.unit_price)}
@@ -257,10 +242,7 @@ export default async function SaleDetailPage({ params }: Props) {
           {/* Footer total row */}
           <tfoot>
             <tr className="border-t-2 border-gray-200 bg-gray-50">
-              <td
-                colSpan={4}
-                className="px-5 py-4 text-sm font-semibold text-gray-500 text-right"
-              >
+              <td colSpan={4} className="px-5 py-4 text-sm font-semibold text-gray-500 text-right">
                 {t("detail.total")}
               </td>
               <td className="px-5 py-4 text-right font-mono font-black text-xl text-gray-900 tabular-nums">

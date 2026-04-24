@@ -169,9 +169,7 @@ export default async function Home() {
                 <h3 className="mb-1.5 text-base font-bold text-gray-900">
                   {f.label}
                 </h3>
-                <p className="text-sm leading-relaxed text-gray-500">
-                  {f.desc}
-                </p>
+                <p className="text-sm leading-relaxed text-gray-500">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -212,3 +210,4 @@ export default async function Home() {
     </div>
   );
 }
+

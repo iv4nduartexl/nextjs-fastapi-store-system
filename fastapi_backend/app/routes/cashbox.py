@@ -3,6 +3,9 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi_pagination import Page, Params
+from fastapi_pagination.ext.sqlalchemy import apaginate
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -27,8 +30,7 @@ from app.users import current_active_user
 router = APIRouter(tags=["cashbox"])
 
 
-# ─── Helper test ──────────────────────────────────────────────────────────────────
-
+# ─── Helper ──────────────────────────────────────────────────────────────────
 
 def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
     """Compute balance stats from a session's loaded transactions."""
@@ -80,10 +82,7 @@ def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
 async def _get_open_session(db: AsyncSession, user_id: UUID) -> CashboxSession | None:
     result = await db.execute(
         select(CashboxSession)
-        .where(
-            CashboxSession.user_id == user_id,
-            CashboxSession.status == CashboxSessionStatus.open,
-        )
+        .where(CashboxSession.user_id == user_id, CashboxSession.status == CashboxSessionStatus.open)
         .options(selectinload(CashboxSession.transactions))
     )
     return result.scalars().first()
@@ -124,7 +123,6 @@ async def record_auto_transaction(
 
 
 # ─── Routes ──────────────────────────────────────────────────────────────────
-
 
 @router.get("/session/current", response_model=CashboxSessionRead)
 async def get_current_session(
@@ -192,9 +190,7 @@ async def close_session(
     session.closed_at = datetime.now(timezone.utc)
     session.closing_amount_counted = data.closing_amount_counted
     if data.notes:
-        session.notes = (
-            (session.notes or "") + (" | " if session.notes else "") + data.notes
-        )
+        session.notes = (session.notes or "") + (" | " if session.notes else "") + data.notes
 
     await db.commit()
 
@@ -214,28 +210,16 @@ async def add_manual_transaction(
     user: User = Depends(current_active_user),
 ):
     if data.type not in ("income", "expense"):
-        raise HTTPException(
-            status_code=422, detail="type must be 'income' or 'expense'"
-        )
+        raise HTTPException(status_code=422, detail="type must be 'income' or 'expense'")
     if data.amount <= 0:
         raise HTTPException(status_code=422, detail="amount must be positive")
 
     session = await _get_open_session(db, user.id)
     if not session:
-        raise HTTPException(
-            status_code=409, detail="No open cashbox session. Open a session first."
-        )
+        raise HTTPException(status_code=409, detail="No open cashbox session. Open a session first.")
 
-    direction = (
-        CashboxTransactionDirection.in_
-        if data.type == "income"
-        else CashboxTransactionDirection.out
-    )
-    tx_type = (
-        CashboxTransactionType.income
-        if data.type == "income"
-        else CashboxTransactionType.expense
-    )
+    direction = CashboxTransactionDirection.in_ if data.type == "income" else CashboxTransactionDirection.out
+    tx_type = CashboxTransactionType.income if data.type == "income" else CashboxTransactionType.expense
 
     tx = CashboxTransaction(
         session_id=session.id,

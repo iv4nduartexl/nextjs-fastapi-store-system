@@ -33,11 +33,7 @@ export async function login(prevState: unknown, formData: FormData) {
     if (error) {
       return { server_validation_error: getErrorMessage(error) };
     }
-    (await cookies()).set("accessToken", data.access_token, {
-      maxAge: 86400,
-      httpOnly: true,
-      sameSite: "lax",
-    });
+    (await cookies()).set("accessToken", data.access_token, { maxAge: 86400, httpOnly: true, sameSite: "lax" });
   } catch (err) {
     console.error("Login error:", err);
     return {

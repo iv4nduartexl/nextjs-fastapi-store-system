@@ -20,9 +20,7 @@ export default async function NewSalePage() {
               <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
                 <Wallet className="h-8 w-8 text-white" strokeWidth={1.5} />
               </div>
-              <h1 className="text-xl font-extrabold text-white">
-                {t("cashboxClosed")}
-              </h1>
+              <h1 className="text-xl font-extrabold text-white">{t("cashboxClosed")}</h1>
             </div>
             <div className="px-8 py-7 text-center space-y-6">
               <p className="text-sm leading-relaxed text-gray-500">

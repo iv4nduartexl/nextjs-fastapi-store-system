@@ -9,6 +9,7 @@ Create Date: 2026-04-19 00:00:00.000000
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
@@ -19,11 +20,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 unit_type_enum = sa.Enum(
-    "unit",
-    "kg",
-    "gram",
-    "liter",
-    "pack",
+    "unit", "kg", "gram", "liter", "pack",
     name="unittype",
 )
 

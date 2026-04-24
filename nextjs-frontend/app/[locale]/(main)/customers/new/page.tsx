@@ -24,10 +24,7 @@ export default function NewCustomerPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit() {
-    if (!name.trim()) {
-      setErrorMsg("Name is required.");
-      return;
-    }
+    if (!name.trim()) { setErrorMsg("Name is required."); return; }
     setSubmitting(true);
     setErrorMsg("");
 
@@ -37,9 +34,7 @@ export default function NewCustomerPage() {
       email: email.trim() || undefined,
       address: address.trim() || undefined,
       id_number: idNumber.trim() || undefined,
-      credit_limit: creditLimit
-        ? parseFloat(creditLimit.replace(/\D/g, ""))
-        : undefined,
+      credit_limit: creditLimit ? parseFloat(creditLimit.replace(/\D/g, "")) : undefined,
       notes: notes.trim() || undefined,
     });
 
@@ -66,9 +61,7 @@ export default function NewCustomerPage() {
             <Users size={20} className="text-gray-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {t("form.title")}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("form.title")}</h1>
             <p className="text-sm text-gray-500">{t("form.subtitle")}</p>
           </div>
         </div>
@@ -77,9 +70,7 @@ export default function NewCustomerPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         {/* Name */}
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            {t("form.name")}
-          </label>
+          <label className="text-sm font-semibold text-gray-700">{t("form.name")}</label>
           <Input
             autoFocus
             value={name}
@@ -92,9 +83,7 @@ export default function NewCustomerPage() {
         {/* Phone + ID in a row */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">
-              {t("form.phone")}
-            </label>
+            <label className="text-sm font-semibold text-gray-700">{t("form.phone")}</label>
             <Input
               type="tel"
               value={phone}
@@ -104,9 +93,7 @@ export default function NewCustomerPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">
-              {t("form.idNumber")}
-            </label>
+            <label className="text-sm font-semibold text-gray-700">{t("form.idNumber")}</label>
             <Input
               value={idNumber}
               onChange={(e) => setIdNumber(e.target.value)}
@@ -118,9 +105,7 @@ export default function NewCustomerPage() {
 
         {/* Email */}
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            {t("form.email")}
-          </label>
+          <label className="text-sm font-semibold text-gray-700">{t("form.email")}</label>
           <Input
             type="email"
             value={email}
@@ -132,9 +117,7 @@ export default function NewCustomerPage() {
 
         {/* Address */}
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            {t("form.address")}
-          </label>
+          <label className="text-sm font-semibold text-gray-700">{t("form.address")}</label>
           <Input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -145,36 +128,24 @@ export default function NewCustomerPage() {
 
         {/* Credit limit */}
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            {t("form.creditLimit")}
-          </label>
+          <label className="text-sm font-semibold text-gray-700">{t("form.creditLimit")}</label>
           <input
             type="text"
             inputMode="numeric"
             value={creditLimit}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, "");
-              setCreditLimit(
-                raw
-                  ? parseInt(raw, 10).toLocaleString(undefined, {
-                      maximumFractionDigits: 0,
-                    })
-                  : "",
-              );
+              setCreditLimit(raw ? parseInt(raw, 10).toLocaleString(undefined, { maximumFractionDigits: 0 }) : "");
             }}
             placeholder={t("form.creditLimitPlaceholder")}
             className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring font-mono"
           />
-          <p className="text-xs text-gray-400">
-            {t("form.creditLimitPlaceholder")}
-          </p>
+          <p className="text-xs text-gray-400">{t("form.creditLimitPlaceholder")}</p>
         </div>
 
         {/* Notes */}
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-700">
-            {t("form.notes")}
-          </label>
+          <label className="text-sm font-semibold text-gray-700">{t("form.notes")}</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -185,9 +156,7 @@ export default function NewCustomerPage() {
         </div>
 
         {errorMsg && (
-          <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">
-            {errorMsg}
-          </p>
+          <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">{errorMsg}</p>
         )}
 
         <Button

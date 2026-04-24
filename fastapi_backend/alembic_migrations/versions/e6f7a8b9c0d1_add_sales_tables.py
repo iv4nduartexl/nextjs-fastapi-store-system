@@ -21,12 +21,9 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.execute(sa.text("DROP TYPE IF EXISTS salestatus"))
     op.execute(sa.text("DROP TYPE IF EXISTS paymentmethod"))
-    op.execute(
-        sa.text("CREATE TYPE salestatus AS ENUM ('completed', 'cancelled', 'refunded')")
-    )
+    op.execute(sa.text("CREATE TYPE salestatus AS ENUM ('completed', 'cancelled', 'refunded')"))
     op.execute(sa.text("CREATE TYPE paymentmethod AS ENUM ('cash', 'card', 'other')"))
-    op.execute(
-        sa.text("""
+    op.execute(sa.text("""
         CREATE TABLE sales (
             id UUID PRIMARY KEY,
             user_id UUID NOT NULL REFERENCES "user"(id),
@@ -38,10 +35,8 @@ def upgrade() -> None:
             change_given NUMERIC(10, 2),
             notes VARCHAR
         )
-    """)
-    )
-    op.execute(
-        sa.text("""
+    """))
+    op.execute(sa.text("""
         CREATE TABLE sale_items (
             id UUID PRIMARY KEY,
             sale_id UUID NOT NULL REFERENCES sales(id),
@@ -52,8 +47,7 @@ def upgrade() -> None:
             quantity NUMERIC(10, 3) NOT NULL,
             subtotal NUMERIC(10, 2) NOT NULL
         )
-    """)
-    )
+    """))
 
 
 def downgrade() -> None:

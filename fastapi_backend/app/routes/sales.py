@@ -29,9 +29,7 @@ async def create_sale(
 
     item_ids = [si.item_id for si in sale_data.items]
     result = await db.execute(
-        select(Item).filter(
-            Item.id.in_(item_ids), Item.user_id == user.id, Item.is_deleted.is_(False)
-        )
+        select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id, Item.is_deleted == False)
     )
     items_map = {item.id: item for item in result.scalars().all()}
 
@@ -53,9 +51,7 @@ async def create_sale(
         quantity = si.quantity
         # Gram: price is per 1000g (per kg). Subtotal = qty * price / 1000
         if item.unit_type.value == "gram":
-            subtotal = (unit_price * quantity / Decimal("1000")).quantize(
-                Decimal("0.01")
-            )
+            subtotal = (unit_price * quantity / Decimal("1000")).quantize(Decimal("0.01"))
         else:
             subtotal = (unit_price * quantity).quantize(Decimal("0.01"))
         total += subtotal
@@ -81,13 +77,9 @@ async def create_sale(
     # Validate customer for credit sales
     if sale_data.payment_method == PaymentMethod.credit:
         if not sale_data.customer_id:
-            raise HTTPException(
-                status_code=422, detail="customer_id is required for credit sales"
-            )
+            raise HTTPException(status_code=422, detail="customer_id is required for credit sales")
         cust_result = await db.execute(
-            select(Customer).filter(
-                Customer.id == sale_data.customer_id, Customer.user_id == user.id
-            )
+            select(Customer).filter(Customer.id == sale_data.customer_id, Customer.user_id == user.id)
         )
         if not cust_result.scalars().first():
             raise HTTPException(status_code=404, detail="Customer not found")

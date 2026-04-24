@@ -16,7 +16,6 @@ from app.routes.categories import upsert_category
 
 router = APIRouter(tags=["item"])
 
-
 # Override default max_size of 100
 class Params(BaseParams):
     size: int = Query(50, ge=1, le=500)
@@ -34,7 +33,7 @@ async def read_item(
     q: str | None = Query(None, description="Search query (name, SKU, or category)"),
     category: str | None = Query(None, description="Filter by exact category name"),
 ):
-    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted.is_(False))
+    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
     if q:
         query = query.filter(
             or_(

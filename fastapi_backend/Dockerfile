@@ -1,8 +1,5 @@
 FROM python:3.12-bookworm
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
 # Set the working directory
 WORKDIR /app
 
@@ -28,11 +25,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy the rest of the application code
 COPY . .
-
-# Give appuser ownership of the app directory
-RUN chown -R appuser:appuser /app
-
-USER appuser
 
 # Expose the application port
 EXPOSE 8000

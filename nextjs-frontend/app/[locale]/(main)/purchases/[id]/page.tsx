@@ -15,10 +15,7 @@ import {
   Truck,
   Hash,
 } from "lucide-react";
-import {
-  fetchPurchase,
-  PurchaseRead,
-} from "@/components/actions/purchases-action";
+import { fetchPurchase, PurchaseRead } from "@/components/actions/purchases-action";
 import { formatCurrency } from "@/lib/currency";
 
 interface Props {
@@ -49,39 +46,15 @@ export default async function PurchaseDetailPage({ params }: Props) {
   const shortId = purchase.id.split("-")[0].toUpperCase();
 
   const STATUS_CONFIG = {
-    received: {
-      label: t("status.received"),
-      icon: CheckCircle2,
-      cls: "bg-green-100 text-green-700 border-green-200",
-      iconCls: "text-green-600",
-    },
-    partial: {
-      label: t("status.partial"),
-      icon: AlertCircle,
-      cls: "bg-amber-100 text-amber-700 border-amber-200",
-      iconCls: "text-amber-500",
-    },
-    cancelled: {
-      label: t("status.cancelled"),
-      icon: XCircle,
-      cls: "bg-gray-100 text-gray-500 border-gray-200",
-      iconCls: "text-gray-400",
-    },
+    received: { label: t("status.received"), icon: CheckCircle2, cls: "bg-green-100 text-green-700 border-green-200", iconCls: "text-green-600" },
+    partial: { label: t("status.partial"), icon: AlertCircle, cls: "bg-amber-100 text-amber-700 border-amber-200", iconCls: "text-amber-500" },
+    cancelled: { label: t("status.cancelled"), icon: XCircle, cls: "bg-gray-100 text-gray-500 border-gray-200", iconCls: "text-gray-400" },
   } as const;
 
   const PAYMENT_STATUS_CONFIG = {
-    paid: {
-      label: t("paymentStatus.paid"),
-      cls: "bg-green-100 text-green-700 border-green-200",
-    },
-    unpaid: {
-      label: t("paymentStatus.unpaid"),
-      cls: "bg-red-100 text-red-700 border-red-200",
-    },
-    partial: {
-      label: t("paymentStatus.partial"),
-      cls: "bg-amber-100 text-amber-700 border-amber-200",
-    },
+    paid: { label: t("paymentStatus.paid"), cls: "bg-green-100 text-green-700 border-green-200" },
+    unpaid: { label: t("paymentStatus.unpaid"), cls: "bg-red-100 text-red-700 border-red-200" },
+    partial: { label: t("paymentStatus.partial"), cls: "bg-amber-100 text-amber-700 border-amber-200" },
   } as const;
 
   const PAYMENT_ICONS = {
@@ -92,9 +65,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
   } as const;
 
   const status = STATUS_CONFIG[purchase.status] ?? STATUS_CONFIG.received;
-  const paymentStatus =
-    PAYMENT_STATUS_CONFIG[purchase.payment_status] ??
-    PAYMENT_STATUS_CONFIG.paid;
+  const paymentStatus = PAYMENT_STATUS_CONFIG[purchase.payment_status] ?? PAYMENT_STATUS_CONFIG.paid;
   const StatusIcon = status.icon;
   const PayIcon = PAYMENT_ICONS[purchase.payment_method] ?? Banknote;
 
@@ -102,6 +73,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+
       {/* Back + header */}
       <div>
         <Link
@@ -119,30 +91,23 @@ export default async function PurchaseDetailPage({ params }: Props) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 leading-tight">
-                {t("detail.purchaseId")}{" "}
-                <span className="font-mono text-gray-500">#{shortId}</span>
+                {t("detail.purchaseId")} <span className="font-mono text-gray-500">#{shortId}</span>
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5 text-sm text-gray-500">
                 <CalendarDays size={13} />
-                <span>
-                  {dateStr} · {timeStr}
-                </span>
+                <span>{dateStr} · {timeStr}</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Delivery status */}
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${status.cls}`}
-            >
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${status.cls}`}>
               <StatusIcon size={14} className={status.iconCls} />
               {status.label}
             </span>
             {/* Payment status */}
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${paymentStatus.cls}`}
-            >
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${paymentStatus.cls}`}>
               <Clock size={13} />
               {paymentStatus.label}
             </span>
@@ -187,11 +152,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
               {purchase.purchase_items.length}
             </span>
             <span className="text-sm text-gray-400 mb-0.5">
-              {t(
-                purchase.purchase_items.length === 1
-                  ? "detail.itemsUnitSingular"
-                  : "detail.itemsUnitPlural",
-              )}
+              {t(purchase.purchase_items.length === 1 ? "detail.itemsUnitSingular" : "detail.itemsUnitPlural")}
             </span>
           </div>
         </div>
@@ -202,11 +163,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
             {t("detail.supplier")}
           </p>
           <p className="font-semibold text-gray-800">
-            {purchase.supplier_name ?? (
-              <span className="italic text-gray-400 font-normal">
-                {t("detail.noSupplier")}
-              </span>
-            )}
+            {purchase.supplier_name ?? <span className="italic text-gray-400 font-normal">{t("detail.noSupplier")}</span>}
           </p>
           {purchase.reference_number && (
             <p className="text-xs text-gray-500 font-mono mt-0.5">
@@ -222,23 +179,17 @@ export default async function PurchaseDetailPage({ params }: Props) {
           </p>
           <div className="flex justify-between text-sm text-gray-600">
             <span>{t("detail.subtotal")}</span>
-            <span className="font-mono tabular-nums">
-              {formatCurrency(purchase.subtotal)}
-            </span>
+            <span className="font-mono tabular-nums">{formatCurrency(purchase.subtotal)}</span>
           </div>
           {hasTax && (
             <div className="flex justify-between text-sm text-gray-600">
               <span>{t("detail.tax")}</span>
-              <span className="font-mono tabular-nums">
-                {formatCurrency(purchase.tax)}
-              </span>
+              <span className="font-mono tabular-nums">{formatCurrency(purchase.tax)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-100">
             <span>{t("detail.total")}</span>
-            <span className="font-mono tabular-nums">
-              {formatCurrency(purchase.total_cost)}
-            </span>
+            <span className="font-mono tabular-nums">{formatCurrency(purchase.total_cost)}</span>
           </div>
         </div>
       </div>
@@ -273,27 +224,18 @@ export default async function PurchaseDetailPage({ params }: Props) {
               const abbr = tDash(`unitAbbr.${item.unit_type ?? "unit"}`);
               const qty = parseFloat(item.quantity);
               return (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3">
                     <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 text-[13px] font-black text-gray-500">
                       {abbr}
                     </span>
                   </td>
                   <td className="px-3 py-3">
-                    <p className="font-medium text-gray-800">
-                      {item.item_name}
-                    </p>
+                    <p className="font-medium text-gray-800">{item.item_name}</p>
                     {item.item_id ? (
-                      <p className="text-[10px] text-green-600 font-medium mt-0.5">
-                        ✓ {t("detail.linked")}
-                      </p>
+                      <p className="text-[10px] text-green-600 font-medium mt-0.5">✓ {t("detail.linked")}</p>
                     ) : (
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        {t("form.unlinked")}
-                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{t("form.unlinked")}</p>
                     )}
                   </td>
                   <td className="px-3 py-3 text-right font-mono font-semibold text-gray-800 tabular-nums">
@@ -311,10 +253,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-gray-200 bg-gray-50">
-              <td
-                colSpan={4}
-                className="px-5 py-4 text-sm font-semibold text-gray-500 text-right"
-              >
+              <td colSpan={4} className="px-5 py-4 text-sm font-semibold text-gray-500 text-right">
                 {t("detail.total")}
               </td>
               <td className="px-5 py-4 text-right font-mono font-black text-xl text-gray-900 tabular-nums">

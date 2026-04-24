@@ -50,19 +50,13 @@ export const itemSchema = z.object({
   min_stock: z
     .string()
     .optional()
-    .refine(
-      (val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
-      {
-        message: "Min stock must be a non-negative number",
-      },
-    ),
+    .refine((val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), {
+      message: "Min stock must be a non-negative number",
+    }),
   price: z
     .string()
     .optional()
-    .refine(
-      (val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
-      {
-        message: "Price must be a non-negative number",
-      },
-    ),
+    .refine((val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), {
+      message: "Price must be a non-negative number",
+    }),
 });

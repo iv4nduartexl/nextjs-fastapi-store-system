@@ -2,6 +2,7 @@ services:
   backend:
     build:
       context: fastapi_backend
+    restart: unless-stopped
     environment:
       - OPENAPI_OUTPUT_FILE=./shared-data/openapi.json
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/mydatabase
@@ -19,6 +20,7 @@ services:
       - db
   db:
     image: postgres:17
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -43,6 +45,7 @@ services:
   frontend:
     build:
       context: ./nextjs-frontend
+    restart: unless-stopped
     user: node
     ports:
       - "3000:3000"
@@ -60,6 +63,7 @@ services:
       - ./local-shared-data:/app/shared-data
   mailhog:
     image: mailhog/mailhog
+    restart: unless-stopped
     ports:
       - "1025:1025" # SMTP server
       - "8025:8025" # Web UI
@@ -107,6 +111,21 @@ services:
       "
     profiles:
       - gdrive
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"      # Public HTTP Port
+      - "443:443"    # Public HTTPS Port
+      - "81:81"      # Admin Web Port
+    environment:
+      DB_SQLITE_FILE: "/data/database.sqlite"
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    networks:
+      - my_network
 
 volumes:
   postgres_data:

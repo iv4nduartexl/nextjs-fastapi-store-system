@@ -27,7 +27,7 @@ from app.users import current_active_user
 router = APIRouter(tags=["cashbox"])
 
 
-# ─── Helper ──────────────────────────────────────────────────────────────────
+# ─── Helper test ──────────────────────────────────────────────────────────────────
 
 def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
     """Compute balance stats from a session's loaded transactions."""

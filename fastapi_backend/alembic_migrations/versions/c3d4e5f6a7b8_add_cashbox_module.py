@@ -4,6 +4,7 @@ Revision ID: c3d4e5f6a7b8
 Revises: a1b2c3d4e5f6
 Create Date: 2026-04-19
 """
+
 from alembic import op
 
 revision = "c3d4e5f6a7b8"
@@ -14,7 +15,9 @@ depends_on = None
 
 def upgrade():
     op.execute("CREATE TYPE cashboxsessionstatus AS ENUM ('open', 'closed')")
-    op.execute("CREATE TYPE cashboxtransactiontype AS ENUM ('sale', 'purchase', 'income', 'expense', 'customer_payment', 'opening')")
+    op.execute(
+        "CREATE TYPE cashboxtransactiontype AS ENUM ('sale', 'purchase', 'income', 'expense', 'customer_payment', 'opening')"
+    )
     op.execute("CREATE TYPE cashboxtransactiondirection AS ENUM ('in', 'out')")
     op.execute("""
         CREATE TABLE cashbox_sessions (
@@ -46,9 +49,15 @@ def upgrade():
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
     """)
-    op.execute("CREATE INDEX ix_cashbox_transactions_session_id ON cashbox_transactions(session_id)")
-    op.execute("CREATE INDEX ix_cashbox_transactions_user_id ON cashbox_transactions(user_id)")
-    op.execute("CREATE INDEX ix_cashbox_transactions_type ON cashbox_transactions(type)")
+    op.execute(
+        "CREATE INDEX ix_cashbox_transactions_session_id ON cashbox_transactions(session_id)"
+    )
+    op.execute(
+        "CREATE INDEX ix_cashbox_transactions_user_id ON cashbox_transactions(user_id)"
+    )
+    op.execute(
+        "CREATE INDEX ix_cashbox_transactions_type ON cashbox_transactions(type)"
+    )
 
 
 def downgrade():

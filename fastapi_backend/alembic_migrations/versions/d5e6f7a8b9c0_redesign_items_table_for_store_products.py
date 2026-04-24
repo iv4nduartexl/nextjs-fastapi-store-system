@@ -19,7 +19,11 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 unit_type_enum = sa.Enum(
-    "unit", "kg", "gram", "liter", "pack",
+    "unit",
+    "kg",
+    "gram",
+    "liter",
+    "pack",
     name="unittype",
 )
 

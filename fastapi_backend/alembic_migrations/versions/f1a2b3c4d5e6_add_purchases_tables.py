@@ -22,16 +22,23 @@ def upgrade() -> None:
     op.execute(sa.text("DROP TYPE IF EXISTS purchasestatus"))
     op.execute(sa.text("DROP TYPE IF EXISTS purchasepaymentstatus"))
     op.execute(sa.text("DROP TYPE IF EXISTS purchasepaymentmethod"))
-    op.execute(sa.text(
-        "CREATE TYPE purchasestatus AS ENUM ('received', 'partial', 'cancelled')"
-    ))
-    op.execute(sa.text(
-        "CREATE TYPE purchasepaymentstatus AS ENUM ('paid', 'unpaid', 'partial')"
-    ))
-    op.execute(sa.text(
-        "CREATE TYPE purchasepaymentmethod AS ENUM ('cash', 'card', 'transfer', 'credit')"
-    ))
-    op.execute(sa.text("""
+    op.execute(
+        sa.text(
+            "CREATE TYPE purchasestatus AS ENUM ('received', 'partial', 'cancelled')"
+        )
+    )
+    op.execute(
+        sa.text(
+            "CREATE TYPE purchasepaymentstatus AS ENUM ('paid', 'unpaid', 'partial')"
+        )
+    )
+    op.execute(
+        sa.text(
+            "CREATE TYPE purchasepaymentmethod AS ENUM ('cash', 'card', 'transfer', 'credit')"
+        )
+    )
+    op.execute(
+        sa.text("""
         CREATE TABLE purchases (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             user_id UUID NOT NULL REFERENCES "user"(id),
@@ -47,8 +54,10 @@ def upgrade() -> None:
             total_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
             notes VARCHAR
         )
-    """))
-    op.execute(sa.text("""
+    """)
+    )
+    op.execute(
+        sa.text("""
         CREATE TABLE purchase_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             purchase_id UUID NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
@@ -59,7 +68,8 @@ def upgrade() -> None:
             cost_price NUMERIC(12, 2) NOT NULL,
             subtotal NUMERIC(12, 2) NOT NULL
         )
-    """))
+    """)
+    )
 
 
 def downgrade() -> None:

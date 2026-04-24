@@ -16,6 +16,7 @@ from app.routes.categories import upsert_category
 
 router = APIRouter(tags=["item"])
 
+
 # Override default max_size of 100
 class Params(BaseParams):
     size: int = Query(50, ge=1, le=500)

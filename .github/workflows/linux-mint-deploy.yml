@@ -25,6 +25,7 @@ jobs:
       - name: Run with Docker Compose
         run: |
           docker compose down
+          export NODE_ENV=production
           docker compose up --build -d
           docker image prune -f
           

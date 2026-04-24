@@ -21,6 +21,11 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Reset workspace to HEAD
+        run: git fetch origin main && git reset --hard origin/main
 
       # ── 1. Backup DB before any changes ────────────────────────────────────
       - name: Backup database

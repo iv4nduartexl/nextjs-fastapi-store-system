@@ -49,7 +49,7 @@ jobs:
 
       # ── 5. Run database migrations ─────────────────────────────────────────
       - name: Run database migrations
-        run: docker compose exec -T backend alembic upgrade head
+        run: docker compose exec backend -- alembic upgrade head
 
       # ── 6. Summary ─────────────────────────────────────────────────────────
       - name: Deployment summary

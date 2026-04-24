@@ -1,6 +1,5 @@
-from typing import Set
+import json
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,19 +35,18 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # CORS
-    CORS_ORIGINS: Set[str] = set()
+    # CORS — stored as raw string to avoid pydantic-settings JSON-parsing issues.
+    # Accepts JSON array ("[\"http://a.com\"]") or comma-separated ("http://a.com,http://b.com").
+    CORS_ORIGINS: str = "*"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: object) -> object:
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("["):
-                import json
-                return set(json.loads(v))
-            return {s.strip() for s in v.split(",") if s.strip()}
-        return v
+    @property
+    def cors_origins(self) -> list[str]:
+        v = self.CORS_ORIGINS.strip()
+        if not v:
+            return []
+        if v.startswith("["):
+            return json.loads(v)
+        return [s.strip() for s in v.split(",") if s.strip()]
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

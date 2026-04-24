@@ -262,7 +262,7 @@ export default function SessionDetailClient({ session, transactions, locale }: P
           {session.notes && (
             <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
               <FileText size={13} className="text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-700 italic">"{session.notes}"</p>
+              <p className="text-xs text-amber-700 italic">&quot;{session.notes}&quot;</p>
             </div>
           )}
         </div>
@@ -450,6 +450,7 @@ export default function SessionDetailClient({ session, transactions, locale }: P
                           </span>
                           <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
                             <MethodIcon size={9} />
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             {t(`method.${tx.payment_method}` as any)}
                           </span>
                         </div>

@@ -487,6 +487,7 @@ export default function CashboxDashboard({
                             </span>
                             <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
                               <MethodIcon size={9} />
+                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                               {t(`method.${tx.payment_method}` as any)}
                             </span>
                           </div>

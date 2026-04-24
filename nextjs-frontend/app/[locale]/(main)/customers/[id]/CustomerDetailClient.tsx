@@ -299,6 +299,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md capitalize">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {t(`paymentMethod.${p.payment_method}` as any)}
                     </span>
                   </td>

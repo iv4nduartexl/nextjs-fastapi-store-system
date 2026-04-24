@@ -74,6 +74,7 @@ services:
     image: postgres:17
     environment:
       PGPASSWORD: password
+      NODE_ENV: ${NODE_ENV:-development}
     volumes:
       - ./backups:/backups
     networks:
@@ -83,6 +84,10 @@ services:
     restart: unless-stopped
     entrypoint: >
       sh -c "
+        if [ \"\$$NODE_ENV\" != \"production\" ]; then
+          echo 'Development mode: Database backups skipped.';
+          sleep infinity;
+        fi;
         echo 'Backup service started. First backup in 1 min, then every 24h.';
         sleep 60;
         while true; do
@@ -94,12 +99,18 @@ services:
       "
   gdrive-sync:
     image: rclone/rclone:latest
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
     volumes:
       - ./backups:/backups:ro
       - ${HOME}/.config/rclone:/config/rclone:ro
     restart: unless-stopped
     entrypoint: >
       sh -c "
+        if [ \"\$$NODE_ENV\" != \"production\" ]; then
+          echo 'Development mode: Google Drive sync skipped.';
+          sleep infinity;
+        fi;
         echo 'Google Drive sync started. Syncing every hour.';
         while true; do
           if rclone lsd gdrive: --config /config/rclone/rclone.conf > /dev/null 2>&1; then

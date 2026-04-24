@@ -27,3 +27,6 @@ jobs:
           docker compose down
           docker compose up --build -d
           docker image prune -f
+          
+      - name: Run Database Migrations
+        run: docker compose exec -T backend alembic upgrade head

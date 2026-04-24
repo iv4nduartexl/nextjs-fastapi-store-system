@@ -10,6 +10,9 @@ jobs:
     runs-on: self-hosted
     
     steps:
+      - name: Fix permissions for checkout
+        run: docker run --rm -v "${{ github.workspace }}:/workspace" alpine chown -R $(id -u):$(id -g) /workspace || true
+
       - name: Checkout Code
         uses: actions/checkout@v4
 

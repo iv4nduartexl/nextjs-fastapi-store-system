@@ -2,6 +2,7 @@ services:
   backend:
     build:
       context: fastapi_backend
+    user: appuser
     environment:
       - OPENAPI_OUTPUT_FILE=./shared-data/openapi.json
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/mydatabase

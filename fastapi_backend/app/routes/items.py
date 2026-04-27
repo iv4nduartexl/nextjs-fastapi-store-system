@@ -33,7 +33,8 @@ async def read_item(
     q: str | None = Query(None, description="Search query (name, SKU, or category)"),
     category: str | None = Query(None, description="Filter by exact category name"),
 ):
-    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted is False)
+    
+    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
     if q:
         query = query.filter(
             or_(
@@ -44,6 +45,11 @@ async def read_item(
         )
     if category:
         query = query.filter(Item.category.ilike(category))
+
+    print("User ID:", user.id)  # Debugging line to check the user ID
+    print("Executing query:", query)  # Debugging line to check the generated SQL
+    result = await apaginate(db, query, params, transformer=transform_items)
+    print ("Query result:", result)  # Debugging line to check the results
     return await apaginate(db, query, params, transformer=transform_items)
 
 

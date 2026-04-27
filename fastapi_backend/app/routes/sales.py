@@ -29,7 +29,7 @@ async def create_sale(
 
     item_ids = [si.item_id for si in sale_data.items]
     result = await db.execute(
-        select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id, Item.is_deleted is False)
+        select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id, Item.is_deleted == False)
     )
     items_map = {item.id: item for item in result.scalars().all()}
 

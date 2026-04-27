@@ -91,7 +91,7 @@ async def list_customers(
 ):
     base = select(Customer).where(Customer.user_id == user.id)
     if not show_inactive:
-        base = base.where(Customer.is_active is True)
+        base = base.where(Customer.is_active == True)
     if q:
         base = base.where(
             or_(

@@ -21,6 +21,9 @@ import {
   PackageX,
   ScanBarcode,
   Users,
+  Crown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { CustomerRead } from "@/components/actions/customers-action";
 
@@ -32,7 +35,7 @@ interface CartItem {
   quantity: number;
 }
 
-type PaymentMethod = "cash" | "card" | "other" | "credit";
+type PaymentMethod = "cash" | "card" | "other" | "credit" | "internal";
 
 // ── Deterministic color palette for category tiles ──────────────────────────
 const CAT_GRADIENTS = [
@@ -180,6 +183,26 @@ export default function POSClient() {
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setShowLeftArrow(scrollLeft > 10);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  const scroll = (direction: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const { clientWidth } = scrollRef.current;
+    const scrollTo =
+      direction === "left"
+        ? scrollRef.current.scrollLeft - clientWidth
+        : scrollRef.current.scrollLeft + clientWidth;
+    scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+  };
 
   // Autofocus search on mount + fetch categories
   useEffect(() => {
@@ -743,35 +766,72 @@ export default function POSClient() {
               <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1.5">
                 {t("paymentMethod")}
               </p>
-              <div className="grid grid-cols-4 gap-1.5">
-                {(
-                  [
-                    { method: "cash", Icon: Banknote },
-                    { method: "card", Icon: CreditCard },
-                    { method: "other", Icon: RefreshCcw },
-                    { method: "credit", Icon: Users },
-                  ] as { method: PaymentMethod; Icon: React.ElementType }[]
-                ).map(({ method: m, Icon }) => (
-                  <button
-                    key={m}
-                    onClick={() => {
-                      setPaymentMethod(m);
-                      if (m !== "credit") {
-                        setSelectedCustomer(null);
-                        setCustomerSearch("");
-                        setCustomerResults([]);
-                      }
-                    }}
-                    className={`flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-semibold border-2 transition-all ${
-                      paymentMethod === m
-                        ? "border-green-500 bg-green-50 text-green-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
+              <div className="relative">
+                <div
+                  ref={scrollRef}
+                  onScroll={checkScroll}
+                  className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth"
+                >
+                  {(
+                    [
+                      { method: "cash", Icon: Banknote },
+                      { method: "credit", Icon: Users },
+                      { method: "internal", Icon: Crown },
+                      { method: "card", Icon: CreditCard },
+                      { method: "other", Icon: RefreshCcw },
+                    ] as { method: PaymentMethod; Icon: React.ElementType }[]
+                  ).map(({ method: m, Icon }) => (
+                    <button
+                      key={m}
+                      onClick={() => {
+                        setPaymentMethod(m);
+                        if (m !== "credit") {
+                          setSelectedCustomer(null);
+                          setCustomerSearch("");
+                          setCustomerResults([]);
+                        }
+                      }}
+                      className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold border-2 transition-all shrink-0 snap-start w-[calc((100%-18px)/4)] ${
+                        paymentMethod === m
+                          ? "border-green-500 bg-green-50/50 text-green-700 shadow-sm"
+                          : "border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span className="overflow-hidden text-ellipsis w-full px-1 text-center">
+                        {tSales(`paymentMethod.${m}`)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Left Fade/Button */}
+                {showLeftArrow && (
+                  <div
+                    className="rounded-xl absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-start group/btn"
                   >
-                    <Icon size={16} />
-                    {tSales(`paymentMethod.${m}`)}
-                  </button>
-                ))}
+                    <button
+                      onClick={() => scroll("left")}
+                      className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Right Fade/Button */}
+                {showRightArrow && (
+                  <div
+                    className="rounded-xl absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-end group/btn"
+                  >
+                    <button
+                      onClick={() => scroll("right")}
+                      className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -897,6 +957,21 @@ export default function POSClient() {
                     </span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Owner Withdrawal Warning */}
+            {paymentMethod === "internal" && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2.5 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
+                <Crown size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-purple-900">
+                    {tSales("pos.ownerWithdrawal")}
+                  </p>
+                  <p className="text-[10px] text-purple-600 leading-tight">
+                    {tSales("pos.ownerWithdrawalDesc")}
+                  </p>
+                </div>
               </div>
             )}
 

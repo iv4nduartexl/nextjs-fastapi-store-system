@@ -1,0 +1,43 @@
+# Build and dependency directories
+node_modules/
+.next/
+out/
+build/
+dist/
+.venv/
+__pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Large lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+uv.lock
+
+# Data and backups
+backups/
+npm/
+local-shared-data/
+*.db
+*.sqlite
+*.log
+
+# Assets and Docs
+public/
+docs/
+CHANGELOG.md
+LICENSE.txt
+
+# System and IDE
+.git/
+.github/
+.vscode/
+.idea/
+.DS_Store
+.env*
+!.env.example
+
+# Large generated files
+openapi.json

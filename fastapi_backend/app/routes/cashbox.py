@@ -39,6 +39,7 @@ def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
     card_in = Decimal("0")
     transfer_in = Decimal("0")
     credit_sales = Decimal("0")
+    owner_withdrawals = Decimal("0")
 
     for tx in session.transactions:
         if tx.type == CashboxTransactionType.opening:
@@ -59,6 +60,8 @@ def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
         else:  # out
             if method == "cash":
                 cash_out += amount
+            elif method == "internal":
+                owner_withdrawals += amount
 
     opening = session.opening_amount or Decimal("0")
     expected = opening + cash_in - cash_out
@@ -68,6 +71,7 @@ def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
     sr.card_in = card_in
     sr.transfer_in = transfer_in
     sr.credit_sales = credit_sales
+    sr.owner_withdrawals = owner_withdrawals
     sr.expected_cash_balance = expected
 
     if session.closing_amount_counted is not None:
@@ -159,7 +163,7 @@ async def open_session(
         direction=CashboxTransactionDirection.in_,
         amount=data.opening_amount,
         payment_method="cash",
-        description="Opening balance",
+        description=None,
     )
     db.add(opening_tx)
     await db.commit()

@@ -72,7 +72,7 @@ async def create_purchase(
         quantity = line.quantity
         cost_price = line.cost_price.quantize(Decimal("0.01"))
         # Gram: cost_price is per 1000g (per kg). Subtotal = qty * cost_price / 1000
-        if (line.unit_type or unit_type) == "gram":
+        if (line.unit_type or UnitType.unit) == UnitType.gram:
             line_subtotal = (quantity * cost_price / Decimal("1000")).quantize(Decimal("0.01"))
         else:
             line_subtotal = (quantity * cost_price).quantize(Decimal("0.01"))
@@ -82,16 +82,16 @@ async def create_purchase(
         if line.item_id and line.item_id in items_map:
             db_item = items_map[line.item_id]
             item_name = db_item.name
-            unit_type = db_item.unit_type.value
+            unit_type = db_item.unit_type
             resolved_item_id = line.item_id
         elif idx in new_catalog_items:
             db_item = new_catalog_items[idx]
             item_name = db_item.name
-            unit_type = db_item.unit_type.value
+            unit_type = db_item.unit_type
             resolved_item_id = db_item.id
         else:
             item_name = line.item_name
-            unit_type = line.unit_type
+            unit_type = UnitType(line.unit_type) if line.unit_type else UnitType.unit
             resolved_item_id = None
 
         line_objs.append(

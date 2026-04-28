@@ -155,3 +155,7 @@ cython_debug/
 .idea/
 # DB backups
 backups/
+
+# Nginx Proxy Manager
+npm/data/keys.json
+npm/data/database.sqlite

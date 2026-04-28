@@ -25,6 +25,7 @@ class PaymentMethod(str, enum.Enum):
     card = "card"
     other = "other"
     credit = "credit"
+    internal = "internal"
 
 
 class SaleStatus(str, enum.Enum):
@@ -117,7 +118,7 @@ class SaleItem(Base):
     sale_id = Column(UUID(as_uuid=True), ForeignKey("sales.id"), nullable=False)
     item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
     item_name = Column(String, nullable=False)
-    unit_type = Column(String, nullable=False)
+    unit_type = Column(Enum(UnitType), nullable=False)
     unit_price = Column(Numeric(10, 2), nullable=False)
     quantity = Column(Numeric(10, 3), nullable=False)
     subtotal = Column(Numeric(10, 2), nullable=False)
@@ -154,7 +155,7 @@ class PurchaseItem(Base):
     purchase_id = Column(UUID(as_uuid=True), ForeignKey("purchases.id"), nullable=False)
     item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
     item_name = Column(String, nullable=False)
-    unit_type = Column(String, nullable=False, default="unit")
+    unit_type = Column(Enum(UnitType), nullable=False, default=UnitType.unit)
     quantity = Column(Numeric(12, 3), nullable=False)
     cost_price = Column(Numeric(12, 2), nullable=False)
     subtotal = Column(Numeric(12, 2), nullable=False)
@@ -211,6 +212,7 @@ class CashboxTransactionType(str, enum.Enum):
     expense = "expense"
     customer_payment = "customer_payment"
     opening = "opening"
+    owner_withdrawal = "owner_withdrawal"
 
 
 class CashboxTransactionDirection(str, enum.Enum):

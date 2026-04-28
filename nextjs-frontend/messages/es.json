@@ -89,7 +89,7 @@
     "purchasesHistory": "Compras",
     "purchasesHistoryDesc": "Revisar el historial de compras a proveedores",
     "addNewProduct": "Agregar Producto",
-    "products": "Productos",
+    "dashboardTitle": "Panel",
     "noResults": "Sin resultados.",
     "home": "Inicio",
     "table": {
@@ -160,7 +160,8 @@
       "cash": "Efectivo",
       "card": "Tarjeta",
       "other": "Otro",
-      "credit": "Crédito"
+      "credit": "Crédito",
+      "internal": "Consumo Interno"
     },
     "status": {
       "completed": "Completada",
@@ -203,7 +204,9 @@
       "cashboxClosed": "La Caja está Cerrada",
       "cashboxClosedDesc": "Debes abrir una sesión de caja antes de iniciar una venta. Esto mantiene tus transacciones registradas y tus cuentas al día.",
       "cashboxClosedCta": "Abrir Caja",
-      "cashboxClosedBack": "Volver al Panel"
+      "cashboxClosedBack": "Volver al Panel",
+      "ownerWithdrawal": "Consumo Dueño",
+      "ownerWithdrawalDesc": "Registrar estos productos como consumidos por el dueño (sin cobro)."
     }
   },
   "products": {
@@ -487,6 +490,7 @@
     "cardIn": "Tarjeta / POS",
     "transferIn": "Transferencias",
     "creditSales": "Ventas a Cr\u00e9dito",
+    "ownerWithdrawals": "Consumo Due\u00f1o",
     "totalRevenue": "Ingresos Totales",
     "netCash": "Efectivo Neto",
     "addIncome": "+ Ingreso",
@@ -541,14 +545,20 @@
       "income": "Ingreso",
       "expense": "Egreso",
       "customer_payment": "Pago de Cliente",
-      "opening": "Saldo Inicial"
+      "opening": "Saldo Inicial",
+      "opening_balance": "Saldo Inicial",
+      "credit_sale": "Venta a Crédito",
+      "owner_withdrawal": "Retiro del Dueño"
     },
+    "itemsUnitSingular": "artículo",
+    "itemsUnitPlural": "artículos",
     "method": {
       "cash": "Efectivo",
       "card": "Tarjeta",
       "transfer": "Transferencia",
       "credit": "Cr\u00e9dito",
-      "other": "Otro"
+      "other": "Otro",
+      "internal": "Interno"
     },
     "sessionCard": {
       "open": "Abierta",

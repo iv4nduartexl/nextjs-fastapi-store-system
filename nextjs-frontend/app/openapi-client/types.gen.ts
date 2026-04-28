@@ -53,6 +53,7 @@ export type CashboxSessionRead = {
   card_in?: string;
   transfer_in?: string;
   credit_sales?: string;
+  owner_withdrawals?: string;
   expected_cash_balance?: string;
   difference?: string | null;
   transaction_count?: number;
@@ -231,7 +232,7 @@ export type Page_SaleRead_ = {
   pages?: number | null;
 };
 
-export type PaymentMethod = "cash" | "card" | "other" | "credit";
+export type PaymentMethod = "cash" | "card" | "other" | "credit" | "internal";
 
 export type PurchaseCreate = {
   supplier_name?: string | null;

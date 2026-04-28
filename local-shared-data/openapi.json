@@ -2281,6 +2281,11 @@
             "title": "Credit Sales",
             "default": "0"
           },
+          "owner_withdrawals": {
+            "type": "string",
+            "title": "Owner Withdrawals",
+            "default": "0"
+          },
           "expected_cash_balance": {
             "type": "string",
             "title": "Expected Cash Balance",
@@ -3493,7 +3498,8 @@
           "cash",
           "card",
           "other",
-          "credit"
+          "credit",
+          "internal"
         ],
         "title": "PaymentMethod"
       },

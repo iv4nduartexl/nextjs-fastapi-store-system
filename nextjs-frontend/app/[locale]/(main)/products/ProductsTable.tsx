@@ -182,7 +182,7 @@ export function ProductsTable({ items }: Props) {
               </button>
             </div>
 
-            <div className="px-5 py-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="px-5 py-5 space-y-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 130px)" }}>
               {/* Name */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-gray-600">
@@ -343,8 +343,11 @@ export function ProductsTable({ items }: Props) {
                   {editError}
                 </p>
               )}
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1">
+            {/* Sticky footer with action buttons */}
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setEditTarget(null)}
@@ -398,6 +401,9 @@ export function ProductsTable({ items }: Props) {
                   </p>
                 )}
               </div>
+            </div>
+
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"

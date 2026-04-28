@@ -924,6 +924,8 @@ export default function NewPurchasePage() {
                   )}
               </div>
 
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <Button
                 onClick={() => setMetaModal(null)}
                 className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold h-10 text-sm"
@@ -990,7 +992,10 @@ export default function NewPurchasePage() {
                   );
                 })}
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-1">
+            </div>
+
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
                   onClick={() => {

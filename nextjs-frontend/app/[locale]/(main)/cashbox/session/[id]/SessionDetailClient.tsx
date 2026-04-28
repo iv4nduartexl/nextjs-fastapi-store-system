@@ -21,6 +21,7 @@ import {
   Clock,
   FileText,
   ExternalLink,
+  Crown,
 } from "lucide-react";
 import {
   CashboxSessionRead,
@@ -37,6 +38,7 @@ const TX_ICONS: Record<string, React.ElementType> = {
   expense: TrendingDown,
   customer_payment: Users,
   opening: Wallet,
+  owner_withdrawal: Crown,
 };
 
 const METHOD_ICONS: Record<string, React.ElementType> = {
@@ -132,6 +134,7 @@ export default function SessionDetailClient({
   const cardIn = parseFloat(session.card_in) || 0;
   const transferIn = parseFloat(session.transfer_in) || 0;
   const creditSales = parseFloat(session.credit_sales) || 0;
+  const ownerWithdrawals = parseFloat((session as any).owner_withdrawals || 0);
   const counted = session.closing_amount_counted
     ? parseFloat(session.closing_amount_counted)
     : null;
@@ -362,6 +365,13 @@ export default function SessionDetailClient({
           labelColor="text-amber-500"
           valueColor="text-amber-700"
         />
+        <StatCard
+          label={t("ownerWithdrawals")}
+          value={formatCurrency(ownerWithdrawals)}
+          colorClass="bg-purple-50"
+          labelColor="text-purple-500"
+          valueColor="text-purple-700"
+        />
       </div>
 
       {/* ── Transaction feed ─────────────────────────────────────────────────── */}
@@ -421,6 +431,7 @@ export default function SessionDetailClient({
                   const isIn = tx.direction === "in";
                   const amount = parseFloat(tx.amount);
                   const isOpening = tx.type === "opening";
+                  const isOwner = tx.type === "owner_withdrawal";
 
                   // Build drill-down href based on reference_type
                   const detailHref =
@@ -443,9 +454,11 @@ export default function SessionDetailClient({
                         className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                           isOpening
                             ? "bg-gray-100"
-                            : isIn
-                              ? "bg-green-100"
-                              : "bg-red-100"
+                            : isOwner
+                              ? "bg-purple-100"
+                              : isIn
+                                ? "bg-green-100"
+                                : "bg-red-100"
                         }`}
                       >
                         <Icon
@@ -453,9 +466,11 @@ export default function SessionDetailClient({
                           className={
                             isOpening
                               ? "text-gray-500"
-                              : isIn
-                                ? "text-green-600"
-                                : "text-red-500"
+                              : isOwner
+                                ? "text-purple-600"
+                                : isIn
+                                  ? "text-green-600"
+                                  : "text-red-500"
                           }
                         />
                       </div>
@@ -464,7 +479,26 @@ export default function SessionDetailClient({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-semibold text-gray-800 truncate">
-                            {tx.description ?? t(`txType.${tx.type}`)}
+                            {tx.description === "Opening balance"
+                              ? t("txType.opening")
+                              : tx.description?.match(/^(Credit sale|Sale) \((\d+) items\)$/)
+                                ? (() => {
+                                    const match = tx.description.match(
+                                      /^(Credit sale|Sale) \((\d+) items\)$/,
+                                    );
+                                    const type =
+                                      match![1] === "Credit sale"
+                                        ? "credit_sale"
+                                        : "sale";
+                                    const count = parseInt(match![2]);
+                                    const unit = t(
+                                      count === 1
+                                        ? "itemsUnitSingular"
+                                        : "itemsUnitPlural",
+                                    );
+                                    return `${t(`txType.${type}`)} (${count} ${unit})`;
+                                  })()
+                                : tx.description ?? t(`txType.${tx.type}`)}
                           </p>
                           {detailHref && (
                             <ExternalLink
@@ -478,9 +512,11 @@ export default function SessionDetailClient({
                             className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                               isOpening
                                 ? "bg-gray-100 text-gray-500"
-                                : isIn
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-100 text-red-600"
+                                : isOwner
+                                  ? "bg-purple-100 text-purple-700"
+                                  : isIn
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-600"
                             }`}
                           >
                             {t(`txType.${tx.type}`)}
@@ -510,12 +546,14 @@ export default function SessionDetailClient({
                           className={`text-sm font-black tabular-nums font-mono ${
                             isOpening
                               ? "text-gray-600"
-                              : isIn
-                                ? "text-green-600"
-                                : "text-red-500"
+                              : isOwner
+                                ? "text-purple-600"
+                                : isIn
+                                  ? "text-green-600"
+                                  : "text-red-500"
                           }`}
                         >
-                          {isOpening ? "" : isIn ? "+" : "-"}
+                          {isOpening ? "" : isOwner ? "" : isIn ? "+" : "-"}
                           {formatCurrency(amount)}
                         </p>
                         <p className="text-[10px] text-gray-400 font-mono mt-0.5">

@@ -89,7 +89,7 @@
     "purchasesHistory": "Purchases",
     "purchasesHistoryDesc": "Review supplier purchase history",
     "addNewProduct": "Add New Product",
-    "products": "Products",
+    "dashboardTitle": "Panel",
     "noResults": "No results.",
     "home": "Home",
     "table": {
@@ -160,7 +160,8 @@
       "cash": "Cash",
       "card": "Card",
       "other": "Other",
-      "credit": "Credit"
+      "credit": "Credit",
+      "internal": "Internal Consumption"
     },
     "status": {
       "completed": "Completed",
@@ -203,7 +204,9 @@
       "cashboxClosed": "Cash Box is Closed",
       "cashboxClosedDesc": "You need to open a cash session before you can start a new sale. This keeps your transactions tracked and your books balanced.",
       "cashboxClosedCta": "Open Cash Box",
-      "cashboxClosedBack": "Back to Dashboard"
+      "cashboxClosedBack": "Back to Dashboard",
+      "ownerWithdrawal": "Owner Consumption",
+      "ownerWithdrawalDesc": "Register these products as consumed by the owner (no payment)."
     }
   },
   "products": {
@@ -487,6 +490,7 @@
     "cardIn": "Card / POS",
     "transferIn": "Transfers",
     "creditSales": "Credit Sales",
+    "ownerWithdrawals": "Owner Consumption",
     "totalRevenue": "Total Revenue",
     "netCash": "Net Cash",
     "addIncome": "+ Income",
@@ -541,14 +545,20 @@
       "income": "Income",
       "expense": "Expense",
       "customer_payment": "Customer Payment",
-      "opening": "Opening Balance"
+      "opening": "Opening Balance",
+      "opening_balance": "Opening Balance",
+      "credit_sale": "Credit Sale",
+      "owner_withdrawal": "Owner Withdrawal"
     },
+    "itemsUnitSingular": "item",
+    "itemsUnitPlural": "items",
     "method": {
       "cash": "Cash",
       "card": "Card",
       "transfer": "Transfer",
       "credit": "Credit",
-      "other": "Other"
+      "other": "Other",
+      "internal": "Internal"
     },
     "sessionCard": {
       "open": "Open",

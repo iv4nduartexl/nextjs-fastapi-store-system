@@ -268,6 +268,7 @@ class CashboxSessionRead(BaseModel):
     card_in: Decimal = Decimal("0")
     transfer_in: Decimal = Decimal("0")
     credit_sales: Decimal = Decimal("0")
+    owner_withdrawals: Decimal = Decimal("0")
     expected_cash_balance: Decimal = Decimal("0")
     difference: Decimal | None = None
     transaction_count: int = 0

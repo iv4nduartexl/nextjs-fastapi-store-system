@@ -512,7 +512,9 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                   {payError}
                 </p>
               )}
+            </div>
 
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <Button
                 onClick={handlePayment}
                 disabled={paySubmitting || !payAmount || amountNum > balance}

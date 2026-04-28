@@ -50,7 +50,7 @@ async def create_sale(
         unit_price = item.price
         quantity = si.quantity
         # Gram: price is per 1000g (per kg). Subtotal = qty * price / 1000
-        if item.unit_type.value == "gram":
+        if item.unit_type == UnitType.gram:
             subtotal = (unit_price * quantity / Decimal("1000")).quantize(Decimal("0.01"))
         else:
             subtotal = (unit_price * quantity).quantize(Decimal("0.01"))
@@ -60,7 +60,7 @@ async def create_sale(
             SaleItem(
                 item_id=item.id,
                 item_name=item.name,
-                unit_type=item.unit_type.value,
+                unit_type=item.unit_type,
                 unit_price=unit_price,
                 quantity=quantity,
                 subtotal=subtotal,
@@ -104,17 +104,24 @@ async def create_sale(
             PaymentMethod.cash: "cash",
             PaymentMethod.card: "card",
             PaymentMethod.other: "transfer",
+            PaymentMethod.internal: "internal",
         }
+        tx_type = CashboxTransactionType.sale
+        direction = CashboxTransactionDirection.in_
+        if sale_data.payment_method == PaymentMethod.internal:
+            tx_type = CashboxTransactionType.owner_withdrawal
+            direction = CashboxTransactionDirection.out
+
         await record_auto_transaction(
             db=db,
             user_id=user.id,
-            tx_type=CashboxTransactionType.sale,
-            direction=CashboxTransactionDirection.in_,
+            tx_type=tx_type,
+            direction=direction,
             amount=total,
             payment_method=method_map.get(sale_data.payment_method, "other"),
             reference_type="sale",
             reference_id=sale.id,
-            description=f"Sale ({len(sale_item_objs)} items)",
+            description=None,
         )
     else:
         await record_auto_transaction(
@@ -126,7 +133,7 @@ async def create_sale(
             payment_method="credit",
             reference_type="sale",
             reference_id=sale.id,
-            description=f"Credit sale ({len(sale_item_objs)} items)",
+            description=None,
         )
     await db.commit()
 

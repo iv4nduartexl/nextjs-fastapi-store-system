@@ -26,6 +26,7 @@ import {
   Lock,
   Unlock,
   BarChart3,
+  Crown,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ const TX_ICONS: Record<string, React.ElementType> = {
   expense: TrendingDown,
   customer_payment: Users,
   opening: Wallet,
+  owner_withdrawal: Crown,
 };
 
 const METHOD_ICONS: Record<string, React.ElementType> = {
@@ -161,6 +163,7 @@ export default function CashboxDashboard({
   const cardIn = session ? parseFloat(session.card_in) : 0;
   const transferIn = session ? parseFloat(session.transfer_in) : 0;
   const creditSales = session ? parseFloat(session.credit_sales) : 0;
+  const ownerWithdrawals = session ? parseFloat((session as any).owner_withdrawals || 0) : 0;
   const totalRevenue = cashIn + cardIn + transferIn + creditSales;
   const openingAmount = session ? parseFloat(session.opening_amount) : 0;
 
@@ -453,7 +456,7 @@ export default function CashboxDashboard({
 
       {/* ── Balance cards ── */}
       {session && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {/* Opening */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
@@ -506,6 +509,15 @@ export default function CashboxDashboard({
             </p>
             <p className="text-lg font-black tabular-nums text-amber-700">
               {formatCurrency(creditSales)}
+            </p>
+          </div>
+          {/* Owner Withdrawal */}
+          <div className="bg-purple-50 rounded-2xl border border-purple-100 shadow-sm p-4">
+            <p className="text-[9px] font-semibold text-purple-500 uppercase tracking-widest mb-1">
+              {t("ownerWithdrawals")}
+            </p>
+            <p className="text-lg font-black tabular-nums text-purple-700">
+              {formatCurrency(ownerWithdrawals)}
             </p>
           </div>
         </div>
@@ -565,6 +577,7 @@ export default function CashboxDashboard({
                     const isIn = tx.direction === "in";
                     const amount = parseFloat(tx.amount);
                     const isOpening = tx.type === "opening";
+                    const isOwner = tx.type === "owner_withdrawal";
 
                     return (
                       <div
@@ -576,9 +589,11 @@ export default function CashboxDashboard({
                           className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                             isOpening
                               ? "bg-gray-100"
-                              : isIn
-                                ? "bg-green-100"
-                                : "bg-red-100"
+                              : isOwner
+                                ? "bg-purple-100"
+                                : isIn
+                                  ? "bg-green-100"
+                                  : "bg-red-100"
                           }`}
                         >
                           <Icon
@@ -586,9 +601,11 @@ export default function CashboxDashboard({
                             className={
                               isOpening
                                 ? "text-gray-500"
-                                : isIn
-                                  ? "text-green-600"
-                                  : "text-red-500"
+                                : isOwner
+                                  ? "text-purple-600"
+                                  : isIn
+                                    ? "text-green-600"
+                                    : "text-red-500"
                             }
                           />
                         </div>
@@ -596,16 +613,37 @@ export default function CashboxDashboard({
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-700 truncate">
-                            {tx.description ?? t(`txType.${tx.type}`)}
+                            {tx.description === "Opening balance"
+                              ? t("txType.opening")
+                              : tx.description?.match(/^(Credit sale|Sale) \((\d+) items\)$/)
+                                ? (() => {
+                                    const match = tx.description.match(
+                                      /^(Credit sale|Sale) \((\d+) items\)$/,
+                                    );
+                                    const type =
+                                      match![1] === "Credit sale"
+                                        ? "credit_sale"
+                                        : "sale";
+                                    const count = parseInt(match![2]);
+                                    const unit = t(
+                                      count === 1
+                                        ? "itemsUnitSingular"
+                                        : "itemsUnitPlural",
+                                    );
+                                    return `${t(`txType.${type}`)} (${count} ${unit})`;
+                                  })()
+                                : tx.description ?? t(`txType.${tx.type}`)}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span
                               className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                                 isOpening
                                   ? "bg-gray-100 text-gray-500"
-                                  : isIn
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-600"
+                                  : isOwner
+                                    ? "bg-purple-100 text-purple-700"
+                                    : isIn
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-red-100 text-red-600"
                               }`}
                             >
                               {t(`txType.${tx.type}`)}
@@ -630,12 +668,14 @@ export default function CashboxDashboard({
                           className={`text-sm font-bold tabular-nums font-mono w-24 text-right shrink-0 ${
                             isOpening
                               ? "text-gray-600"
-                              : isIn
-                                ? "text-green-600"
-                                : "text-red-500"
+                              : isOwner
+                                ? "text-purple-600"
+                                : isIn
+                                  ? "text-green-600"
+                                  : "text-red-500"
                           }`}
                         >
-                          {isOpening ? "" : isIn ? "+" : "-"}
+                          {isOpening ? "" : isOwner ? "" : isIn ? "+" : "-"}
                           {formatCurrency(amount)}
                         </p>
                       </div>
@@ -860,6 +900,8 @@ export default function CashboxDashboard({
                   {openError}
                 </p>
               )}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <Button
                 onClick={handleOpenSession}
                 disabled={openSubmitting}
@@ -1001,7 +1043,8 @@ export default function CashboxDashboard({
                   {closeError}
                 </p>
               )}
-
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <Button
                 onClick={handleCloseSession}
                 disabled={closeSubmitting || !countedAmount}
@@ -1126,7 +1169,8 @@ export default function CashboxDashboard({
                   {txError}
                 </p>
               )}
-
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <Button
                 onClick={handleManualTx}
                 disabled={txSubmitting || !txAmount}

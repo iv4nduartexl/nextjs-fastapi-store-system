@@ -49,7 +49,7 @@ const API = process.env.API_BASE_URL;
 
 export async function createSale(input: {
   items: SaleItemCreate[];
-  payment_method: "cash" | "card" | "other" | "credit";
+  payment_method: "cash" | "card" | "other" | "credit" | "internal";
   amount_tendered?: number;
   notes?: string;
   customer_id?: string;

@@ -725,6 +725,24 @@
             "description": "Filter by exact category name"
           },
           {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Order by field (e.g., 'name', '-price')",
+              "title": "Order"
+            },
+            "description": "Order by field (e.g., 'name', '-price')"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,

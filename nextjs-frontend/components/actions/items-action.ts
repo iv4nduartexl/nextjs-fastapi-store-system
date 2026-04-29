@@ -25,6 +25,7 @@ export async function fetchItems(
     query: {
       page: page,
       size: size,
+      order: "-created_at",
       ...(q ? { q } : {}),
     },
     headers: {

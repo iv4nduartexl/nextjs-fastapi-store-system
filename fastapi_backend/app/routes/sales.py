@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
-from app.models import Customer, Item, Sale, SaleItem, PaymentMethod
+from app.models import Customer, Item, Sale, SaleItem, PaymentMethod, UnitType
 from app.schemas import SaleCreate, SaleRead
 from app.users import current_active_user
 from app.routes.cashbox import record_auto_transaction

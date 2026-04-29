@@ -468,6 +468,10 @@ export type ReadItemData = {
      */
     category?: string | null;
     /**
+     * Order by field (e.g., 'name', '-price')
+     */
+    order?: string | null;
+    /**
      * Page number
      */
     page?: number;

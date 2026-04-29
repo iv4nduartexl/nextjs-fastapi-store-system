@@ -32,6 +32,7 @@ async def read_item(
     params: Params = Depends(),
     q: str | None = Query(None, description="Search query (name, SKU, or category)"),
     category: str | None = Query(None, description="Filter by exact category name"),
+    order: str | None = Query(None, description="Order by field (e.g., 'name', '-price')"),
 ):
     
     query = select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
@@ -45,6 +46,12 @@ async def read_item(
         )
     if category:
         query = query.filter(Item.category.ilike(category))
+    
+    if order:
+        order_field = order.lstrip("-")
+        if hasattr(Item, order_field):
+            column = getattr(Item, order_field)
+            query = query.order_by(column.desc() if order.startswith("-") else column.asc())
 
     print("User ID:", user.id)  # Debugging line to check the user ID
     print("Executing query:", query)  # Debugging line to check the generated SQL

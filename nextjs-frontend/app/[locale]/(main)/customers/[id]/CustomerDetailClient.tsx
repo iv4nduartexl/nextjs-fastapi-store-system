@@ -433,7 +433,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                   <button
                     type="button"
                     onClick={() =>
-                      setPayAmount(String(Math.floor(balance)));
+                      setPayAmount(String(Math.floor(balance)))
                     }
                     className="text-[10px] font-bold text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-2 py-0.5 rounded-md transition-colors"
                   >

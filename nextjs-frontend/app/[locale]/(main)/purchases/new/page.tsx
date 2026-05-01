@@ -13,6 +13,7 @@ import {
 } from "@/components/actions/purchases-action";
 import type { ItemRead } from "@/app/openapi-client";
 import { formatCurrency } from "@/lib/currency";
+import { formatNumber } from "@/lib/format-number";
 import {
   ArrowLeft,
   Search,
@@ -556,9 +557,7 @@ export default function NewPurchasePage() {
                             value={
                               line.costPrice === 0
                                 ? ""
-                                : line.costPrice.toLocaleString(undefined, {
-                                    maximumFractionDigits: 0,
-                                  })
+                                : formatNumber(line.costPrice)
                             }
                             onChange={(e) => {
                               const raw = e.target.value.replace(/\D/g, "");
@@ -860,9 +859,7 @@ export default function NewPurchasePage() {
                   value={
                     lines[metaModal].costPrice === 0
                       ? ""
-                      : lines[metaModal].costPrice.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })
+                      : formatNumber(lines[metaModal].costPrice)
                   }
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");
@@ -898,9 +895,7 @@ export default function NewPurchasePage() {
                     lines[metaModal].sellPrice === undefined ||
                     lines[metaModal].sellPrice === 0
                       ? ""
-                      : lines[metaModal].sellPrice!.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })
+                      : formatNumber(lines[metaModal].sellPrice!)
                   }
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { createSale, SaleRead } from "@/components/actions/sales-action";
 import type { ItemRead } from "@/app/openapi-client";
 import { formatCurrency } from "@/lib/currency";
+import { formatNumber } from "@/lib/format-number";
 import {
   Search,
   ShoppingCart,
@@ -458,7 +459,7 @@ export default function POSClient() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400 font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                      ×{parseFloat(si.quantity).toLocaleString()}
+                      ×{formatNumber(parseFloat(si.quantity))}
                     </span>
                     <span className="text-gray-700">{si.item_name}</span>
                   </div>
@@ -641,14 +642,14 @@ export default function POSClient() {
             <h3 className="font-semibold text-gray-800">{t("cart")}</h3>
             {cart.length > 0 && (
               <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
-                {cart
-                  .reduce(
+                {formatNumber(
+                  cart.reduce(
                     (s, c) =>
                       s +
                       (c.unitType === "gram" ? c.quantity / 1000 : c.quantity),
                     0,
                   )
-                  .toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                )}
               </span>
             )}
           </div>

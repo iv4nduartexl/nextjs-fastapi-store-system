@@ -30,6 +30,7 @@ import {
 } from "@/components/actions/customers-action";
 import type { SaleRead } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
+import { formatNumber } from "@/lib/format-number";
 
 const PAYMENT_METHODS: {
   value: "cash" | "card" | "transfer";
@@ -67,10 +68,10 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
     : null;
   const isOverLimit = limit !== null && balance > limit;
   const limitPct = limit ? Math.min(100, (balance / limit) * 100) : 0;
-  const amountNum = parseFloat(payAmount.replace(/,/g, "") || "0");
+  const amountNum = parseFloat(payAmount || "0");
 
   async function handlePayment() {
-    const amount = parseFloat(payAmount.replace(/,/g, ""));
+    const amount = parseFloat(payAmount);
     if (!amount || amount <= 0) {
       setPayError("Enter a valid amount.");
       return;
@@ -432,11 +433,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                   <button
                     type="button"
                     onClick={() =>
-                      setPayAmount(
-                        Math.floor(balance).toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        }),
-                      )
+                      setPayAmount(String(Math.floor(balance)));
                     }
                     className="text-[10px] font-bold text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-2 py-0.5 rounded-md transition-colors"
                   >
@@ -447,16 +444,9 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                   type="text"
                   inputMode="numeric"
                   autoFocus
-                  value={payAmount}
+                  value={formatNumber(payAmount)}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    setPayAmount(
-                      raw
-                        ? parseInt(raw, 10).toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })
-                        : "",
-                    );
+                    setPayAmount(e.target.value.replace(/\D/g, ""));
                   }}
                   placeholder="0"
                   className={`w-full h-12 text-2xl font-bold text-right rounded-xl border px-4 font-mono focus:outline-none focus:ring-2 transition-colors ${

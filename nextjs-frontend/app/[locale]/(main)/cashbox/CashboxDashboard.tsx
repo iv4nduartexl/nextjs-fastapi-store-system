@@ -39,6 +39,7 @@ import {
   fetchTransactions,
 } from "@/components/actions/cashbox-action";
 import { formatCurrency } from "@/lib/currency";
+import { formatNumber } from "@/lib/format-number";
 
 type TxFilter = "all" | "in" | "out";
 
@@ -167,7 +168,7 @@ export default function CashboxDashboard({
   const totalRevenue = cashIn + cardIn + transferIn + creditSales;
   const openingAmount = session ? parseFloat(session.opening_amount) : 0;
 
-  const countedNum = parseFloat(countedAmount.replace(/,/g, "") || "0");
+  const countedNum = parseFloat(countedAmount || "0");
   const difference = session
     ? countedNum - parseFloat(session.expected_cash_balance)
     : 0;
@@ -211,7 +212,7 @@ export default function CashboxDashboard({
 
   // ── Handlers ──
   async function handleOpenSession() {
-    const amount = parseFloat(openAmount.replace(/,/g, "") || "0");
+    const amount = parseFloat(openAmount || "0");
     setOpenSubmitting(true);
     setOpenError("");
     const result = await openSession({
@@ -253,7 +254,7 @@ export default function CashboxDashboard({
 
   async function handleManualTx() {
     if (!txModal) return;
-    const amount = parseFloat(txAmount.replace(/,/g, "") || "0");
+    const amount = parseFloat(txAmount || "0");
     if (!amount || amount <= 0) {
       setTxError("Enter a valid amount.");
       return;
@@ -840,16 +841,9 @@ export default function CashboxDashboard({
                   type="text"
                   inputMode="numeric"
                   autoFocus
-                  value={openAmount}
+                  value={formatNumber(openAmount)}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    setOpenAmount(
-                      raw
-                        ? parseInt(raw, 10).toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })
-                        : "",
-                    );
+                    setOpenAmount(e.target.value.replace(/\D/g, ""));
                   }}
                   placeholder={t("openForm.openingPlaceholder")}
                   className="w-full h-14 text-3xl font-black text-right rounded-xl border border-gray-200 bg-gray-50 px-4 font-mono focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -862,11 +856,7 @@ export default function CashboxDashboard({
                       const amt = Math.round(
                         parseFloat(lastClosed.closing_amount_counted!),
                       );
-                      setOpenAmount(
-                        amt.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        }),
-                      );
+                      setOpenAmount(String(amt));
                     }}
                     className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-2 w-full transition-colors"
                   >
@@ -959,16 +949,9 @@ export default function CashboxDashboard({
                   type="text"
                   inputMode="numeric"
                   autoFocus
-                  value={countedAmount}
+                  value={formatNumber(countedAmount)}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    setCountedAmount(
-                      raw
-                        ? parseInt(raw, 10).toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })
-                        : "",
-                    );
+                    setCountedAmount(e.target.value.replace(/\D/g, ""));
                   }}
                   placeholder={t("closeForm.countedPlaceholder")}
                   className={`w-full h-14 text-3xl font-black text-right rounded-xl border px-4 font-mono focus:outline-none focus:ring-2 transition-colors ${
@@ -1098,16 +1081,9 @@ export default function CashboxDashboard({
                   type="text"
                   inputMode="numeric"
                   autoFocus
-                  value={txAmount}
+                  value={formatNumber(txAmount)}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    setTxAmount(
-                      raw
-                        ? parseInt(raw, 10).toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })
-                        : "",
-                    );
+                    setTxAmount(e.target.value.replace(/\D/g, ""));
                   }}
                   placeholder="0"
                   className={`w-full h-14 text-3xl font-black text-right rounded-xl border px-4 font-mono focus:outline-none focus:ring-2 ${

@@ -20,6 +20,7 @@ import {
   PurchaseRead,
 } from "@/components/actions/purchases-action";
 import { formatCurrency } from "@/lib/currency";
+import { formatNumber } from "@/lib/format-number";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -297,7 +298,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
                     )}
                   </td>
                   <td className="px-3 py-3 text-right font-mono font-semibold text-gray-800 tabular-nums">
-                    {qty % 1 === 0 ? qty.toLocaleString() : qty.toFixed(3)}
+                    {qty % 1 === 0 ? formatNumber(qty) : qty.toFixed(3)}
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-gray-600 tabular-nums">
                     {formatCurrency(item.cost_price)}

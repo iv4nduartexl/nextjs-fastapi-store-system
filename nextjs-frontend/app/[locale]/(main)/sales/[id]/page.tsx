@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { fetchSale, SaleRead } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
+import { formatNumber } from "@/lib/format-number";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -244,7 +245,7 @@ export default async function SaleDetailPage({ params }: Props) {
                   </td>
                   <td className="px-3 py-3 text-right">
                     <span className="font-mono font-semibold text-gray-800 tabular-nums">
-                      {qty % 1 === 0 ? qty.toLocaleString() : qty.toFixed(3)}
+                      {qty % 1 === 0 ? formatNumber(qty) : qty.toFixed(3)}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-right font-mono font-bold text-gray-900 tabular-nums">

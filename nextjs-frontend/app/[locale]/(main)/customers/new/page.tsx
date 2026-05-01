@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createCustomer } from "@/components/actions/customers-action";
+import { formatNumber } from "@/lib/format-number";
 import { ArrowLeft, Users } from "lucide-react";
 
 export default function NewCustomerPage() {
@@ -151,16 +152,9 @@ export default function NewCustomerPage() {
           <input
             type="text"
             inputMode="numeric"
-            value={creditLimit}
+            value={formatNumber(creditLimit)}
             onChange={(e) => {
-              const raw = e.target.value.replace(/\D/g, "");
-              setCreditLimit(
-                raw
-                  ? parseInt(raw, 10).toLocaleString(undefined, {
-                      maximumFractionDigits: 0,
-                    })
-                  : "",
-              );
+              setCreditLimit(e.target.value.replace(/\D/g, ""));
             }}
             placeholder={t("form.creditLimitPlaceholder")}
             className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring font-mono"

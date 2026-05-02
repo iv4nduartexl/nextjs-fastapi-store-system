@@ -346,6 +346,7 @@ export default function POSClient() {
   }
 
   function updateQty(itemId: string, qty: number) {
+    if (qty === null) return;
     if (qty <= 0) {
       setCart((prev) => prev.filter((c) => c.itemId !== itemId));
     } else {
@@ -644,9 +645,11 @@ export default function POSClient() {
               <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
                 {formatNumber(
                   cart.reduce(
-                    (s, c) =>
+                    (s, c) =>{
+                      const val = c.quantity ? c.quantity : 0;
+                      return (
                       s +
-                      (c.unitType === "gram" ? c.quantity / 1000 : c.quantity),
+                      (c.unitType === "gram" ? val / 1000 : val))},
                     0,
                   )
                 )}
@@ -709,12 +712,17 @@ export default function POSClient() {
                   </button>
                   <input
                     type="number"
-                    value={item.quantity}
-                    min={item.unitType === "gram" ? 1 : 1}
+                    value={String(item.quantity)}
+                    min={1}
                     step={item.unitType === "gram" ? 100 : 1}
                     onChange={(e) =>
-                      updateQty(item.itemId, parseFloat(e.target.value) || 1)
+                      updateQty(item.itemId, parseFloat(e.target.value))
                     }
+                    onBlur={() => {
+                      if (!item.quantity) {
+                        updateQty(item.itemId, 1);
+                      }
+                    }}
                     className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
                   />
                   <button
@@ -937,7 +945,7 @@ export default function POSClient() {
                 </label>
                 <Input
                   type="number"
-                  min={cartTotal}
+                  min={cartTotal ? cartTotal.toString() : "0"}
                   step="1"
                   value={amountTendered}
                   onChange={(e) => setAmountTendered(e.target.value)}

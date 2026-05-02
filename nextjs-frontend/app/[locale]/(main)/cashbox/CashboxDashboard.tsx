@@ -761,18 +761,16 @@ export default function CashboxDashboard({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-700">
+                    <p suppressHydrationWarning className="text-sm font-semibold text-gray-700">
                       {new Date(s.opened_at).toLocaleDateString(locale, {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
-                      })}{" "}
-                      {new Date(s.opened_at).toLocaleTimeString(locale, {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p suppressHydrationWarning className="text-xs text-gray-400">
                       {s.transaction_count} movs.
                       {s.closed_at &&
                         ` · ${new Date(s.closed_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`}

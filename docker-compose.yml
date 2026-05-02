@@ -111,14 +111,14 @@ services:
           echo 'Development mode: Google Drive sync skipped.';
           sleep infinity;
         fi;
-        echo 'Google Drive sync started. Syncing every hour.';
+        echo 'Google Drive sync started. Syncing every 24 hours.';
         while true; do
           if rclone lsd gdrive: --config /config/rclone/rclone.conf > /dev/null 2>&1; then
             rclone sync /backups gdrive:db-backups --config /config/rclone/rclone.conf && echo \"Synced to Google Drive\" || echo 'Sync FAILED';
           else
             echo 'rclone remote \"gdrive\" not configured. Run: make setup-gdrive';
           fi;
-          sleep 3600;
+          sleep 86400;
         done
       "
     profiles:

@@ -21,6 +21,18 @@ jobs:
           # Copy example env files so containers have required variables
           cp fastapi_backend/.env.example fastapi_backend/.env
 
+      - name: Backup database before deploy
+        run: make docker-db-backup
+
+      - name: Push backup to Google Drive
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/backups:/backups:ro" \
+            -v "$HOME/.config/rclone:/config/rclone:ro" \
+            rclone/rclone:latest \
+            sync /backups gdrive:db-backups --config /config/rclone/rclone.conf \
+            && echo "Backup pushed to Google Drive" || echo "GDrive push failed — rclone not configured?"
+
       # Only deploy. No tests to keep it clean.
       - name: Run with Docker Compose
         run: |
@@ -31,3 +43,6 @@ jobs:
           
       - name: Run Database Migrations
         run: docker compose exec -T backend alembic upgrade head
+
+      - name: Start Google Drive sync service
+        run: make docker-start-gdrive

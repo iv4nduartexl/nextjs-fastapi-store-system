@@ -102,7 +102,7 @@ setup-gdrive: ## Authenticate rclone with Google Drive (run once). Creates remot
 
 docker-start-gdrive: ## Start the Google Drive sync service
 	$(DOCKER_COMPOSE) --profile gdrive up -d gdrive-sync
-	@echo "gdrive-sync running. Uploads every hour to Google Drive folder: db-backups/"
+	@echo "gdrive-sync running. Uploads every 24 hours to Google Drive folder: db-backups/"
 
 docker-stop-gdrive: ## Stop the Google Drive sync service
 	$(DOCKER_COMPOSE) --profile gdrive stop gdrive-sync

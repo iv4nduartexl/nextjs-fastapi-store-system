@@ -62,6 +62,9 @@ import type {
   GetSaleData,
   GetSaleError,
   GetSaleResponse,
+  CancelSaleData,
+  CancelSaleError,
+  CancelSaleResponse,
   CreatePurchaseData,
   CreatePurchaseError,
   CreatePurchaseResponse,
@@ -86,6 +89,15 @@ import type {
   RecordPaymentData,
   RecordPaymentError,
   RecordPaymentResponse,
+  RecordOutcomeData,
+  RecordOutcomeError,
+  RecordOutcomeResponse,
+  DeletePaymentData,
+  DeletePaymentError,
+  DeletePaymentResponse,
+  DeleteOutcomeData,
+  DeleteOutcomeError,
+  DeleteOutcomeResponse,
   GetCurrentSessionError,
   GetCurrentSessionResponse,
   OpenSessionData,
@@ -423,6 +435,22 @@ export const getSale = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Cancel Sale
+ */
+export const cancelSale = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CancelSaleData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CancelSaleResponse,
+    CancelSaleError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/{sale_id}/cancel",
+  });
+};
+
+/**
  * Create Purchase
  */
 export const createPurchase = <ThrowOnError extends boolean = false>(
@@ -547,6 +575,54 @@ export const recordPayment = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/customers/{customer_id}/payments",
+  });
+};
+
+/**
+ * Record Outcome
+ */
+export const recordOutcome = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<RecordOutcomeData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    RecordOutcomeResponse,
+    RecordOutcomeError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/{customer_id}/outcomes",
+  });
+};
+
+/**
+ * Delete Payment
+ */
+export const deletePayment = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DeletePaymentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    DeletePaymentResponse,
+    DeletePaymentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/{customer_id}/payments/{payment_id}",
+  });
+};
+
+/**
+ * Delete Outcome
+ */
+export const deleteOutcome = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DeleteOutcomeData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    DeleteOutcomeResponse,
+    DeleteOutcomeError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/customers/{customer_id}/outcomes/{outcome_id}",
   });
 };
 

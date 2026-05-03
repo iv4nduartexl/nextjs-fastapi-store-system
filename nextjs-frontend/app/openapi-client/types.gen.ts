@@ -94,10 +94,26 @@ export type CustomerDetailRead = {
   is_active: boolean;
   created_at: string;
   total_credit?: string;
+  total_outcomes?: string;
   total_paid?: string;
   balance?: string;
   credit_sales?: Array<SaleRead>;
   payments?: Array<CustomerPaymentRead>;
+  outcomes?: Array<CustomerOutcomeRead>;
+};
+
+export type CustomerOutcomeCreate = {
+  amount: number | string;
+  description: string;
+  outcome_date?: string | null;
+};
+
+export type CustomerOutcomeRead = {
+  id: string;
+  amount: string;
+  description: string;
+  outcome_date: string;
+  created_at: string;
 };
 
 export type CustomerPage = {
@@ -136,6 +152,7 @@ export type CustomerRead = {
   is_active: boolean;
   created_at: string;
   total_credit?: string;
+  total_outcomes?: string;
   total_paid?: string;
   balance?: string;
 };
@@ -556,6 +573,16 @@ export type GetSaleResponse = SaleRead;
 
 export type GetSaleError = HTTPValidationError;
 
+export type CancelSaleData = {
+  path: {
+    sale_id: string;
+  };
+};
+
+export type CancelSaleResponse = SaleRead;
+
+export type CancelSaleError = HTTPValidationError;
+
 export type CreatePurchaseData = {
   body: PurchaseCreate;
 };
@@ -646,6 +673,39 @@ export type RecordPaymentData = {
 export type RecordPaymentResponse = CustomerPaymentRead;
 
 export type RecordPaymentError = HTTPValidationError;
+
+export type RecordOutcomeData = {
+  body: CustomerOutcomeCreate;
+  path: {
+    customer_id: string;
+  };
+};
+
+export type RecordOutcomeResponse = CustomerOutcomeRead;
+
+export type RecordOutcomeError = HTTPValidationError;
+
+export type DeletePaymentData = {
+  path: {
+    customer_id: string;
+    payment_id: string;
+  };
+};
+
+export type DeletePaymentResponse = unknown;
+
+export type DeletePaymentError = HTTPValidationError;
+
+export type DeleteOutcomeData = {
+  path: {
+    customer_id: string;
+    outcome_id: string;
+  };
+};
+
+export type DeleteOutcomeResponse = unknown;
+
+export type DeleteOutcomeError = HTTPValidationError;
 
 export type GetCurrentSessionResponse = CashboxSessionRead;
 

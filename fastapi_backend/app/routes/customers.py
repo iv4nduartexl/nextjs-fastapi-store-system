@@ -10,12 +10,14 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
-from app.models import Customer, CustomerPayment, Sale, PaymentMethod, SaleStatus
+from app.models import Customer, CustomerPayment, CustomerOutcome, Sale, PaymentMethod, SaleStatus
 from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import (
     CustomerCreate,
     CustomerDetailRead,
     CustomerPage,
+    CustomerOutcomeCreate,
+    CustomerOutcomeRead,
     CustomerPaymentCreate,
     CustomerPaymentRead,
     CustomerRead,
@@ -40,6 +42,12 @@ async def _build_customer_read(
     )
     total_credit = Decimal(str(credit_result.scalar()))
 
+    outcome_result = await db.execute(
+        select(func.coalesce(func.sum(CustomerOutcome.amount), 0))
+        .where(CustomerOutcome.customer_id == customer.id)
+    )
+    total_outcomes = Decimal(str(outcome_result.scalar()))
+
     paid_result = await db.execute(
         select(func.coalesce(func.sum(CustomerPayment.amount), 0))
         .where(CustomerPayment.customer_id == customer.id)
@@ -48,13 +56,14 @@ async def _build_customer_read(
 
     cr = CustomerRead.model_validate(customer)
     cr.total_credit = total_credit
+    cr.total_outcomes = total_outcomes
     cr.total_paid = total_paid
-    cr.balance = total_credit - total_paid
+    cr.balance = total_credit + total_outcomes - total_paid
     return cr
 
 
 async def _batch_balances(customer_ids: list[UUID], db: AsyncSession) -> dict:
-    """Return {customer_id: {total_credit, total_paid}} for a list of IDs in 2 queries."""
+    """Return {customer_id: {total_credit, total_outcomes, total_paid}} for a list of IDs."""
     credit_result = await db.execute(
         select(Sale.customer_id, func.coalesce(func.sum(Sale.total), 0).label("tc"))
         .where(Sale.customer_id.in_(customer_ids))
@@ -63,6 +72,13 @@ async def _batch_balances(customer_ids: list[UUID], db: AsyncSession) -> dict:
         .group_by(Sale.customer_id)
     )
     credits = {row.customer_id: Decimal(str(row.tc)) for row in credit_result}
+
+    outcome_result = await db.execute(
+        select(CustomerOutcome.customer_id, func.coalesce(func.sum(CustomerOutcome.amount), 0).label("total_outcomes"))
+        .where(CustomerOutcome.customer_id.in_(customer_ids))
+        .group_by(CustomerOutcome.customer_id)
+    )
+    outcomes = {row.customer_id: Decimal(str(row.total_outcomes)) for row in outcome_result}
 
     paid_result = await db.execute(
         select(CustomerPayment.customer_id, func.coalesce(func.sum(CustomerPayment.amount), 0).label("tp"))
@@ -74,6 +90,7 @@ async def _batch_balances(customer_ids: list[UUID], db: AsyncSession) -> dict:
     return {
         cid: {
             "total_credit": credits.get(cid, Decimal("0")),
+            "total_outcomes": outcomes.get(cid, Decimal("0")),
             "total_paid": paid.get(cid, Decimal("0")),
         }
         for cid in customer_ids
@@ -121,8 +138,9 @@ async def list_customers(
         b = balances[c.id]
         cr = CustomerRead.model_validate(c)
         cr.total_credit = b["total_credit"]
+        cr.total_outcomes = b["total_outcomes"]
         cr.total_paid = b["total_paid"]
-        cr.balance = b["total_credit"] - b["total_paid"]
+        cr.balance = b["total_credit"] + b["total_outcomes"] - b["total_paid"]
         items.append(cr)
 
     # Sort: highest balance first within the page
@@ -157,6 +175,7 @@ async def get_customer(
         .options(
             selectinload(Customer.sales).selectinload(Sale.sale_items),
             selectinload(Customer.credit_payments),
+            selectinload(Customer.custom_outcomes),
         )
     )
     customer = result.scalars().first()
@@ -168,12 +187,14 @@ async def get_customer(
         if s.payment_method == PaymentMethod.credit and s.status != SaleStatus.cancelled
     ]
     total_credit = sum(s.total for s in credit_sales) or Decimal("0")
+    total_outcomes = sum(o.amount for o in customer.custom_outcomes) or Decimal("0")
     total_paid = sum(p.amount for p in customer.credit_payments) or Decimal("0")
 
     detail = CustomerDetailRead.model_validate(customer)
     detail.total_credit = Decimal(str(total_credit))
+    detail.total_outcomes = Decimal(str(total_outcomes))
     detail.total_paid = Decimal(str(total_paid))
-    detail.balance = detail.total_credit - detail.total_paid
+    detail.balance = detail.total_credit + detail.total_outcomes - detail.total_paid
     detail.credit_sales = [
         _sale_read_with_customer(s, customer.name)
         for s in sorted(credit_sales, key=lambda x: x.created_at, reverse=True)
@@ -181,6 +202,10 @@ async def get_customer(
     detail.payments = [
         CustomerPaymentRead.model_validate(p)
         for p in sorted(customer.credit_payments, key=lambda x: x.payment_date, reverse=True)
+    ]
+    detail.outcomes = [
+        CustomerOutcomeRead.model_validate(o)
+        for o in sorted(customer.custom_outcomes, key=lambda x: x.outcome_date, reverse=True)
     ]
     return detail
 
@@ -242,9 +267,15 @@ async def record_payment(
             CustomerPayment.customer_id == customer_id
         )
     )
+    outcomes_result = await db.execute(
+        select(func.coalesce(func.sum(CustomerOutcome.amount), 0)).where(
+            CustomerOutcome.customer_id == customer_id
+        )
+    )
     total_credit = balance_result.scalar() or Decimal("0")
+    total_outcomes = outcomes_result.scalar() or Decimal("0")
     total_paid = paid_result.scalar() or Decimal("0")
-    current_balance = total_credit - total_paid
+    current_balance = total_credit + total_outcomes - total_paid
     if data.amount > current_balance:
         raise HTTPException(
             status_code=422,
@@ -279,3 +310,97 @@ async def record_payment(
     await db.commit()
 
     return CustomerPaymentRead.model_validate(payment)
+
+
+@router.post("/{customer_id}/outcomes", response_model=CustomerOutcomeRead, status_code=201)
+async def record_outcome(
+    customer_id: UUID,
+    data: CustomerOutcomeCreate,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    result = await db.execute(
+        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+    )
+    customer = result.scalars().first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    if data.amount <= 0:
+        raise HTTPException(status_code=422, detail="Outcome amount must be greater than zero.")
+
+    if not data.description.strip():
+        raise HTTPException(status_code=422, detail="Description is required.")
+
+    outcome = CustomerOutcome(
+        customer_id=customer_id,
+        user_id=user.id,
+        amount=data.amount,
+        description=data.description.strip(),
+        outcome_date=data.outcome_date or datetime.now(timezone.utc),
+    )
+    db.add(outcome)
+    await db.commit()
+    await db.refresh(outcome)
+
+    return CustomerOutcomeRead.model_validate(outcome)
+
+
+@router.delete("/{customer_id}/payments/{payment_id}")
+async def delete_payment(
+    customer_id: UUID,
+    payment_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    customer_result = await db.execute(
+        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+    )
+    customer = customer_result.scalars().first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    payment_result = await db.execute(
+        select(CustomerPayment).where(
+            CustomerPayment.id == payment_id,
+            CustomerPayment.customer_id == customer_id,
+            CustomerPayment.user_id == user.id,
+        )
+    )
+    payment = payment_result.scalars().first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    await db.delete(payment)
+    await db.commit()
+    return {"message": "Payment deleted"}
+
+
+@router.delete("/{customer_id}/outcomes/{outcome_id}")
+async def delete_outcome(
+    customer_id: UUID,
+    outcome_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    customer_result = await db.execute(
+        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+    )
+    customer = customer_result.scalars().first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    outcome_result = await db.execute(
+        select(CustomerOutcome).where(
+            CustomerOutcome.id == outcome_id,
+            CustomerOutcome.customer_id == customer_id,
+            CustomerOutcome.user_id == user.id,
+        )
+    )
+    outcome = outcome_result.scalars().first()
+    if not outcome:
+        raise HTTPException(status_code=404, detail="Outcome not found")
+
+    await db.delete(outcome)
+    await db.commit()
+    return {"message": "Outcome deleted"}

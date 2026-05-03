@@ -116,3 +116,27 @@ export async function fetchSale(
   if (!res.ok) return { message: `Error ${res.status}` };
   return res.json();
 }
+
+export async function cancelCreditSale(
+  saleId: string,
+): Promise<{ data?: SaleRead; error?: string }> {
+  const token = await getToken();
+  if (!token) return { error: "Not authenticated" };
+
+  const res = await fetch(`${API}/sales/${saleId}/cancel`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return { error: err.detail ?? `Error ${res.status}` };
+  }
+
+  const data: SaleRead = await res.json();
+  revalidatePath("/sales");
+  revalidatePath("/customers");
+  return { data };
+}

@@ -29,6 +29,7 @@ export interface CustomerRead {
   is_active: boolean;
   created_at: string;
   total_credit: string;
+  total_outcomes: string;
   total_paid: string;
   balance: string;
 }
@@ -56,9 +57,23 @@ export interface CustomerPaymentRead {
   created_at: string;
 }
 
+export interface CustomerOutcomeCreate {
+  amount: number;
+  description: string;
+}
+
+export interface CustomerOutcomeRead {
+  id: string;
+  amount: string;
+  description: string;
+  outcome_date: string;
+  created_at: string;
+}
+
 export interface CustomerDetailRead extends CustomerRead {
   credit_sales: import("./sales-action").SaleRead[];
   payments: CustomerPaymentRead[];
+  outcomes: CustomerOutcomeRead[];
 }
 
 async function getToken() {
@@ -177,4 +192,77 @@ export async function recordPayment(
   revalidatePath(`/customers/${customerId}`);
   revalidatePath("/customers");
   return { data: await res.json() };
+}
+
+export async function recordOutcome(
+  customerId: string,
+  data: CustomerOutcomeCreate,
+): Promise<{ data?: CustomerOutcomeRead; error?: string }> {
+  const token = await getToken();
+  if (!token) return { error: "Not authenticated" };
+
+  const res = await fetch(`${API}/customers/${customerId}/outcomes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return { error: err.detail ?? `Error ${res.status}` };
+  }
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/customers");
+  return { data: await res.json() };
+}
+
+export async function deletePayment(
+  customerId: string,
+  paymentId: string,
+): Promise<{ ok?: true; error?: string }> {
+  const token = await getToken();
+  if (!token) return { error: "Not authenticated" };
+
+  const res = await fetch(`${API}/customers/${customerId}/payments/${paymentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return { error: err.detail ?? `Error ${res.status}` };
+  }
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/customers");
+  return { ok: true };
+}
+
+export async function deleteOutcome(
+  customerId: string,
+  outcomeId: string,
+): Promise<{ ok?: true; error?: string }> {
+  const token = await getToken();
+  if (!token) return { error: "Not authenticated" };
+
+  const res = await fetch(`${API}/customers/${customerId}/outcomes/${outcomeId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return { error: err.detail ?? `Error ${res.status}` };
+  }
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/customers");
+  return { ok: true };
 }

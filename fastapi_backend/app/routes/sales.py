@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
-from app.models import Customer, Item, Sale, SaleItem, PaymentMethod, UnitType
+from app.models import Customer, Item, Sale, SaleItem, PaymentMethod, SaleStatus, UnitType
 from app.schemas import SaleCreate, SaleRead
 from app.users import current_active_user
 from app.routes.cashbox import record_auto_transaction
@@ -196,6 +196,59 @@ async def get_sale(
     sale = result.scalars().first()
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
+    sr = SaleRead.model_validate(sale)
+    if sale.customer:
+        sr.customer_name = sale.customer.name
+    return sr
+
+
+@router.post("/{sale_id}/cancel", response_model=SaleRead)
+async def cancel_sale(
+    sale_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    result = await db.execute(
+        select(Sale)
+        .filter(Sale.id == sale_id, Sale.user_id == user.id)
+        .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
+    )
+    sale = result.scalars().first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+
+    if sale.status == SaleStatus.cancelled:
+        raise HTTPException(status_code=409, detail="Sale already cancelled")
+
+    if sale.payment_method != PaymentMethod.credit:
+        raise HTTPException(
+            status_code=422,
+            detail="Only credit sales can be cancelled from customer audit.",
+        )
+
+    item_ids = [si.item_id for si in sale.sale_items if si.item_id is not None]
+    if item_ids:
+        item_result = await db.execute(
+            select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id)
+        )
+        items_map = {item.id: item for item in item_result.scalars().all()}
+
+        for sale_item in sale.sale_items:
+            if sale_item.item_id and sale_item.item_id in items_map:
+                items_map[sale_item.item_id].stock = (
+                    items_map[sale_item.item_id].stock + sale_item.quantity
+                )
+
+    sale.status = SaleStatus.cancelled
+    await db.commit()
+
+    refreshed = await db.execute(
+        select(Sale)
+        .filter(Sale.id == sale.id)
+        .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
+    )
+    sale = refreshed.scalars().first()
+
     sr = SaleRead.model_validate(sale)
     if sale.customer:
         sr.customer_name = sale.customer.name

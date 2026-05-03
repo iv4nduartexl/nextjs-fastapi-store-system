@@ -216,6 +216,29 @@ export default function CashboxDashboard({
     });
   }
 
+  function getTranslatedTxDescription(tx: CashboxTransactionRead): string {
+    const raw = tx.description?.trim();
+    if (!raw) return t(`txType.${tx.type}`);
+
+    if (raw === "Opening balance") return t("txType.opening");
+    if (raw === "Purchase") return t("txType.purchase");
+
+    const saleWithItemsMatch = raw.match(/^(Credit sale|Sale) \((\d+) items\)$/);
+    if (saleWithItemsMatch) {
+      const type = saleWithItemsMatch[1] === "Credit sale" ? "credit_sale" : "sale";
+      const count = parseInt(saleWithItemsMatch[2]);
+      const unit = t(count === 1 ? "itemsUnitSingular" : "itemsUnitPlural");
+      return `${t(`txType.${type}`)} (${count} ${unit})`;
+    }
+
+    const paymentFromMatch = raw.match(/^Payment from\s+(.+)$/);
+    if (paymentFromMatch) {
+      return t("txDescription.paymentFrom", { name: paymentFromMatch[1] });
+    }
+
+    return raw;
+  }
+
   // ── Handlers ──
   async function handleOpenSession() {
     const amount = parseFloat(openAmount || "0");
@@ -620,26 +643,7 @@ export default function CashboxDashboard({
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-700 truncate">
-                            {tx.description === "Opening balance"
-                              ? t("txType.opening")
-                              : tx.description?.match(/^(Credit sale|Sale) \((\d+) items\)$/)
-                                ? (() => {
-                                    const match = tx.description.match(
-                                      /^(Credit sale|Sale) \((\d+) items\)$/,
-                                    );
-                                    const type =
-                                      match![1] === "Credit sale"
-                                        ? "credit_sale"
-                                        : "sale";
-                                    const count = parseInt(match![2]);
-                                    const unit = t(
-                                      count === 1
-                                        ? "itemsUnitSingular"
-                                        : "itemsUnitPlural",
-                                    );
-                                    return `${t(`txType.${type}`)} (${count} ${unit})`;
-                                  })()
-                                : t(`txType.${tx.type}`) ?? tx.description}
+                            {getTranslatedTxDescription(tx)}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span

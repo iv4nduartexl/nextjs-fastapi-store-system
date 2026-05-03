@@ -135,6 +135,7 @@ class CustomerRead(BaseModel):
     is_active: bool
     created_at: datetime
     total_credit: Decimal = Decimal("0")
+    total_outcomes: Decimal = Decimal("0")
     total_paid: Decimal = Decimal("0")
     balance: Decimal = Decimal("0")
 
@@ -167,9 +168,26 @@ class CustomerPaymentRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CustomerOutcomeCreate(BaseModel):
+    amount: Decimal
+    description: str
+    outcome_date: datetime | None = None
+
+
+class CustomerOutcomeRead(BaseModel):
+    id: UUID
+    amount: Decimal
+    description: str
+    outcome_date: datetime
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class CustomerDetailRead(CustomerRead):
     credit_sales: list[SaleRead] = []
     payments: list[CustomerPaymentRead] = []
+    outcomes: list[CustomerOutcomeRead] = []
 
 
 # --- Purchases ---

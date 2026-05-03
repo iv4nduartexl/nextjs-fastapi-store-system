@@ -183,6 +183,7 @@ class Customer(Base):
     user = relationship("User", back_populates="customers")
     sales = relationship("Sale", back_populates="customer")
     credit_payments = relationship("CustomerPayment", back_populates="customer", cascade="all, delete-orphan")
+    custom_outcomes = relationship("CustomerOutcome", back_populates="customer", cascade="all, delete-orphan")
 
 
 class CustomerPayment(Base):
@@ -198,6 +199,21 @@ class CustomerPayment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     customer = relationship("Customer", back_populates="credit_payments")
+    user = relationship("User")
+
+
+class CustomerOutcome(Base):
+    __tablename__ = "customer_outcomes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    description = Column(String, nullable=False)
+    outcome_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    customer = relationship("Customer", back_populates="custom_outcomes")
     user = relationship("User")
 
 

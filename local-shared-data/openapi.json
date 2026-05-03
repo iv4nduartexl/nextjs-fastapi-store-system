@@ -1129,6 +1129,54 @@
         }
       }
     },
+    "/sales/{sale_id}/cancel": {
+      "post": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Cancel Sale",
+        "operationId": "cancel_sale",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sale_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sale Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/purchases/": {
       "post": {
         "tags": [
@@ -1611,6 +1659,176 @@
                 "schema": {
                   "$ref": "#/components/schemas/CustomerPaymentRead"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}/outcomes": {
+      "post": {
+        "tags": [
+          "customers"
+        ],
+        "summary": "Record Outcome",
+        "operationId": "record_outcome",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Customer Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerOutcomeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerOutcomeRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}/payments/{payment_id}": {
+      "delete": {
+        "tags": [
+          "customers"
+        ],
+        "summary": "Delete Payment",
+        "operationId": "delete_payment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}/outcomes/{outcome_id}": {
+      "delete": {
+        "tags": [
+          "customers"
+        ],
+        "summary": "Delete Outcome",
+        "operationId": "delete_outcome",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Customer Id"
+            }
+          },
+          {
+            "name": "outcome_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Outcome Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -2602,6 +2820,11 @@
             "title": "Total Credit",
             "default": "0"
           },
+          "total_outcomes": {
+            "type": "string",
+            "title": "Total Outcomes",
+            "default": "0"
+          },
           "total_paid": {
             "type": "string",
             "title": "Total Paid",
@@ -2627,6 +2850,14 @@
             "type": "array",
             "title": "Payments",
             "default": []
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerOutcomeRead"
+            },
+            "type": "array",
+            "title": "Outcomes",
+            "default": []
           }
         },
         "type": "object",
@@ -2643,6 +2874,79 @@
           "created_at"
         ],
         "title": "CustomerDetailRead"
+      },
+      "CustomerOutcomeCreate": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "outcome_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount",
+          "description"
+        ],
+        "title": "CustomerOutcomeCreate"
+      },
+      "CustomerOutcomeRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "outcome_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Outcome Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "description",
+          "outcome_date",
+          "created_at"
+        ],
+        "title": "CustomerOutcomeRead"
       },
       "CustomerPage": {
         "properties": {
@@ -2865,6 +3169,11 @@
           "total_credit": {
             "type": "string",
             "title": "Total Credit",
+            "default": "0"
+          },
+          "total_outcomes": {
+            "type": "string",
+            "title": "Total Outcomes",
             "default": "0"
           },
           "total_paid": {

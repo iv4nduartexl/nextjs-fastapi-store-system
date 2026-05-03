@@ -12,7 +12,7 @@ export interface PurchaseItemCreate {
   item_name: string;
   unit_type: string;
   quantity: number;
-  cost_price: number;
+  total_cost_price: number;
   sku?: string;
   category?: string;
   sell_price?: number;

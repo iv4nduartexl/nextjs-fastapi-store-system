@@ -9,7 +9,7 @@ export function formatCurrency(
   if (isNaN(num)) return "—";
   return `${symbol}${num.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    maximumFractionDigits: 2,
   })}`;
 }
 

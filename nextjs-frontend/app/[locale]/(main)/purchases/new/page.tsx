@@ -34,6 +34,7 @@ interface LineItem {
   unitType: string;
   quantity: number;
   costPrice: number;
+  totalCostPrice: number;
   sellPrice?: number;
   sku?: string;
   category?: string;
@@ -142,6 +143,7 @@ export default function NewPurchasePage() {
         itemName: product.name,
         unitType: product.unit_type ?? "unit",
         quantity: 1,
+        totalCostPrice: 0,
         costPrice: 0,
         sellPrice: product.price != null ? Number(product.price) : undefined,
         existingStock: product.stock != null ? Number(product.stock) : 0,
@@ -164,6 +166,7 @@ export default function NewPurchasePage() {
         itemName: "",
         unitType: "unit",
         quantity: 1,
+        totalCostPrice: 0,
         costPrice: 0,
         sku: "",
         category: "",
@@ -186,13 +189,8 @@ export default function NewPurchasePage() {
   }
 
   const subtotal = lines.reduce((s, l) => {
-    // Gram: costPrice is per 1000g (per kg). Subtotal = qty × price / 1000
-    return (
-      s +
-      (l.unitType === "gram"
-        ? (l.costPrice * l.quantity) / 1000
-        : l.costPrice * l.quantity)
-    );
+    // Gram: totalCostPrice is per 1000g (per kg). Subtotal = Sum(price)
+    return s + l.totalCostPrice;
   }, 0);
   const taxNum = parseFloat(tax) || 0;
   const totalCost = subtotal + taxNum;
@@ -206,7 +204,7 @@ export default function NewPurchasePage() {
       setErrorMsg(t("form.noNameItems"));
       return;
     }
-    if (lines.some((l) => !l.costPrice)) {
+    if (lines.some((l) => !l.totalCostPrice)) {
       setErrorMsg(t("form.noPriceItems"));
       return;
     }
@@ -250,7 +248,7 @@ export default function NewPurchasePage() {
         item_name: l.itemName,
         unit_type: l.unitType,
         quantity: l.quantity,
-        cost_price: l.costPrice,
+        total_cost_price: l.totalCostPrice,
         sku: l.sku || undefined,
         category: l.category || undefined,
         sell_price: l.sellPrice !== undefined ? l.sellPrice : undefined,
@@ -473,14 +471,11 @@ export default function NewPurchasePage() {
                       <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                         {t("form.productName")}
                       </th>
-                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-24">
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-24">
                         {t("form.qty")}
                       </th>
-                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-32">
-                        {t("form.costPrice")}
-                      </th>
-                      <th className="text-right px-5 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-28">
-                        {t("form.subtotal")}
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-32">
+                        {t("form.totalCostPrice")}
                       </th>
                       <th className="text-center px-3 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-12">
                         {t("form.details")}
@@ -554,46 +549,27 @@ export default function NewPurchasePage() {
                             className="h-8 text-sm text-right font-mono w-full"
                           />
                         </td>
-                        {/* Cost price */}
+                        {/* Total cost price */}
                         <td className="px-3 py-2">
                           <input
                             type="text"
                             inputMode="numeric"
                             value={
-                              line.costPrice === 0
+                              line.totalCostPrice === 0
                                 ? ""
-                                : formatNumber(line.costPrice)
+                                : formatNumber(line.totalCostPrice)
                             }
                             onChange={(e) => {
                               const raw = e.target.value.replace(/\D/g, "");
                               updateLine(
                                 i,
-                                "costPrice",
+                                "totalCostPrice",
                                 raw ? parseInt(raw, 10) : 0,
                               );
                             }}
                             placeholder="0"
                             className="h-8 text-sm text-right font-mono w-full rounded-md border border-input bg-background px-3 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                           />
-                        </td>
-                        {/* Line subtotal */}
-                        <td className="px-5 py-2 text-right tabular-nums">
-                          {line.unitType === "gram" ? (
-                            <div className="flex flex-col items-end gap-0.5">
-                              <span className="font-mono font-semibold text-gray-800">
-                                {formatCurrency(
-                                  (line.costPrice * line.quantity) / 1000,
-                                )}
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {t("form.perKgHint")}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="font-mono font-semibold text-gray-800">
-                              {formatCurrency(line.costPrice * line.quantity)}
-                            </span>
-                          )}
                         </td>
                         {/* Additional details */}
                         <td className="px-3 py-2 text-center">
@@ -806,8 +782,7 @@ export default function NewPurchasePage() {
                   <Input
                     type="number"
                     min={1}
-                    step={1
-                    }
+                    step={1}
                     onBlur={() => {
                       if (!lines[metaModal].quantity) {
                         updateLine(metaModal!, "quantity", 1);
@@ -854,36 +829,45 @@ export default function NewPurchasePage() {
 
               {/* Divider */}
               <div className="border-t border-gray-100" />
-
               {/* Cost price */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-gray-600">
-                  {t("form.costPrice")}
+                  {t("form.totalCostPrice")}
                 </label>
-                {lines[metaModal].unitType === "gram" && (
-                  <p className="text-[11px] text-amber-600">
-                    {t("form.perKgHint")}
-                  </p>
-                )}
                 <input
                   type="text"
                   inputMode="numeric"
                   value={
-                    lines[metaModal].costPrice === 0
+                    lines[metaModal].totalCostPrice === 0
                       ? ""
-                      : formatNumber(lines[metaModal].costPrice)
+                      : formatNumber(lines[metaModal].totalCostPrice)
                   }
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");
                     updateLine(
                       metaModal!,
-                      "costPrice",
+                      "totalCostPrice",
                       raw ? parseInt(raw, 10) : 0,
                     );
                   }}
                   placeholder="0"
                   className="w-full h-9 text-sm text-right rounded-lg border border-gray-200 bg-gray-50 px-3 font-mono focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
+                <span className="text-[11px] text-amber-600">
+                  {lines[metaModal].unitType === "gram"
+                    ? t("form.perKgHint")
+                    : t("form.costPrice")}
+                  {" = "}
+                  {lines[metaModal].unitType === "gram"
+                    ? formatCurrency(
+                        (1000 * lines[metaModal].totalCostPrice) /
+                          lines[metaModal].quantity,
+                      )
+                    : formatCurrency(
+                        lines[metaModal].totalCostPrice /
+                          lines[metaModal].quantity,
+                      )}
+                </span>
               </div>
 
               {/* Sell price — all products */}
@@ -930,7 +914,6 @@ export default function NewPurchasePage() {
                     </p>
                   )}
               </div>
-
             </div>
             <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
               <Button

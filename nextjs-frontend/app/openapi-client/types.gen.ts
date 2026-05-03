@@ -250,7 +250,7 @@ export type PurchaseItemCreate = {
   item_name: string;
   unit_type?: string;
   quantity: number | string;
-  cost_price: number | string;
+  total_cost_price: number | string;
   sku?: string | null;
   category?: string | null;
   sell_price?: number | string | null;

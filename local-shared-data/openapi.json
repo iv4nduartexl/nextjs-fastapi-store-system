@@ -3636,7 +3636,7 @@
             ],
             "title": "Quantity"
           },
-          "cost_price": {
+          "total_cost_price": {
             "anyOf": [
               {
                 "type": "number"
@@ -3645,7 +3645,7 @@
                 "type": "string"
               }
             ],
-            "title": "Cost Price"
+            "title": "Total Cost Price"
           },
           "sku": {
             "anyOf": [
@@ -3693,7 +3693,7 @@
         "required": [
           "item_name",
           "quantity",
-          "cost_price"
+          "total_cost_price"
         ],
         "title": "PurchaseItemCreate"
       },

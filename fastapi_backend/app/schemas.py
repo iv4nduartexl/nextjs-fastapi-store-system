@@ -180,7 +180,7 @@ class PurchaseItemCreate(BaseModel):
     item_name: str
     unit_type: str = "unit"
     quantity: Decimal
-    cost_price: Decimal
+    total_cost_price: Decimal
     sku: str | None = None
     category: str | None = None
     sell_price: Decimal | None = None

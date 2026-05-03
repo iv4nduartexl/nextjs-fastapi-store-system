@@ -131,7 +131,7 @@ export default function CreateItemPage() {
                 id="stock"
                 name="stock"
                 type="number"
-                step="0.001"
+                step="1"
                 min="0"
                 placeholder={t("stockPlaceholder")}
                 required
@@ -154,7 +154,7 @@ export default function CreateItemPage() {
                 id="min_stock"
                 name="min_stock"
                 type="number"
-                step="0.001"
+                step="1"
                 min="0"
                 placeholder={t("minStockPlaceholder")}
                 className="w-full border-gray-300 dark:border-gray-600"
@@ -176,7 +176,7 @@ export default function CreateItemPage() {
                 id="price"
                 name="price"
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
                 placeholder={t("pricePlaceholder")}
                 className="w-full border-gray-300 dark:border-gray-600"

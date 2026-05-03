@@ -300,6 +300,8 @@
       "submit": "Register Purchase",
       "submitting": "Registering…",
       "noItems": "Add at least one item to continue.",
+      "noNameItems": "All items need a product name.",
+      "noPriceItems": "All items need a cost price.",
       "unlinked": "Manual entry",
       "sku": "SKU / Barcode",
       "skuPlaceholder": "e.g. BUT-001",

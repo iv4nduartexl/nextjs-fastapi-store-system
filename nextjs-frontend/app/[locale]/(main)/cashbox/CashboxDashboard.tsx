@@ -196,6 +196,12 @@ export default function CashboxDashboard({
   });
 
   const txGroups = groupByDay(filteredTx);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Avoid hydration mismatch due to relative date labels (e.g. "5m ago", "today", "yesterday")
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   function dateLabel(key: string) {
     const d = new Date(key);
@@ -371,10 +377,10 @@ export default function CashboxDashboard({
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {t("since")}{" "}
-                  {new Date(session.opened_at).toLocaleTimeString(locale, {
+                  {isMounted ? new Date(session.opened_at).toLocaleTimeString(locale, {
                     hour: "2-digit",
                     minute: "2-digit",
-                  })}
+                  }) : ""}
                   {" · "}
                   {session.transaction_count} movs.
                 </p>
@@ -554,7 +560,7 @@ export default function CashboxDashboard({
             </div>
           </div>
 
-          {filteredTx.length === 0 ? (
+          {isMounted && (filteredTx.length === 0 ? (
             <p className="text-center text-sm text-gray-400 py-12">
               {t("noTransactions")}
             </p>
@@ -567,7 +573,7 @@ export default function CashboxDashboard({
                     <div className="px-5 py-1.5 bg-gray-50 flex items-center gap-1.5">
                       <Calendar size={11} className="text-gray-400" />
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        {dateLabel(key)}
+                        {isMounted ? dateLabel(key) : ""}
                       </span>
                     </div>
                   )}
@@ -633,7 +639,7 @@ export default function CashboxDashboard({
                                     );
                                     return `${t(`txType.${type}`)} (${count} ${unit})`;
                                   })()
-                                : tx.description ?? t(`txType.${tx.type}`)}
+                                : t(`txType.${tx.type}`) ?? tx.description}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span
@@ -658,10 +664,10 @@ export default function CashboxDashboard({
 
                         {/* Time */}
                         <p className="text-xs text-gray-400 font-mono shrink-0 hidden sm:block">
-                          {new Date(tx.created_at).toLocaleTimeString(locale, {
+                          {isMounted ? new Date(tx.created_at).toLocaleTimeString(locale, {
                             hour: "2-digit",
                             minute: "2-digit",
-                          })}
+                          }) : ""}
                         </p>
 
                         {/* Amount */}
@@ -685,7 +691,7 @@ export default function CashboxDashboard({
                 </div>
               ))}
             </div>
-          )}
+          ))}
         </div>
       )}
 
@@ -761,19 +767,19 @@ export default function CashboxDashboard({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p suppressHydrationWarning className="text-sm font-semibold text-gray-700">
-                      {new Date(s.opened_at).toLocaleDateString(locale, {
+                    <p className="text-sm font-semibold text-gray-700">
+                      {isMounted ? new Date(s.opened_at).toLocaleDateString(locale, {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
+                      }) : ""}
                     </p>
-                    <p suppressHydrationWarning className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400">
                       {s.transaction_count} movs.
                       {s.closed_at &&
-                        ` · ${new Date(s.closed_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`}
+                        ` · ${isMounted ? new Date(s.closed_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }) : ""}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

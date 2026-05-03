@@ -300,6 +300,8 @@
       "submit": "Registrar Compra",
       "submitting": "Registrando…",
       "noItems": "Agrega al menos un artículo para continuar.",
+      "noNameItems": "Todos los artículos necesitan un nombre de producto.",
+      "noPriceItems": "Todos los artículos necesitan un precio de costo.",
       "unlinked": "Entrada manual",
       "sku": "SKU / Código",
       "skuPlaceholder": "ej. MAN-001",

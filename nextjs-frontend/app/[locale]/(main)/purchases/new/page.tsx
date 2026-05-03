@@ -203,7 +203,11 @@ export default function NewPurchasePage() {
       return;
     }
     if (lines.some((l) => !l.itemName.trim())) {
-      setErrorMsg("All items need a product name.");
+      setErrorMsg(t("form.noNameItems"));
+      return;
+    }
+    if (lines.some((l) => !l.costPrice)) {
+      setErrorMsg(t("form.noPriceItems"));
       return;
     }
 
@@ -531,21 +535,22 @@ export default function NewPurchasePage() {
                         <td className="px-3 py-2">
                           <Input
                             type="number"
-                            min={0.001}
-                            step={
-                              line.unitType === "gram" ||
-                              line.unitType === "liter"
-                                ? 0.001
-                                : 1
-                            }
-                            value={line.quantity}
-                            onChange={(e) =>
+                            min={1}
+                            step={1}
+                            value={String(line.quantity)}
+                            onBlur={() => {
+                              if (!line.quantity) {
+                                updateLine(i, "quantity", 1);
+                              }
+                            }}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/\D/g, "");
                               updateLine(
                                 i,
                                 "quantity",
-                                parseFloat(e.target.value) || 1,
-                              )
-                            }
+                                raw ? parseInt(raw, 10) : 0,
+                              );
+                            }}
                             className="h-8 text-sm text-right font-mono w-full"
                           />
                         </td>
@@ -694,7 +699,12 @@ export default function NewPurchasePage() {
 
             <Button
               onClick={handleSubmit}
-              disabled={submitting || lines.length === 0}
+              disabled={
+                submitting ||
+                lines.length === 0 ||
+                totalCost <= 0 ||
+                isNaN(totalCost)
+              }
               className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-11 mt-1"
             >
               {submitting ? t("form.submitting") : t("form.submit")}
@@ -795,21 +805,23 @@ export default function NewPurchasePage() {
                   </label>
                   <Input
                     type="number"
-                    min={0.001}
-                    step={
-                      lines[metaModal].unitType === "gram" ||
-                      lines[metaModal].unitType === "liter"
-                        ? 0.001
-                        : 1
+                    min={1}
+                    step={1
                     }
-                    value={lines[metaModal].quantity}
-                    onChange={(e) =>
+                    onBlur={() => {
+                      if (!lines[metaModal].quantity) {
+                        updateLine(metaModal!, "quantity", 1);
+                      }
+                    }}
+                    value={String(lines[metaModal].quantity)}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
                       updateLine(
                         metaModal!,
                         "quantity",
-                        parseFloat(e.target.value) || 1,
-                      )
-                    }
+                        raw ? parseInt(raw, 10) : 0,
+                      );
+                    }}
                     className="h-9 text-sm text-right font-mono"
                   />
                 </div>

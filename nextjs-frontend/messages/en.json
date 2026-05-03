@@ -178,6 +178,7 @@
       "clearCart": "Clear",
       "subtotal": "Subtotal",
       "paymentMethod": "Payment Method",
+      "openPayment": "Select Payment Method",
       "amountTendered": "Amount Received",
       "change": "Change",
       "completeSale": "Complete Sale",

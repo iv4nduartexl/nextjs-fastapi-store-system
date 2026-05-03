@@ -15,6 +15,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "@formkit/auto-animate": "^0.9.0",
     "@heroicons/react": "^2.2.0",
     "@hey-api/client-axios": "^0.3.4",
     "@hey-api/client-fetch": "^0.4.0",

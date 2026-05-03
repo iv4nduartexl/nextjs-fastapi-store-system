@@ -177,6 +177,7 @@
       "emptyCart": "Carrito vacío. Agrega productos desde la izquierda.",
       "clearCart": "Limpiar",
       "subtotal": "Subtotal",
+      "openPayment": "Seleccionar método de pago",
       "paymentMethod": "Método de Pago",
       "amountTendered": "Monto Recibido",
       "change": "Cambio",

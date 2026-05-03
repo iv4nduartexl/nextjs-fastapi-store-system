@@ -27,6 +27,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { CustomerRead } from "@/components/actions/customers-action";
+import autoAnimate from "@formkit/auto-animate";
 
 interface CartItem {
   itemId: string;
@@ -162,6 +163,8 @@ export default function POSClient() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [showPaymentSection, setShowPaymentSection] = useState(false);
+  const paymentRef = useRef<HTMLDivElement>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [amountTendered, setAmountTendered] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -204,6 +207,10 @@ export default function POSClient() {
         : scrollRef.current.scrollLeft + clientWidth;
     scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
   };
+
+  useEffect(() => {
+    paymentRef.current && autoAnimate(paymentRef.current);
+  }, [paymentRef, receipt]);
 
   // Autofocus search on mount + fetch categories
   useEffect(() => {
@@ -387,12 +394,17 @@ export default function POSClient() {
       setSelectedCustomer(null);
       setCustomerSearch("");
       setCustomerResults([]);
+      setShowPaymentSection(false);
     }
   }
 
   function startNewSale() {
     setReceipt(null);
     setTimeout(() => searchRef.current?.focus(), 0);
+  }
+
+  function togglePaymentSection() {
+    setShowPaymentSection((prev) => !prev);
   }
 
   // Receipt overlay
@@ -487,7 +499,7 @@ export default function POSClient() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-0 -m-8">
+    <div className="flex h-[calc(100vh-6rem)] gap-0 -m-8">
       {/* ── LEFT: Product Search + Grid ── */}
       <div className="flex flex-col flex-1 bg-gray-50 border-r overflow-hidden">
         {/* Search header */}
@@ -635,7 +647,7 @@ export default function POSClient() {
       </div>
 
       {/* ── RIGHT: Cart + Payment ── */}
-      <div className="w-[22rem] flex flex-col bg-white overflow-hidden">
+      <div className="w-[26rem] flex flex-col bg-white overflow-hidden">
         {/* Cart header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b bg-white">
           <div className="flex items-center gap-2">
@@ -644,14 +656,10 @@ export default function POSClient() {
             {cart.length > 0 && (
               <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
                 {formatNumber(
-                  cart.reduce(
-                    (s, c) =>{
-                      const val = c.quantity ? c.quantity : 0;
-                      return (
-                      s +
-                      (c.unitType === "gram" ? val / 1000 : val))},
-                    0,
-                  )
+                  cart.reduce((s, c) => {
+                    const val = c.quantity ? c.quantity : 0;
+                    return s + (c.unitType === "gram" ? val / 1000 : val);
+                  }, 0),
                 )}
               </span>
             )}
@@ -758,252 +766,265 @@ export default function POSClient() {
         </div>
 
         {/* ── Payment section ── */}
-        <div className="border-t bg-white">
-          {/* Total */}
-          <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
-            <span className="text-sm font-medium text-gray-500">
-              {t("subtotal")}
-            </span>
-            <span className="text-2xl font-bold text-gray-900 tabular-nums">
-              {formatCurrency(cartTotal)}
-            </span>
-          </div>
-
-          <div className="px-4 py-3 space-y-3">
-            {/* Payment method */}
-            <div>
-              <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1.5">
-                {t("paymentMethod")}
-              </p>
-              <div className="relative">
-                <div
-                  ref={scrollRef}
-                  onScroll={checkScroll}
-                  className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth"
-                >
-                  {(
-                    [
-                      { method: "cash", Icon: Banknote },
-                      { method: "credit", Icon: Users },
-                      { method: "internal", Icon: Crown },
-                      { method: "card", Icon: CreditCard },
-                      { method: "other", Icon: RefreshCcw },
-                    ] as { method: PaymentMethod; Icon: React.ElementType }[]
-                  ).map(({ method: m, Icon }) => (
-                    <button
-                      key={m}
-                      onClick={() => {
-                        setPaymentMethod(m);
-                        if (m !== "credit") {
-                          setSelectedCustomer(null);
-                          setCustomerSearch("");
-                          setCustomerResults([]);
-                        }
-                      }}
-                      className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold border-2 transition-all shrink-0 snap-start w-[calc((100%-18px)/4)] ${
-                        paymentMethod === m
-                          ? "border-green-500 bg-green-50/50 text-green-700 shadow-sm"
-                          : "border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50"
-                      }`}
-                    >
-                      <Icon size={16} />
-                      <span className="overflow-hidden text-ellipsis w-full px-1 text-center">
-                        {tSales(`paymentMethod.${m}`)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Left Fade/Button */}
-                {showLeftArrow && (
-                  <div
-                    className="rounded-xl absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-start group/btn"
-                  >
-                    <button
-                      onClick={() => scroll("left")}
-                      className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Right Fade/Button */}
-                {showRightArrow && (
-                  <div
-                    className="rounded-xl absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-end group/btn"
-                  >
-                    <button
-                      onClick={() => scroll("right")}
-                      className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                )}
+        <div ref={paymentRef}>
+          {/* 1. Basic Toggle Button */}
+          <button
+            onClick={togglePaymentSection}
+            className="border border-emerald-600 px-6 py-3 font-semibold rounded-t-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm hover:-translate-y-0.5 transition-all duration-150 p-3.5 text-white leading-none select-none w-full"
+          >
+            {t("openPayment")}
+          </button>
+          {showPaymentSection && (
+            <div className=" bg-white">
+              {/* Total */}
+              <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
+                <span className="text-sm font-medium text-gray-500">
+                  {t("subtotal")}
+                </span>
+                <span className="text-2xl font-bold text-gray-900 tabular-nums">
+                  {formatCurrency(cartTotal)}
+                </span>
               </div>
-            </div>
 
-            {/* Credit: customer picker */}
-            {paymentMethod === "credit" && (
-              <div className="space-y-2">
-                <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
-                  {tSales("pos.selectCustomer")}
-                </label>
-                {selectedCustomer ? (
-                  <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    <div>
-                      <p className="text-sm font-bold text-amber-900">
-                        {selectedCustomer.name}
-                      </p>
-                      {selectedCustomer.phone && (
-                        <p className="text-xs text-amber-600">
-                          {selectedCustomer.phone}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedCustomer(null);
-                        setCustomerSearch("");
-                      }}
-                      className="text-amber-400 hover:text-amber-700"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
+              <div className="px-4 py-3 space-y-3">
+                {/* Payment method */}
+                <div>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1.5">
+                    {t("paymentMethod")}
+                  </p>
                   <div className="relative">
-                    <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={13}
-                    />
-                    <input
-                      type="text"
-                      value={customerSearch}
-                      onChange={(e) => setCustomerSearch(e.target.value)}
-                      placeholder={tSales("pos.searchCustomer")}
-                      className="w-full h-9 pl-8 pr-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
-                    />
-                    {customerResults.length > 0 && (
-                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                        {customerResults.map((c) => {
-                          const bal = parseFloat(c.balance);
-                          return (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedCustomer(c);
-                                setCustomerSearch("");
-                                setCustomerResults([]);
-                              }}
-                              className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-amber-50 transition-colors"
-                            >
-                              <div>
-                                <p className="font-semibold text-gray-800">
-                                  {c.name}
-                                </p>
-                                {c.phone && (
-                                  <p className="text-xs text-gray-400">
-                                    {c.phone}
-                                  </p>
-                                )}
-                              </div>
-                              {bal > 0 && (
-                                <span className="text-xs font-mono text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
-                                  {formatCurrency(bal)}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
+                    <div
+                      ref={scrollRef}
+                      onScroll={checkScroll}
+                      className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth"
+                    >
+                      {(
+                        [
+                          { method: "cash", Icon: Banknote },
+                          { method: "credit", Icon: Users },
+                          { method: "internal", Icon: Crown },
+                          { method: "card", Icon: CreditCard },
+                          { method: "other", Icon: RefreshCcw },
+                        ] as {
+                          method: PaymentMethod;
+                          Icon: React.ElementType;
+                        }[]
+                      ).map(({ method: m, Icon }) => (
+                        <button
+                          key={m}
+                          onClick={() => {
+                            setPaymentMethod(m);
+                            if (m !== "credit") {
+                              setSelectedCustomer(null);
+                              setCustomerSearch("");
+                              setCustomerResults([]);
+                            }
+                          }}
+                          className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold border-2 transition-all shrink-0 snap-start w-[calc((100%-18px)/4)] ${
+                            paymentMethod === m
+                              ? "border-green-500 bg-green-50/50 text-green-700 shadow-sm"
+                              : "border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Icon size={16} />
+                          <span className="overflow-hidden text-ellipsis w-full px-1 text-center">
+                            {tSales(`paymentMethod.${m}`)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Left Fade/Button */}
+                    {showLeftArrow && (
+                      <div className="rounded-xl absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-start group/btn">
+                        <button
+                          onClick={() => scroll("left")}
+                          className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
+                        >
+                          <ChevronLeft size={20} />
+                        </button>
                       </div>
                     )}
-                    {loadingCustomers && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        {tSales("pos.searching")}
-                      </p>
+
+                    {/* Right Fade/Button */}
+                    {showRightArrow && (
+                      <div className="rounded-xl absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-end group/btn">
+                        <button
+                          onClick={() => scroll("right")}
+                          className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
+                        >
+                          <ChevronRight size={20} />
+                        </button>
+                      </div>
                     )}
-                    {!loadingCustomers &&
-                      customerSearch.trim() &&
-                      customerResults.length === 0 && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {tSales("pos.noCustomer")}
-                        </p>
-                      )}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Cash tendered + change */}
-            {paymentMethod === "cash" && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
-                  {t("amountTendered")}
-                </label>
-                <Input
-                  type="number"
-                  min={cartTotal ? cartTotal.toString() : "0"}
-                  step="1"
-                  value={amountTendered}
-                  onChange={(e) => setAmountTendered(e.target.value)}
-                  placeholder="0"
-                  className="text-base font-mono h-10 border-gray-200"
-                />
-                {tenderedNum > 0 && (
-                  <div
-                    className={`flex justify-between text-sm font-semibold rounded-lg px-3 py-2 ${
-                      change >= 0
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-600"
-                    }`}
-                  >
-                    <span>{t("change")}</span>
-                    <span className="font-mono tabular-nums">
-                      {formatCurrency(Math.max(0, change))}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Owner Withdrawal Warning */}
-            {paymentMethod === "internal" && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2.5 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
-                <Crown size={16} className="text-purple-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-purple-900">
-                    {tSales("pos.ownerWithdrawal")}
-                  </p>
-                  <p className="text-[10px] text-purple-600 leading-tight">
-                    {tSales("pos.ownerWithdrawalDesc")}
-                  </p>
                 </div>
+
+                {/* Credit: customer picker */}
+                {paymentMethod === "credit" && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+                      {tSales("pos.selectCustomer")}
+                    </label>
+                    {selectedCustomer ? (
+                      <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        <div>
+                          <p className="text-sm font-bold text-amber-900">
+                            {selectedCustomer.name}
+                          </p>
+                          {selectedCustomer.phone && (
+                            <p className="text-xs text-amber-600">
+                              {selectedCustomer.phone}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedCustomer(null);
+                            setCustomerSearch("");
+                          }}
+                          className="text-amber-400 hover:text-amber-700"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Search
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={13}
+                        />
+                        <input
+                          type="text"
+                          value={customerSearch}
+                          onChange={(e) => setCustomerSearch(e.target.value)}
+                          placeholder={tSales("pos.searchCustomer")}
+                          className="w-full h-9 pl-8 pr-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
+                        />
+                        {customerResults.length > 0 && (
+                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                            {customerResults.map((c) => {
+                              const bal = parseFloat(c.balance);
+                              return (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCustomer(c);
+                                    setCustomerSearch("");
+                                    setCustomerResults([]);
+                                  }}
+                                  className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-amber-50 transition-colors"
+                                >
+                                  <div>
+                                    <p className="font-semibold text-gray-800">
+                                      {c.name}
+                                    </p>
+                                    {c.phone && (
+                                      <p className="text-xs text-gray-400">
+                                        {c.phone}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {bal > 0 && (
+                                    <span className="text-xs font-mono text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                                      {formatCurrency(bal)}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {loadingCustomers && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {tSales("pos.searching")}
+                          </p>
+                        )}
+                        {!loadingCustomers &&
+                          customerSearch.trim() &&
+                          customerResults.length === 0 && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              {tSales("pos.noCustomer")}
+                            </p>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Cash tendered + change */}
+                {paymentMethod === "cash" && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+                      {t("amountTendered")}
+                    </label>
+                    <Input
+                      type="number"
+                      min={cartTotal ? cartTotal.toString() : "0"}
+                      step="1"
+                      value={amountTendered}
+                      onChange={(e) => setAmountTendered(e.target.value)}
+                      placeholder="0"
+                      className="text-base font-mono h-10 border-gray-200"
+                    />
+                    {tenderedNum > 0 && (
+                      <div
+                        className={`flex justify-between text-sm font-semibold rounded-lg px-3 py-2 ${
+                          change >= 0
+                            ? "bg-green-50 text-green-700"
+                            : "bg-red-50 text-red-600"
+                        }`}
+                      >
+                        <span>{t("change")}</span>
+                        <span className="font-mono tabular-nums">
+                          {formatCurrency(Math.max(0, change))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Owner Withdrawal Warning */}
+                {paymentMethod === "internal" && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2.5 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
+                    <Crown
+                      size={16}
+                      className="text-purple-500 shrink-0 mt-0.5"
+                    />
+                    <div>
+                      <p className="text-xs font-bold text-purple-900">
+                        {tSales("pos.ownerWithdrawal")}
+                      </p>
+                      <p className="text-[10px] text-purple-600 leading-tight">
+                        {tSales("pos.ownerWithdrawalDesc")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error */}
+                {errorMsg && (
+                  <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">
+                    {errorMsg}
+                  </p>
+                )}
+
+                {/* Complete sale */}
+                <button
+                  onClick={handleCompleteSale}
+                  disabled={!canComplete || submitting}
+                  className={`w-full py-3.5 rounded-xl text-sm font-bold tracking-wide transition-all ${
+                    canComplete && !submitting
+                      ? "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 active:scale-[0.98]"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  {submitting ? t("processing") : t("completeSale")}
+                </button>
               </div>
-            )}
-
-            {/* Error */}
-            {errorMsg && (
-              <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">
-                {errorMsg}
-              </p>
-            )}
-
-            {/* Complete sale */}
-            <button
-              onClick={handleCompleteSale}
-              disabled={!canComplete || submitting}
-              className={`w-full py-3.5 rounded-xl text-sm font-bold tracking-wide transition-all ${
-                canComplete && !submitting
-                  ? "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 active:scale-[0.98]"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              {submitting ? t("processing") : t("completeSale")}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

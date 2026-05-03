@@ -861,11 +861,11 @@ export default function NewPurchasePage() {
                   {lines[metaModal].unitType === "gram"
                     ? formatCurrency(
                         (1000 * lines[metaModal].totalCostPrice) /
-                          lines[metaModal].quantity,
+                          lines[metaModal].quantity, 2
                       )
                     : formatCurrency(
                         lines[metaModal].totalCostPrice /
-                          lines[metaModal].quantity,
+                          lines[metaModal].quantity, 2
                       )}
                 </span>
               </div>

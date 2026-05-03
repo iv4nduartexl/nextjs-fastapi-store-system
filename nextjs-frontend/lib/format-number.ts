@@ -6,7 +6,7 @@ export function formatNumber(
   const num = typeof value === "string" ? parseFloat(value) : value;
   if (isNaN(num)) return "";
   return num.toLocaleString(undefined, {
-    minimumFractionDigits: decimals,
+    minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
   });
 }

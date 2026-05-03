@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/currency";
 import { Pencil, Trash2, X } from "lucide-react";
 import { unitTypes } from "@/lib/definitions";
+import { formatNumber } from "@/lib/format-number";
 
 interface Props {
   items: ItemRead[];
@@ -125,7 +126,7 @@ export function ProductsTable({ items }: Props) {
                   <td
                     className={`px-4 py-3 text-right font-mono ${lowStock ? "text-red-500 font-semibold" : ""}`}
                   >
-                    {item.stock ?? "0"}{" "}
+                    {formatNumber(item.stock, 2) ?? "0"}{" "}
                     {lowStock && <span title="Low stock">⚠</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-mono">
@@ -261,7 +262,7 @@ export function ProductsTable({ items }: Props) {
                   </label>
                   <Input
                     type="number"
-                    step="0.001"
+                    step="1"
                     min="0"
                     value={editForm.stock ?? ""}
                     onChange={(e) =>
@@ -279,7 +280,7 @@ export function ProductsTable({ items }: Props) {
                   </label>
                   <Input
                     type="number"
-                    step="0.001"
+                    step="1"
                     min="0"
                     value={editForm.min_stock ?? ""}
                     onChange={(e) =>

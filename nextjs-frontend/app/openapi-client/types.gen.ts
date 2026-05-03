@@ -168,6 +168,10 @@ export type CustomerUpdate = {
   is_active?: boolean | null;
 };
 
+export type DiscountRuleScope = "global" | "item" | "category";
+
+export type DiscountRuleType = "percent" | "fixed_price" | "buy_x_get_y";
+
 export type ErrorModel = {
   detail:
     | string
@@ -306,17 +310,67 @@ export type PurchaseRead = {
 
 export type PurchaseStatus = "received" | "partial" | "cancelled";
 
+export type QuantityDiscountRuleCreate = {
+  name: string;
+  scope?: DiscountRuleScope;
+  item_id?: string | null;
+  category?: string | null;
+  is_active?: boolean;
+  priority?: number | string;
+  min_qty: number | string;
+  rule_type: DiscountRuleType;
+  percent_off?: number | string | null;
+  fixed_unit_price?: number | string | null;
+  buy_qty?: number | string | null;
+  free_qty?: number | string | null;
+};
+
+export type QuantityDiscountRuleRead = {
+  id: string;
+  name: string;
+  scope: string;
+  item_id: string | null;
+  category: string | null;
+  is_active: boolean;
+  priority: string;
+  min_qty: string;
+  rule_type: string;
+  percent_off: string | null;
+  fixed_unit_price: string | null;
+  buy_qty: string | null;
+  free_qty: string | null;
+};
+
+export type QuantityDiscountRuleUpdate = {
+  name?: string | null;
+  scope?: DiscountRuleScope | null;
+  item_id?: string | null;
+  category?: string | null;
+  is_active?: boolean | null;
+  priority?: number | string | null;
+  min_qty?: number | string | null;
+  rule_type?: DiscountRuleType | null;
+  percent_off?: number | string | null;
+  fixed_unit_price?: number | string | null;
+  buy_qty?: number | string | null;
+  free_qty?: number | string | null;
+};
+
 export type SaleCreate = {
   items: Array<SaleItemCreate>;
   payment_method?: PaymentMethod;
   amount_tendered?: number | string | null;
   notes?: string | null;
   customer_id?: string | null;
+  subtotal_override?: number | string | null;
+  subtotal_override_reason?: string | null;
 };
 
 export type SaleItemCreate = {
   item_id: string;
   quantity: number | string;
+  unit_price_override?: number | string | null;
+  manual_override_reason?: string | null;
 };
 
 export type SaleItemRead = {
@@ -324,9 +378,14 @@ export type SaleItemRead = {
   item_id: string | null;
   item_name: string;
   unit_type: string;
+  base_unit_price: string;
   unit_price: string;
   quantity: string;
   subtotal: string;
+  pricing_source?: string | null;
+  discount_rule_name?: string | null;
+  discount_amount?: string | null;
+  manual_override_reason?: string | null;
 };
 
 export type SaleRead = {
@@ -562,6 +621,46 @@ export type ListSalesData = {
 export type ListSalesResponse = Page_SaleRead_;
 
 export type ListSalesError = HTTPValidationError;
+
+export type ListDiscountRulesData = {
+  query?: {
+    include_inactive?: boolean;
+    item_id?: string | null;
+  };
+};
+
+export type ListDiscountRulesResponse = Array<QuantityDiscountRuleRead>;
+
+export type ListDiscountRulesError = HTTPValidationError;
+
+export type CreateDiscountRuleData = {
+  body: QuantityDiscountRuleCreate;
+};
+
+export type CreateDiscountRuleResponse = QuantityDiscountRuleRead;
+
+export type CreateDiscountRuleError = HTTPValidationError;
+
+export type UpdateDiscountRuleData = {
+  body: QuantityDiscountRuleUpdate;
+  path: {
+    rule_id: string;
+  };
+};
+
+export type UpdateDiscountRuleResponse = QuantityDiscountRuleRead;
+
+export type UpdateDiscountRuleError = HTTPValidationError;
+
+export type DeleteDiscountRuleData = {
+  path: {
+    rule_id: string;
+  };
+};
+
+export type DeleteDiscountRuleResponse = void;
+
+export type DeleteDiscountRuleError = HTTPValidationError;
 
 export type GetSaleData = {
   path: {

@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 export interface SaleItemCreate {
   item_id: string;
   quantity: number;
+  unit_price_override?: number;
+  manual_override_reason?: string;
 }
 
 export interface SaleItemRead {
@@ -13,9 +15,14 @@ export interface SaleItemRead {
   item_id: string | null;
   item_name: string;
   unit_type: string;
+  base_unit_price: string;
   unit_price: string;
   quantity: string;
   subtotal: string;
+  pricing_source?: "base" | "quantity_discount" | "manual_override";
+  discount_rule_name?: string | null;
+  discount_amount?: string;
+  manual_override_reason?: string | null;
 }
 
 export interface SaleRead {
@@ -53,6 +60,8 @@ export async function createSale(input: {
   amount_tendered?: number;
   notes?: string;
   customer_id?: string;
+  subtotal_override?: number;
+  subtotal_override_reason?: string;
 }): Promise<{ data?: SaleRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };

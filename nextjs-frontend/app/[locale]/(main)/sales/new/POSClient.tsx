@@ -23,6 +23,7 @@ import {
   ScanBarcode,
   Users,
   Crown,
+  DollarSign,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -33,11 +34,29 @@ interface CartItem {
   itemId: string;
   name: string;
   unitType: string;
+  category: string | null;
   unitPrice: number;
   quantity: number;
+  manualOverridePrice?: number;
+  manualOverrideReason?: string;
+}
+
+interface QuantityDiscountRule {
+  id: string;
+  name: string;
+  scope: "global" | "item" | "category";
+  item_id: string | null;
+  category: string | null;
+  min_qty: string;
+  rule_type: "percent" | "fixed_price" | "buy_x_get_y";
+  percent_off: string | null;
+  fixed_unit_price: string | null;
+  buy_qty: string | null;
+  free_qty: string | null;
 }
 
 type PaymentMethod = "cash" | "card" | "other" | "credit" | "internal";
+type PriceOverrideMode = "unit" | "line_total";
 
 // ── Deterministic color palette for category tiles ──────────────────────────
 const CAT_GRADIENTS = [
@@ -170,6 +189,22 @@ export default function POSClient() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [receipt, setReceipt] = useState<SaleRead | null>(null);
+  const [discountRules, setDiscountRules] = useState<QuantityDiscountRule[]>([]);
+  const [priceModalItemId, setPriceModalItemId] = useState<string | null>(null);
+  const [priceOverrideMode, setPriceOverrideMode] =
+    useState<PriceOverrideMode>("line_total");
+  const [overridePriceDraft, setOverridePriceDraft] = useState("");
+  const [overrideLineTotalDraft, setOverrideLineTotalDraft] = useState("");
+  const [overrideReasonDraft, setOverrideReasonDraft] = useState("");
+  const [priceModalError, setPriceModalError] = useState("");
+  const [subtotalModalOpen, setSubtotalModalOpen] = useState(false);
+  const [subtotalDraft, setSubtotalDraft] = useState("");
+  const [subtotalReasonDraft, setSubtotalReasonDraft] = useState("");
+  const [subtotalModalError, setSubtotalModalError] = useState("");
+  const [appliedSubtotalOverride, setAppliedSubtotalOverride] = useState<{
+    amount: number;
+    reason: string;
+  } | null>(null);
 
   // Category browse state
   const [categories, setCategories] = useState<string[]>([]);
@@ -212,6 +247,13 @@ export default function POSClient() {
     paymentRef.current && autoAnimate(paymentRef.current);
   }, [paymentRef, receipt]);
 
+  useEffect(() => {
+    if (cart.length === 0) {
+      setAppliedSubtotalOverride(null);
+      setPriceModalItemId(null);
+    }
+  }, [cart.length]);
+
   // Autofocus search on mount + fetch categories
   useEffect(() => {
     searchRef.current?.focus();
@@ -223,6 +265,15 @@ export default function POSClient() {
         /* silent */
       } finally {
         setLoadingCategories(false);
+      }
+    })();
+
+    (async () => {
+      try {
+        const res = await fetch("/api/discount-rules", { cache: "no-store" });
+        if (res.ok) setDiscountRules(await res.json());
+      } catch {
+        /* silent */
       }
     })();
   }, []);
@@ -308,20 +359,112 @@ export default function POSClient() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  function toSaleUnits(quantity: number, unitType: string) {
+    return unitType === "gram" ? quantity / 1000 : quantity;
+  }
+
+  function lineSubtotal(unitPrice: number, quantity: number, unitType: string) {
+    return unitType === "gram"
+      ? (unitPrice * quantity) / 1000
+      : unitPrice * quantity;
+  }
+
+  function getPricing(item: CartItem) {
+    const baseUnitPrice = item.unitPrice;
+    const baseSubtotal = lineSubtotal(baseUnitPrice, item.quantity, item.unitType);
+
+    if (item.manualOverridePrice != null) {
+      const effectiveSubtotal = lineSubtotal(
+        item.manualOverridePrice,
+        item.quantity,
+        item.unitType,
+      );
+      return {
+        baseUnitPrice,
+        effectiveUnitPrice: item.manualOverridePrice,
+        baseSubtotal,
+        effectiveSubtotal,
+        discountAmount: Math.max(0, baseSubtotal - effectiveSubtotal),
+        discountRuleName: null,
+        pricingSource: "manual_override" as const,
+      };
+    }
+
+    const saleUnits = toSaleUnits(item.quantity, item.unitType);
+    const matching = discountRules.filter((r) => {
+      const minQty = parseFloat(r.min_qty || "0");
+      if (saleUnits < minQty) return false;
+      if (r.scope === "item" && r.item_id !== item.itemId) return false;
+      if (r.scope === "category" && r.category !== item.category) return false;
+      return true;
+    });
+
+    let effectiveUnitPrice = baseUnitPrice;
+    let ruleName: string | null = null;
+
+    for (const rule of matching) {
+      let candidate = baseUnitPrice;
+      if (rule.rule_type === "percent" && rule.percent_off != null) {
+        candidate = baseUnitPrice * (1 - parseFloat(rule.percent_off) / 100);
+      } else if (
+        rule.rule_type === "fixed_price" &&
+        rule.fixed_unit_price != null
+      ) {
+        const minQty = parseFloat(rule.min_qty || "0");
+        if (minQty > 0) {
+          candidate = parseFloat(rule.fixed_unit_price) / minQty;
+        }
+      } else if (
+        rule.rule_type === "buy_x_get_y" &&
+        rule.buy_qty != null &&
+        rule.free_qty != null
+      ) {
+        const buyQty = parseFloat(rule.buy_qty);
+        const freeQty = parseFloat(rule.free_qty);
+        const group = buyQty + freeQty;
+        if (group > 0) {
+          const groups = Math.floor(saleUnits / group);
+          const freeUnits = groups * freeQty;
+          const payableUnits = Math.max(0, saleUnits - freeUnits);
+          candidate = saleUnits > 0 ? (baseUnitPrice * payableUnits) / saleUnits : baseUnitPrice;
+        }
+      }
+
+      if (candidate < effectiveUnitPrice) {
+        effectiveUnitPrice = candidate;
+        ruleName = rule.name;
+      }
+    }
+
+    const effectiveSubtotal = lineSubtotal(effectiveUnitPrice, item.quantity, item.unitType);
+    return {
+      baseUnitPrice,
+      effectiveUnitPrice,
+      baseSubtotal,
+      effectiveSubtotal,
+      discountAmount: Math.max(0, baseSubtotal - effectiveSubtotal),
+      discountRuleName: ruleName,
+      pricingSource: ruleName ? ("quantity_discount" as const) : ("base" as const),
+    };
+  }
+
   const cartTotal = cart.reduce(
-    (sum, c) =>
-      sum +
-      (c.unitType === "gram"
-        ? (c.unitPrice * c.quantity) / 1000
-        : c.unitPrice * c.quantity),
+    (sum, c) => sum + getPricing(c).effectiveSubtotal,
     0,
   );
+  const finalTotal = appliedSubtotalOverride?.amount ?? cartTotal;
   const tenderedNum = parseFloat(amountTendered) || 0;
-  const change = tenderedNum - cartTotal;
+  const change = tenderedNum - finalTotal;
+
+  const hasInvalidOverride = cart.some(
+    (c) => c.manualOverridePrice != null && !(c.manualOverrideReason || "").trim(),
+  );
+
   const canComplete =
     cart.length > 0 &&
-    (paymentMethod !== "cash" || tenderedNum >= cartTotal) &&
-    (paymentMethod !== "credit" || selectedCustomer != null);
+    (paymentMethod !== "cash" || tenderedNum >= finalTotal) &&
+    (paymentMethod !== "credit" || selectedCustomer != null) &&
+    !hasInvalidOverride;
 
   function addToCart(product: ItemRead) {
     if (!product.price) return;
@@ -340,6 +483,7 @@ export default function POSClient() {
           itemId: product.id as string,
           name: product.name,
           unitType: product.unit_type ?? "unit",
+          category: product.category ?? null,
           unitPrice: price,
           quantity: step,
         },
@@ -378,11 +522,18 @@ export default function POSClient() {
     setSubmitting(true);
     setErrorMsg("");
     const result = await createSale({
-      items: cart.map((c) => ({ item_id: c.itemId, quantity: c.quantity })),
+      items: cart.map((c) => ({
+        item_id: c.itemId,
+        quantity: c.quantity,
+        unit_price_override: c.manualOverridePrice,
+        manual_override_reason: c.manualOverrideReason,
+      })),
       payment_method: paymentMethod,
       amount_tendered: paymentMethod === "cash" ? tenderedNum : undefined,
       customer_id:
         paymentMethod === "credit" ? selectedCustomer?.id : undefined,
+      subtotal_override: appliedSubtotalOverride?.amount,
+      subtotal_override_reason: appliedSubtotalOverride?.reason,
     });
     setSubmitting(false);
     if (result.error) {
@@ -395,7 +546,111 @@ export default function POSClient() {
       setCustomerSearch("");
       setCustomerResults([]);
       setShowPaymentSection(false);
+      setAppliedSubtotalOverride(null);
+      setSubtotalDraft("");
+      setSubtotalReasonDraft("");
     }
+  }
+
+  function openPriceEditor(item: CartItem) {
+    const pricing = getPricing(item);
+    setPriceModalItemId(item.itemId);
+    setPriceOverrideMode("line_total");
+    setOverridePriceDraft(
+      String(item.manualOverridePrice ?? pricing.effectiveUnitPrice),
+    );
+    setOverrideLineTotalDraft(String(pricing.effectiveSubtotal));
+    setOverrideReasonDraft(item.manualOverrideReason ?? "");
+    setPriceModalError("");
+  }
+
+  function applyManualOverride(itemId: string) {
+    const item = cart.find((entry) => entry.itemId === itemId);
+    if (!item) return;
+
+    const reason = overrideReasonDraft.trim();
+    if (!reason) {
+      setPriceModalError(t("overrideReasonRequired"));
+      return;
+    }
+
+    let value = parseFloat(overridePriceDraft);
+    if (priceOverrideMode === "line_total") {
+      const lineTotal = parseFloat(overrideLineTotalDraft);
+      const saleUnits = toSaleUnits(item.quantity, item.unitType);
+      if (Number.isNaN(lineTotal) || lineTotal < 0 || saleUnits <= 0) {
+        setPriceModalError(t("invalidOverrideAmount"));
+        return;
+      }
+      value = lineTotal / saleUnits;
+    }
+
+    if (Number.isNaN(value) || value < 0) {
+      setPriceModalError(t("invalidOverrideAmount"));
+      return;
+    }
+
+    setCart((prev) =>
+      prev.map((c) =>
+        c.itemId === itemId
+          ? {
+              ...c,
+              manualOverridePrice: value,
+              manualOverrideReason: reason,
+            }
+          : c,
+      ),
+    );
+    setPriceModalItemId(null);
+    setPriceModalError("");
+  }
+
+  function clearManualOverride(itemId: string) {
+    setCart((prev) =>
+      prev.map((c) =>
+        c.itemId === itemId
+          ? {
+              ...c,
+              manualOverridePrice: undefined,
+              manualOverrideReason: undefined,
+            }
+          : c,
+      ),
+    );
+    if (priceModalItemId === itemId) setPriceModalItemId(null);
+  }
+
+  function openSubtotalEditor() {
+    setSubtotalModalOpen(true);
+    setSubtotalDraft(
+      String(appliedSubtotalOverride?.amount ?? cartTotal),
+    );
+    setSubtotalReasonDraft(appliedSubtotalOverride?.reason ?? "");
+    setSubtotalModalError("");
+  }
+
+  function applySubtotalOverride() {
+    const amount = parseFloat(subtotalDraft);
+    const reason = subtotalReasonDraft.trim();
+
+    if (Number.isNaN(amount) || amount < 0) {
+      setSubtotalModalError(t("invalidOverrideAmount"));
+      return;
+    }
+    if (!reason) {
+      setSubtotalModalError(t("overrideReasonRequired"));
+      return;
+    }
+
+    setAppliedSubtotalOverride({ amount, reason });
+    setSubtotalModalOpen(false);
+    setSubtotalModalError("");
+  }
+
+  function clearSubtotalOverride() {
+    setAppliedSubtotalOverride(null);
+    setSubtotalModalOpen(false);
+    setSubtotalModalError("");
   }
 
   function startNewSale() {
@@ -499,7 +754,8 @@ export default function POSClient() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] gap-0 -m-8">
+    <>
+      <div className="flex h-[calc(100vh-6rem)] gap-0 -m-8">
       {/* ── LEFT: Product Search + Grid ── */}
       <div className="flex flex-col flex-1 bg-gray-50 border-r overflow-hidden">
         {/* Search header */}
@@ -666,7 +922,10 @@ export default function POSClient() {
           </div>
           {cart.length > 0 && (
             <button
-              onClick={() => setCart([])}
+              onClick={() => {
+                setCart([]);
+                setAppliedSubtotalOverride(null);
+              }}
               className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
             >
               <Trash2 size={12} />
@@ -683,85 +942,123 @@ export default function POSClient() {
               <p className="text-sm">{t("emptyCart")}</p>
             </div>
           ) : (
-            cart.map((item) => (
-              <div
-                key={item.itemId}
-                className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
-              >
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate leading-tight">
-                    {item.name}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs text-gray-500">
-                      {item.unitType === "gram"
-                        ? `${formatCurrency(item.unitPrice)}/kg`
-                        : formatCurrency(item.unitPrice)}
+            cart.map((item) => {
+              const pricing = getPricing(item);
+              return (
+                <div
+                  key={item.itemId}
+                  className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate leading-tight">
+                        {item.name}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        {pricing.pricingSource === "base" ? (
+                          <span className="text-xs text-gray-500">
+                            {item.unitType === "gram"
+                              ? `${formatCurrency(pricing.effectiveUnitPrice)}/kg`
+                              : formatCurrency(pricing.effectiveUnitPrice)}
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-xs text-gray-400 line-through">
+                              {item.unitType === "gram"
+                                ? `${formatCurrency(pricing.baseUnitPrice)}/kg`
+                                : formatCurrency(pricing.baseUnitPrice)}
+                            </span>
+                            <span className="text-xs text-green-700 font-semibold">
+                              {item.unitType === "gram"
+                                ? `${formatCurrency(pricing.effectiveUnitPrice)}/kg`
+                                : formatCurrency(pricing.effectiveUnitPrice)}
+                            </span>
+                          </>
+                        )}
+                        <span className="text-[10px] font-bold text-gray-400 bg-gray-200 px-1 py-0.5 rounded leading-none">
+                          {tDash(`unitAbbr.${item.unitType}`)}
+                        </span>
+                        {pricing.pricingSource === "manual_override" && (
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 py-0.5 rounded leading-none">
+                            {t("manualPrice")}
+                          </span>
+                        )}
+                        {pricing.pricingSource === "quantity_discount" &&
+                          pricing.discountRuleName && (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1 py-0.5 rounded leading-none">
+                              {t("discountApplied")}: {pricing.discountRuleName}
+                            </span>
+                          )}
+                      </div>
+                    </div>
+
+                    {/* Qty controls */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() =>
+                          updateQty(
+                            item.itemId,
+                            item.quantity - (item.unitType === "gram" ? 100 : 1),
+                          )
+                        }
+                        className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
+                      >
+                        <Minus size={11} />
+                      </button>
+                      <input
+                        type="number"
+                        value={String(item.quantity)}
+                        min={1}
+                        step={item.unitType === "gram" ? 100 : 1}
+                        onChange={(e) =>
+                          updateQty(item.itemId, parseFloat(e.target.value))
+                        }
+                        onBlur={() => {
+                          if (!item.quantity) {
+                            updateQty(item.itemId, 1);
+                          }
+                        }}
+                        className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
+                      />
+                      <button
+                        onClick={() =>
+                          updateQty(
+                            item.itemId,
+                            item.quantity + (item.unitType === "gram" ? 100 : 1),
+                          )
+                        }
+                        className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
+                      >
+                        <Plus size={11} />
+                      </button>
+                    </div>
+
+                    {/* Subtotal */}
+                    <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
+                      {formatCurrency(pricing.effectiveSubtotal)}
                     </span>
-                    <span className="text-[10px] font-bold text-gray-400 bg-gray-200 px-1 py-0.5 rounded leading-none">
-                      {tDash(`unitAbbr.${item.unitType}`)}
-                    </span>
+
+                    {/* Price Edit */}
+                    <button
+                      onClick={() => openPriceEditor(item)}
+                      className="text-gray-300 hover:text-blue-500 transition-colors ml-0.5 shrink-0"
+                      title={t("editLinePrice")}
+                    >
+                      <DollarSign size={14} />
+                    </button>
+
+                    {/* Remove */}
+                    <button
+                      onClick={() => removeFromCart(item.itemId)}
+                      className="text-gray-300 hover:text-red-400 transition-colors ml-0.5 shrink-0"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
                 </div>
-
-                {/* Qty controls */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() =>
-                      updateQty(
-                        item.itemId,
-                        item.quantity - (item.unitType === "gram" ? 100 : 1),
-                      )
-                    }
-                    className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
-                  >
-                    <Minus size={11} />
-                  </button>
-                  <input
-                    type="number"
-                    value={String(item.quantity)}
-                    min={1}
-                    step={item.unitType === "gram" ? 100 : 1}
-                    onChange={(e) =>
-                      updateQty(item.itemId, parseFloat(e.target.value))
-                    }
-                    onBlur={() => {
-                      if (!item.quantity) {
-                        updateQty(item.itemId, 1);
-                      }
-                    }}
-                    className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
-                  />
-                  <button
-                    onClick={() =>
-                      updateQty(
-                        item.itemId,
-                        item.quantity + (item.unitType === "gram" ? 100 : 1),
-                      )
-                    }
-                    className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
-                  >
-                    <Plus size={11} />
-                  </button>
-                </div>
-
-                {/* Subtotal */}
-                <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
-                  {item.unitType === "gram"
-                    ? formatCurrency((item.unitPrice * item.quantity) / 1000)
-                    : formatCurrency(item.unitPrice * item.quantity)}
-                </span>
-
-                {/* Remove */}
-                <button
-                  onClick={() => removeFromCart(item.itemId)}
-                  className="text-gray-300 hover:text-red-400 transition-colors ml-0.5 shrink-0"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -778,11 +1075,30 @@ export default function POSClient() {
             <div className=" bg-white">
               {/* Total */}
               <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
-                <span className="text-sm font-medium text-gray-500">
-                  {t("subtotal")}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-500">
+                    {t("subtotal")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openSubtotalEditor}
+                    className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                  >
+                    <DollarSign size={12} />
+                    {t("editSubtotal")}
+                  </button>
+                  {appliedSubtotalOverride && (
+                    <button
+                      type="button"
+                      onClick={clearSubtotalOverride}
+                      className="text-[11px] font-semibold text-red-500 hover:text-red-600"
+                    >
+                      {t("resetPrice")}
+                    </button>
+                  )}
+                </div>
                 <span className="text-2xl font-bold text-gray-900 tabular-nums">
-                  {formatCurrency(cartTotal)}
+                  {formatCurrency(finalTotal)}
                 </span>
               </div>
 
@@ -961,7 +1277,7 @@ export default function POSClient() {
                     </label>
                     <Input
                       type="number"
-                      min={cartTotal ? cartTotal.toString() : "0"}
+                      min={finalTotal ? finalTotal.toString() : "0"}
                       step="1"
                       value={amountTendered}
                       onChange={(e) => setAmountTendered(e.target.value)}
@@ -984,7 +1300,6 @@ export default function POSClient() {
                     )}
                   </div>
                 )}
-
                 {/* Owner Withdrawal Warning */}
                 {paymentMethod === "internal" && (
                   <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2.5 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
@@ -1027,6 +1342,247 @@ export default function POSClient() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+
+      {priceModalItemId && (() => {
+        const modalItem = cart.find((item) => item.itemId === priceModalItemId);
+        if (!modalItem) return null;
+        const pricing = getPricing(modalItem);
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setPriceModalItemId(null);
+            }}
+          >
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <DollarSign size={16} className="text-blue-500" />
+                  <h3 className="font-semibold text-gray-800">
+                    {t("priceOverrideTitle")}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setPriceModalItemId(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="px-5 py-5 space-y-4">
+                <div className="rounded-xl bg-gray-50 px-4 py-3">
+                  <p className="text-sm font-semibold text-gray-800">{modalItem.name}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t("currentUnitPrice")}: {formatCurrency(pricing.effectiveUnitPrice)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {t("currentLineTotal")}: {formatCurrency(pricing.effectiveSubtotal)}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPriceOverrideMode("line_total")}
+                    className={`rounded-xl border-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                      priceOverrideMode === "line_total"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {t("overrideByLineTotal")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPriceOverrideMode("unit")}
+                    className={`rounded-xl border-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                      priceOverrideMode === "unit"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {t("overrideByUnit")}
+                  </button>
+                </div>
+
+                {priceOverrideMode === "unit" ? (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-600">
+                      {t("newUnitPrice")}
+                    </label>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={overridePriceDraft}
+                      onChange={(e) => setOverridePriceDraft(e.target.value)}
+                      className="h-10 text-sm font-mono"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-600">
+                      {t("lineTotalPrice")}
+                    </label>
+                    <Input
+                      type="number"
+                      step="100"
+                      min="0"
+                      value={overrideLineTotalDraft}
+                      onChange={(e) => setOverrideLineTotalDraft(e.target.value)}
+                      className="h-10 text-sm font-mono"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-600">
+                    {t("overrideReason")}
+                  </label>
+                  <Input
+                    value={overrideReasonDraft}
+                    onChange={(e) => setOverrideReasonDraft(e.target.value)}
+                    placeholder={t("overrideReason")}
+                    className="h-10 text-sm"
+                  />
+                </div>
+
+                {priceModalError && (
+                  <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">
+                    {priceModalError}
+                  </p>
+                )}
+              </div>
+
+              <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setPriceModalItemId(null)}
+                    className="h-10 text-sm"
+                  >
+                    {t("cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => clearManualOverride(modalItem.itemId)}
+                    className="h-10 text-sm"
+                  >
+                    {t("resetPrice")}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => applyManualOverride(modalItem.itemId)}
+                    className="h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {t("applyPrice")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {subtotalModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSubtotalModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <DollarSign size={16} className="text-blue-500" />
+                <h3 className="font-semibold text-gray-800">
+                  {t("subtotalOverrideTitle")}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSubtotalModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-5 space-y-4">
+              <div className="rounded-xl bg-gray-50 px-4 py-3">
+                <p className="text-xs text-gray-500">{t("currentSubtotal")}</p>
+                <p className="text-2xl font-black text-gray-800 font-mono">
+                  {formatCurrency(cartTotal)}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600">
+                  {t("overrideSubtotal")}
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={subtotalDraft}
+                  onChange={(e) => setSubtotalDraft(e.target.value)}
+                  placeholder={t("overrideSubtotalPlaceholder")}
+                  className="h-10 text-sm font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600">
+                  {t("overrideReason")}
+                </label>
+                <Input
+                  value={subtotalReasonDraft}
+                  onChange={(e) => setSubtotalReasonDraft(e.target.value)}
+                  placeholder={t("overrideReason")}
+                  className="h-10 text-sm"
+                />
+              </div>
+
+              {subtotalModalError && (
+                <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">
+                  {subtotalModalError}
+                </p>
+              )}
+            </div>
+
+            <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSubtotalModalOpen(false)}
+                  className="h-10 text-sm"
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clearSubtotalOverride}
+                  className="h-10 text-sm"
+                >
+                  {t("resetPrice")}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={applySubtotalOverride}
+                  className="h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {t("applyPrice")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

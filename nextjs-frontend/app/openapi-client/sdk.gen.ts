@@ -59,6 +59,18 @@ import type {
   ListSalesData,
   ListSalesError,
   ListSalesResponse,
+  ListDiscountRulesData,
+  ListDiscountRulesError,
+  ListDiscountRulesResponse,
+  CreateDiscountRuleData,
+  CreateDiscountRuleError,
+  CreateDiscountRuleResponse,
+  UpdateDiscountRuleData,
+  UpdateDiscountRuleError,
+  UpdateDiscountRuleResponse,
+  DeleteDiscountRuleData,
+  DeleteDiscountRuleError,
+  DeleteDiscountRuleResponse,
   GetSaleData,
   GetSaleError,
   GetSaleResponse,
@@ -415,6 +427,70 @@ export const listSales = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/sales/",
+  });
+};
+
+/**
+ * List Discount Rules
+ */
+export const listDiscountRules = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListDiscountRulesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListDiscountRulesResponse,
+    ListDiscountRulesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/discount-rules",
+  });
+};
+
+/**
+ * Create Discount Rule
+ */
+export const createDiscountRule = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreateDiscountRuleData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateDiscountRuleResponse,
+    CreateDiscountRuleError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/discount-rules",
+  });
+};
+
+/**
+ * Update Discount Rule
+ */
+export const updateDiscountRule = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateDiscountRuleData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateDiscountRuleResponse,
+    UpdateDiscountRuleError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/discount-rules/{rule_id}",
+  });
+};
+
+/**
+ * Delete Discount Rule
+ */
+export const deleteDiscountRule = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DeleteDiscountRuleData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    DeleteDiscountRuleResponse,
+    DeleteDiscountRuleError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/discount-rules/{rule_id}",
   });
 };
 

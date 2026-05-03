@@ -34,6 +34,24 @@ class SaleStatus(str, enum.Enum):
     refunded = "refunded"
 
 
+class PricingSource(str, enum.Enum):
+    base = "base"
+    quantity_discount = "quantity_discount"
+    manual_override = "manual_override"
+
+
+class DiscountRuleScope(str, enum.Enum):
+    global_scope = "global"
+    item = "item"
+    category = "category"
+
+
+class DiscountRuleType(str, enum.Enum):
+    percent = "percent"
+    fixed_price = "fixed_price"
+    buy_x_get_y = "buy_x_get_y"
+
+
 class PurchaseStatus(str, enum.Enum):
     received = "received"
     partial = "partial"
@@ -120,12 +138,54 @@ class SaleItem(Base):
     item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
     item_name = Column(String, nullable=False)
     unit_type = Column(Enum(UnitType), nullable=False)
+    base_unit_price = Column(Numeric(10, 2), nullable=False)
     unit_price = Column(Numeric(10, 2), nullable=False)
     quantity = Column(Numeric(10, 3), nullable=False)
     subtotal = Column(Numeric(10, 2), nullable=False)
+    pricing_source = Column(Enum(PricingSource), nullable=False, default=PricingSource.base)
+    discount_rule_name = Column(String, nullable=True)
+    discount_amount = Column(Numeric(10, 2), nullable=False, default=0)
+    manual_override_reason = Column(String, nullable=True)
+    manual_overridden_by = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
+    manual_overridden_at = Column(DateTime(timezone=True), nullable=True)
 
     sale = relationship("Sale", back_populates="sale_items")
     item = relationship("Item", back_populates="sale_items")
+
+
+class SalePriceChangeLog(Base):
+    __tablename__ = "sale_price_change_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    sale_id = Column(UUID(as_uuid=True), ForeignKey("sales.id", ondelete="CASCADE"), nullable=False)
+    sale_item_id = Column(UUID(as_uuid=True), ForeignKey("sale_items.id", ondelete="CASCADE"), nullable=True)
+    change_scope = Column(String, nullable=False)  # item | subtotal
+    source = Column(String, nullable=False)  # manual | system_discount
+    old_value = Column(Numeric(12, 2), nullable=False)
+    new_value = Column(Numeric(12, 2), nullable=False)
+    reason = Column(String, nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class QuantityDiscountRule(Base):
+    __tablename__ = "quantity_discount_rules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    name = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    priority = Column(Numeric(6, 0), nullable=False, default=100)
+    scope = Column(Enum(DiscountRuleScope), nullable=False, default=DiscountRuleScope.global_scope)
+    item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
+    category = Column(String, nullable=True)
+    min_qty = Column(Numeric(10, 3), nullable=False, default=1)
+    rule_type = Column(Enum(DiscountRuleType), nullable=False)
+    percent_off = Column(Numeric(5, 2), nullable=True)
+    fixed_unit_price = Column(Numeric(10, 2), nullable=True)
+    buy_qty = Column(Numeric(10, 3), nullable=True)
+    free_qty = Column(Numeric(10, 3), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class Purchase(Base):

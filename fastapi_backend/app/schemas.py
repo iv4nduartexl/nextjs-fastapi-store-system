@@ -6,7 +6,16 @@ from fastapi_users import schemas
 from pydantic import BaseModel
 from uuid import UUID
 
-from app.models import UnitType, PaymentMethod, SaleStatus, PurchaseStatus, PurchasePaymentStatus, PurchasePaymentMethod
+from app.models import (
+    DiscountRuleScope,
+    DiscountRuleType,
+    PaymentMethod,
+    PurchasePaymentMethod,
+    PurchasePaymentStatus,
+    PurchaseStatus,
+    SaleStatus,
+    UnitType,
+)
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
@@ -61,6 +70,8 @@ class ItemUpdate(BaseModel):
 class SaleItemCreate(BaseModel):
     item_id: UUID
     quantity: Decimal
+    unit_price_override: Decimal | None = None
+    manual_override_reason: str | None = None
 
 
 class SaleCreate(BaseModel):
@@ -69,6 +80,8 @@ class SaleCreate(BaseModel):
     amount_tendered: Decimal | None = None
     notes: str | None = None
     customer_id: UUID | None = None
+    subtotal_override: Decimal | None = None
+    subtotal_override_reason: str | None = None
 
 
 class SaleItemRead(BaseModel):
@@ -76,9 +89,14 @@ class SaleItemRead(BaseModel):
     item_id: UUID | None
     item_name: str
     unit_type: str
+    base_unit_price: Decimal
     unit_price: Decimal
     quantity: Decimal
     subtotal: Decimal
+    pricing_source: str | None = None
+    discount_rule_name: str | None = None
+    discount_amount: Decimal | None = None
+    manual_override_reason: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -97,6 +115,54 @@ class SaleRead(BaseModel):
     sale_items: list[SaleItemRead]
 
     model_config = {"from_attributes": True}
+
+
+class QuantityDiscountRuleRead(BaseModel):
+    id: UUID
+    name: str
+    scope: str
+    item_id: UUID | None
+    category: str | None
+    is_active: bool
+    priority: Decimal
+    min_qty: Decimal
+    rule_type: str
+    percent_off: Decimal | None
+    fixed_unit_price: Decimal | None
+    buy_qty: Decimal | None
+    free_qty: Decimal | None
+
+    model_config = {"from_attributes": True}
+
+
+class QuantityDiscountRuleCreate(BaseModel):
+    name: str
+    scope: DiscountRuleScope = DiscountRuleScope.item
+    item_id: UUID | None = None
+    category: str | None = None
+    is_active: bool = True
+    priority: Decimal = Decimal("100")
+    min_qty: Decimal
+    rule_type: DiscountRuleType
+    percent_off: Decimal | None = None
+    fixed_unit_price: Decimal | None = None
+    buy_qty: Decimal | None = None
+    free_qty: Decimal | None = None
+
+
+class QuantityDiscountRuleUpdate(BaseModel):
+    name: str | None = None
+    scope: DiscountRuleScope | None = None
+    item_id: UUID | None = None
+    category: str | None = None
+    is_active: bool | None = None
+    priority: Decimal | None = None
+    min_qty: Decimal | None = None
+    rule_type: DiscountRuleType | None = None
+    percent_off: Decimal | None = None
+    fixed_unit_price: Decimal | None = None
+    buy_qty: Decimal | None = None
+    free_qty: Decimal | None = None
 
 
 # --- Customers ---

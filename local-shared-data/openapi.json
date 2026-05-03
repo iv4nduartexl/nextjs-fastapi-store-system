@@ -1081,6 +1081,216 @@
         }
       }
     },
+    "/sales/discount-rules": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "List Discount Rules",
+        "operationId": "list_discount_rules",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuantityDiscountRuleRead"
+                  },
+                  "title": "Response Sales-List Discount Rules"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Create Discount Rule",
+        "operationId": "create_discount_rule",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuantityDiscountRuleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantityDiscountRuleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/discount-rules/{rule_id}": {
+      "patch": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Update Discount Rule",
+        "operationId": "update_discount_rule",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuantityDiscountRuleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantityDiscountRuleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Delete Discount Rule",
+        "operationId": "delete_discount_rule",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sales/{sale_id}": {
       "get": {
         "tags": [
@@ -3299,6 +3509,24 @@
         "type": "object",
         "title": "CustomerUpdate"
       },
+      "DiscountRuleScope": {
+        "type": "string",
+        "enum": [
+          "global",
+          "item",
+          "category"
+        ],
+        "title": "DiscountRuleScope"
+      },
+      "DiscountRuleType": {
+        "type": "string",
+        "enum": [
+          "percent",
+          "fixed_price",
+          "buy_x_get_y"
+        ],
+        "title": "DiscountRuleType"
+      },
       "ErrorModel": {
         "properties": {
           "detail": {
@@ -4183,6 +4411,407 @@
         ],
         "title": "PurchaseStatus"
       },
+      "QuantityDiscountRuleCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/DiscountRuleScope",
+            "default": "item"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Priority",
+            "default": "100"
+          },
+          "min_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Min Qty"
+          },
+          "rule_type": {
+            "$ref": "#/components/schemas/DiscountRuleType"
+          },
+          "percent_off": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Off"
+          },
+          "fixed_unit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Unit Price"
+          },
+          "buy_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buy Qty"
+          },
+          "free_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Qty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "min_qty",
+          "rule_type"
+        ],
+        "title": "QuantityDiscountRuleCreate"
+      },
+      "QuantityDiscountRuleRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority"
+          },
+          "min_qty": {
+            "type": "string",
+            "title": "Min Qty"
+          },
+          "rule_type": {
+            "type": "string",
+            "title": "Rule Type"
+          },
+          "percent_off": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Off"
+          },
+          "fixed_unit_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Unit Price"
+          },
+          "buy_qty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buy Qty"
+          },
+          "free_qty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Qty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "scope",
+          "item_id",
+          "category",
+          "is_active",
+          "priority",
+          "min_qty",
+          "rule_type",
+          "percent_off",
+          "fixed_unit_price",
+          "buy_qty",
+          "free_qty"
+        ],
+        "title": "QuantityDiscountRuleRead"
+      },
+      "QuantityDiscountRuleUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscountRuleScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "min_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Qty"
+          },
+          "rule_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscountRuleType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "percent_off": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Off"
+          },
+          "fixed_unit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Unit Price"
+          },
+          "buy_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buy Qty"
+          },
+          "free_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Qty"
+          }
+        },
+        "type": "object",
+        "title": "QuantityDiscountRuleUpdate"
+      },
       "SaleCreate": {
         "properties": {
           "items": {
@@ -4232,6 +4861,31 @@
               }
             ],
             "title": "Customer Id"
+          },
+          "subtotal_override": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal Override"
+          },
+          "subtotal_override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal Override Reason"
           }
         },
         "type": "object",
@@ -4257,6 +4911,31 @@
               }
             ],
             "title": "Quantity"
+          },
+          "unit_price_override": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Override"
+          },
+          "manual_override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Override Reason"
           }
         },
         "type": "object",
@@ -4293,6 +4972,10 @@
             "type": "string",
             "title": "Unit Type"
           },
+          "base_unit_price": {
+            "type": "string",
+            "title": "Base Unit Price"
+          },
           "unit_price": {
             "type": "string",
             "title": "Unit Price"
@@ -4304,6 +4987,50 @@
           "subtotal": {
             "type": "string",
             "title": "Subtotal"
+          },
+          "pricing_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Source"
+          },
+          "discount_rule_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Rule Name"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "manual_override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Override Reason"
           }
         },
         "type": "object",
@@ -4312,6 +5039,7 @@
           "item_id",
           "item_name",
           "unit_type",
+          "base_unit_price",
           "unit_price",
           "quantity",
           "subtotal"

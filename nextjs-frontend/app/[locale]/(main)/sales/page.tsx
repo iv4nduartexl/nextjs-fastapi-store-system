@@ -14,6 +14,7 @@ import { fetchSales, SalesPage } from "@/components/actions/sales-action";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
 import { TableFilters } from "@/components/ui/table-filters";
+import LocalDateSpan from "@/lib/LocalDateSpan";
 
 interface SalesPageProps {
   searchParams: Promise<{
@@ -115,7 +116,7 @@ export default async function SalesHistoryPage({
               sales.items.map((sale) => (
                 <TableRow key={sale.id} className="hover:bg-gray-50">
                   <TableCell className="text-gray-600">
-                    {new Date(sale.created_at).toLocaleString()}
+                    <LocalDateSpan dateIso={sale.created_at} />
                   </TableCell>
                   <TableCell className="text-center font-mono">
                     {sale.sale_items.length}

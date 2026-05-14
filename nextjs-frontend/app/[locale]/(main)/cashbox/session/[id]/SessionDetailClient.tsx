@@ -28,6 +28,7 @@ import {
   CashboxTransactionRead,
 } from "@/components/actions/cashbox-action";
 import { formatCurrency } from "@/lib/currency";
+import LocalDateSpan from "@/lib/LocalDateSpan";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -210,12 +211,12 @@ export default function SessionDetailClient({
             {t("sessionDetail.title")}
           </p>
           <h1 className="text-2xl font-black text-gray-900">
-            {new Date(session.opened_at).toLocaleDateString(locale, {
+            <LocalDateSpan dateIso={session.opened_at} locale={locale} options={{
               weekday: "long",
               day: "2-digit",
               month: "long",
               year: "numeric",
-            })}
+            }} />
           </h1>
 
           {/* Timeline row */}
@@ -229,16 +230,16 @@ export default function SessionDetailClient({
                   {t("sessionDetail.openedAt")}
                 </p>
                 <p className="text-sm font-bold text-gray-800">
-                  {new Date(session.opened_at).toLocaleTimeString(locale, {
+                  <LocalDateSpan dateIso={session.opened_at} locale={locale} options={{
                     hour: "2-digit",
                     minute: "2-digit",
-                  })}
+                  }} />
                   {" · "}
                   <span className="font-normal text-gray-500">
-                    {new Date(session.opened_at).toLocaleDateString(locale, {
+                    <LocalDateSpan dateIso={session.opened_at} locale={locale} options={{
                       day: "2-digit",
                       month: "short",
-                    })}
+                    }} />
                   </span>
                 </p>
               </div>
@@ -256,19 +257,16 @@ export default function SessionDetailClient({
                       {t("sessionDetail.closedAt")}
                     </p>
                     <p className="text-sm font-bold text-gray-800">
-                      {new Date(session.closed_at).toLocaleTimeString(locale, {
+                      <LocalDateSpan dateIso={session.closed_at} locale={locale} options={{
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
+                      }} />
                       {" · "}
                       <span className="font-normal text-gray-500">
-                        {new Date(session.closed_at).toLocaleDateString(
-                          locale,
-                          {
-                            day: "2-digit",
-                            month: "short",
-                          },
-                        )}
+                        <LocalDateSpan dateIso={session.closed_at} locale={locale} options={{
+                          day: "2-digit",
+                          month: "short",
+                        }} />
                       </span>
                     </p>
                   </div>
@@ -557,10 +555,14 @@ export default function SessionDetailClient({
                           {formatCurrency(amount)}
                         </p>
                         <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                          {new Date(tx.created_at).toLocaleTimeString(locale, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          <LocalDateSpan
+                              dateIso={tx.created_at}
+                              locale={locale}
+                              options={{
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }}
+                            />
                         </p>
                       </div>
                     </>

@@ -17,6 +17,7 @@ import {
 import { fetchSale, SaleRead } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
+import LocalDateSpan from "@/lib/LocalDateSpan";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -30,18 +31,6 @@ export default async function SaleDetailPage({ params }: Props) {
   const result = await fetchSale(id);
   if ("message" in result) notFound();
   const sale = result as SaleRead;
-
-  const createdAt = new Date(sale.created_at);
-  const dateStr = createdAt.toLocaleDateString(locale, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const timeStr = createdAt.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   const shortId = sale.id.split("-")[0].toUpperCase();
 
@@ -106,7 +95,25 @@ export default async function SaleDetailPage({ params }: Props) {
               <div className="flex items-center gap-1.5 mt-0.5 text-sm text-gray-500">
                 <CalendarDays size={13} />
                 <span>
-                  {dateStr} · {timeStr}
+                  <LocalDateSpan
+                    dateIso={sale.created_at}
+                    locale={locale}
+                    options={{
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }}
+                  />{" "}
+                  ·{" "}
+                  <LocalDateSpan
+                    dateIso={sale.created_at}
+                    locale={locale}
+                    options={{
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }}
+                  />
                 </span>
               </div>
             </div>

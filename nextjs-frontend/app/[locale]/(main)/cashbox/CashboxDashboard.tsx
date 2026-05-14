@@ -40,6 +40,7 @@ import {
 } from "@/components/actions/cashbox-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
+import LocalDateSpan from "@/lib/LocalDateSpan";
 
 type TxFilter = "all" | "in" | "out";
 
@@ -68,12 +69,6 @@ function formatDuration(from: string): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-function durationBetween(from: string, to: string): string {
-  const ms = new Date(to).getTime() - new Date(from).getTime();
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.floor((ms % 3_600_000) / 60_000);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
 
 function isSameDay(a: Date, b: Date) {
   return (
@@ -164,8 +159,9 @@ export default function CashboxDashboard({
   const cardIn = session ? parseFloat(session.card_in) : 0;
   const transferIn = session ? parseFloat(session.transfer_in) : 0;
   const creditSales = session ? parseFloat(session.credit_sales) : 0;
-  const ownerWithdrawals = session ? parseFloat((session as any).owner_withdrawals || 0) : 0;
-  const totalRevenue = cashIn + cardIn + transferIn + creditSales;
+  const ownerWithdrawals = session
+    ? parseFloat((session as any).owner_withdrawals || 0)
+    : 0;
   const openingAmount = session ? parseFloat(session.opening_amount) : 0;
 
   const countedNum = parseFloat(countedAmount || "0");
@@ -223,9 +219,12 @@ export default function CashboxDashboard({
     if (raw === "Opening balance") return t("txType.opening");
     if (raw === "Purchase") return t("txType.purchase");
 
-    const saleWithItemsMatch = raw.match(/^(Credit sale|Sale) \((\d+) items\)$/);
+    const saleWithItemsMatch = raw.match(
+      /^(Credit sale|Sale) \((\d+) items\)$/,
+    );
     if (saleWithItemsMatch) {
-      const type = saleWithItemsMatch[1] === "Credit sale" ? "credit_sale" : "sale";
+      const type =
+        saleWithItemsMatch[1] === "Credit sale" ? "credit_sale" : "sale";
       const count = parseInt(saleWithItemsMatch[2]);
       const unit = t(count === 1 ? "itemsUnitSingular" : "itemsUnitPlural");
       return `${t(`txType.${type}`)} (${count} ${unit})`;
@@ -400,10 +399,14 @@ export default function CashboxDashboard({
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {t("since")}{" "}
-                  {isMounted ? new Date(session.opened_at).toLocaleTimeString(locale, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }) : ""}
+                  <LocalDateSpan
+                    dateIso={session.opened_at}
+                    locale={locale}
+                    options={{
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }}
+                  />
                   {" · "}
                   {session.transaction_count} movs.
                 </p>
@@ -444,7 +447,7 @@ export default function CashboxDashboard({
                 {t("sessionClosed")}
               </p>
               <p className="text-xs text-gray-400">
-                {new Date(session.closed_at!).toLocaleString(locale)}
+                <LocalDateSpan dateIso={session.closed_at!} locale={locale} />
               </p>
             </div>
           </div>
@@ -583,119 +586,124 @@ export default function CashboxDashboard({
             </div>
           </div>
 
-          {isMounted && (filteredTx.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 py-12">
-              {t("noTransactions")}
-            </p>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {txGroups.map(({ key, items }) => (
-                <div key={key}>
-                  {/* Date separator — only shown when session spans multiple days */}
-                  {txGroups.length > 1 && (
-                    <div className="px-5 py-1.5 bg-gray-50 flex items-center gap-1.5">
-                      <Calendar size={11} className="text-gray-400" />
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        {isMounted ? dateLabel(key) : ""}
-                      </span>
-                    </div>
-                  )}
-                  {items.map((tx) => {
-                    const Icon = TX_ICONS[tx.type] ?? Wallet;
-                    const MethodIcon =
-                      METHOD_ICONS[tx.payment_method] ?? Banknote;
-                    const isIn = tx.direction === "in";
-                    const amount = parseFloat(tx.amount);
-                    const isOpening = tx.type === "opening";
-                    const isOwner = tx.type === "owner_withdrawal";
+          {isMounted &&
+            (filteredTx.length === 0 ? (
+              <p className="text-center text-sm text-gray-400 py-12">
+                {t("noTransactions")}
+              </p>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {txGroups.map(({ key, items }) => (
+                  <div key={key}>
+                    {/* Date separator — only shown when session spans multiple days */}
+                    {txGroups.length > 1 && (
+                      <div className="px-5 py-1.5 bg-gray-50 flex items-center gap-1.5">
+                        <Calendar size={11} className="text-gray-400" />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                          {isMounted ? dateLabel(key) : ""}
+                        </span>
+                      </div>
+                    )}
+                    {items.map((tx) => {
+                      const Icon = TX_ICONS[tx.type] ?? Wallet;
+                      const MethodIcon =
+                        METHOD_ICONS[tx.payment_method] ?? Banknote;
+                      const isIn = tx.direction === "in";
+                      const amount = parseFloat(tx.amount);
+                      const isOpening = tx.type === "opening";
+                      const isOwner = tx.type === "owner_withdrawal";
 
-                    return (
-                      <div
-                        key={tx.id}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
-                      >
-                        {/* Icon */}
+                      return (
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                            isOpening
-                              ? "bg-gray-100"
-                              : isOwner
-                                ? "bg-purple-100"
-                                : isIn
-                                  ? "bg-green-100"
-                                  : "bg-red-100"
-                          }`}
+                          key={tx.id}
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
                         >
-                          <Icon
-                            size={16}
-                            className={
+                          {/* Icon */}
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                               isOpening
-                                ? "text-gray-500"
+                                ? "bg-gray-100"
+                                : isOwner
+                                  ? "bg-purple-100"
+                                  : isIn
+                                    ? "bg-green-100"
+                                    : "bg-red-100"
+                            }`}
+                          >
+                            <Icon
+                              size={16}
+                              className={
+                                isOpening
+                                  ? "text-gray-500"
+                                  : isOwner
+                                    ? "text-purple-600"
+                                    : isIn
+                                      ? "text-green-600"
+                                      : "text-red-500"
+                              }
+                            />
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-700 truncate">
+                              {getTranslatedTxDescription(tx)}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                                  isOpening
+                                    ? "bg-gray-100 text-gray-500"
+                                    : isOwner
+                                      ? "bg-purple-100 text-purple-700"
+                                      : isIn
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-red-100 text-red-600"
+                                }`}
+                              >
+                                {t(`txType.${tx.type}`)}
+                              </span>
+                              <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
+                                <MethodIcon size={9} />
+                                {t(`method.${tx.payment_method}` as any)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Time */}
+                          <p className="text-xs text-gray-400 font-mono shrink-0 hidden sm:block">
+                            <LocalDateSpan
+                              dateIso={tx.created_at}
+                              locale={locale}
+                              options={{
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }}
+                            />
+                          </p>
+
+                          {/* Amount */}
+                          <p
+                            className={`text-sm font-bold tabular-nums font-mono w-24 text-right shrink-0 ${
+                              isOpening
+                                ? "text-gray-600"
                                 : isOwner
                                   ? "text-purple-600"
                                   : isIn
                                     ? "text-green-600"
                                     : "text-red-500"
-                            }
-                          />
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-700 truncate">
-                            {getTranslatedTxDescription(tx)}
+                            }`}
+                          >
+                            {isOpening ? "" : isOwner ? "" : isIn ? "+" : "-"}
+                            {formatCurrency(amount)}
                           </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                                isOpening
-                                  ? "bg-gray-100 text-gray-500"
-                                  : isOwner
-                                    ? "bg-purple-100 text-purple-700"
-                                    : isIn
-                                      ? "bg-green-100 text-green-700"
-                                      : "bg-red-100 text-red-600"
-                              }`}
-                            >
-                              {t(`txType.${tx.type}`)}
-                            </span>
-                            <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
-                              <MethodIcon size={9} />
-                              {t(`method.${tx.payment_method}` as any)}
-                            </span>
-                          </div>
                         </div>
-
-                        {/* Time */}
-                        <p className="text-xs text-gray-400 font-mono shrink-0 hidden sm:block">
-                          {isMounted ? new Date(tx.created_at).toLocaleTimeString(locale, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }) : ""}
-                        </p>
-
-                        {/* Amount */}
-                        <p
-                          className={`text-sm font-bold tabular-nums font-mono w-24 text-right shrink-0 ${
-                            isOpening
-                              ? "text-gray-600"
-                              : isOwner
-                                ? "text-purple-600"
-                                : isIn
-                                  ? "text-green-600"
-                                  : "text-red-500"
-                          }`}
-                        >
-                          {isOpening ? "" : isOwner ? "" : isIn ? "+" : "-"}
-                          {formatCurrency(amount)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          ))}
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ))}
         </div>
       )}
 
@@ -772,18 +780,33 @@ export default function CashboxDashboard({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-700">
-                      {isMounted ? new Date(s.opened_at).toLocaleDateString(locale, {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }) : ""}
+                      <LocalDateSpan
+                        dateIso={s.opened_at}
+                        locale={locale}
+                        options={{
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }}
+                      />
                     </p>
                     <p className="text-xs text-gray-400">
                       {s.transaction_count} movs.
-                      {s.closed_at &&
-                        ` · ${isMounted ? new Date(s.closed_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }) : ""}`}
+                      {s.closed_at && (
+                        <>
+                          {" · "}
+                          <LocalDateSpan
+                            dateIso={s.closed_at!}
+                            locale={locale}
+                            options={{
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }}
+                          />
+                        </>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

@@ -8,15 +8,11 @@ import {
   Phone,
   Mail,
   MapPin,
-  Hash,
   AlertCircle,
-  CheckCircle2,
-  DollarSign,
   X,
   Banknote,
   CreditCard,
   ArrowRightLeft,
-  Receipt,
   Wallet,
   ShieldAlert,
 } from "lucide-react";
@@ -28,11 +24,11 @@ import {
   deletePayment,
   recordPayment,
   recordOutcome,
-  updateCustomer,
 } from "@/components/actions/customers-action";
 import { cancelCreditSale } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
+import LocalDateSpan from "@/lib/LocalDateSpan";
 
 const PAYMENT_METHODS: {
   value: "cash" | "card" | "transfer";
@@ -50,7 +46,6 @@ interface Props {
 
 export default function CustomerDetailClient({ customer, locale }: Props) {
   const t = useTranslations("customers");
-  const tSales = useTranslations("sales");
 
   const [paymentModal, setPaymentModal] = useState(false);
   const [payAmount, setPayAmount] = useState("");
@@ -65,7 +60,9 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
   const [outcomeDesc, setOutcomeDesc] = useState("");
   const [outcomeSubmitting, setOutcomeSubmitting] = useState(false);
   const [outcomeError, setOutcomeError] = useState("");
-  const [rowActionPendingId, setRowActionPendingId] = useState<string | null>(null);
+  const [rowActionPendingId, setRowActionPendingId] = useState<string | null>(
+    null,
+  );
   const [rowActionError, setRowActionError] = useState("");
   const [localCustomer, setLocalCustomer] = useState(customer);
 
@@ -96,13 +93,6 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
   const payments = localCustomer.payments ?? [];
   const outcomes = localCustomer.outcomes ?? [];
 
-  function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString(locale, {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
 
   function inRange(dateValue: string) {
     const current = new Date(dateValue);
@@ -783,11 +773,15 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                             href={`/sales/${row.saleId}`}
                             className="hover:underline"
                           >
-                            {new Date(row.date).toLocaleDateString(locale, {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            <LocalDateSpan
+                              dateIso={row.date}
+                              locale={locale}
+                              options={{
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              }}
+                            />
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-gray-700">
@@ -889,11 +883,27 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                             href={`/sales/${row.id.replace("sale-", "")}`}
                             className="hover:underline text-gray-700"
                           >
-                            {formatDate(row.date)}
+                            <LocalDateSpan
+                              dateIso={row.date}
+                              locale={locale}
+                              options={{
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              }}
+                            />
                           </Link>
                         ) : (
                           <span className="text-gray-700">
-                            {formatDate(row.date)}
+                            <LocalDateSpan
+                              dateIso={row.date}
+                              locale={locale}
+                              options={{
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              }}
+                            />
                           </span>
                         )}
                       </td>
@@ -923,7 +933,9 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                         {row.type === "sale" ? (
                           <button
                             type="button"
-                            onClick={() => handleUndoSale(row.id.replace("sale-", ""))}
+                            onClick={() =>
+                              handleUndoSale(row.id.replace("sale-", ""))
+                            }
                             disabled={rowActionPendingId === row.id}
                             className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
                           >
@@ -934,7 +946,11 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                         ) : row.type === "payment" ? (
                           <button
                             type="button"
-                            onClick={() => handleDeletePayment(row.id.replace("payment-", ""))}
+                            onClick={() =>
+                              handleDeletePayment(
+                                row.id.replace("payment-", ""),
+                              )
+                            }
                             disabled={rowActionPendingId === row.id}
                             className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
                           >
@@ -945,7 +961,11 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => handleDeleteOutcome(row.id.replace("outcome-", ""))}
+                            onClick={() =>
+                              handleDeleteOutcome(
+                                row.id.replace("outcome-", ""),
+                              )
+                            }
                             disabled={rowActionPendingId === row.id}
                             className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
                           >

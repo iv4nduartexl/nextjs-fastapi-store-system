@@ -21,7 +21,7 @@ import {
 } from "@/components/actions/purchases-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
-import LocalSpan from "@/lib/LocalDateSpan";
+import LocalDateSpan from "@/lib/LocalDateSpan";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -117,7 +117,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
               <div className="flex items-center gap-1.5 mt-0.5 text-sm text-gray-500">
                 <CalendarDays size={13} />
                 <span>
-                  <LocalSpan
+                  <LocalDateSpan
                     dateIso={purchase.purchase_date}
                     locale={locale}
                     options={{
@@ -128,7 +128,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
                     }}
                   />{" "}
                   ·{" "}
-                  <LocalSpan
+                  <LocalDateSpan
                     dateIso={purchase.purchase_date}
                     locale={locale}
                     options={{

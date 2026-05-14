@@ -256,7 +256,7 @@ export type Page_SaleRead_ = {
 export type PaymentMethod = "cash" | "card" | "other" | "credit" | "internal";
 
 export type PurchaseCreate = {
-  supplier_name?: string | null;
+  supplier?: SupplierCreate | null;
   reference_number?: string | null;
   purchase_date?: string | null;
   payment_method?: PurchasePaymentMethod;
@@ -294,7 +294,7 @@ export type PurchasePaymentStatus = "paid" | "unpaid" | "partial";
 
 export type PurchaseRead = {
   id: string;
-  supplier_name: string | null;
+  supplier: SupplierRead | null;
   reference_number: string | null;
   purchase_date: string;
   created_at: string;
@@ -403,6 +403,16 @@ export type SaleRead = {
 };
 
 export type SaleStatus = "completed" | "cancelled" | "refunded";
+
+export type SupplierCreate = {
+  id?: string | null;
+  name: string;
+};
+
+export type SupplierRead = {
+  id: string;
+  name: string;
+};
 
 export type UnitType = "unit" | "gram" | "liter" | "pack";
 
@@ -878,3 +888,17 @@ export type SearchCategoriesData = {
 export type SearchCategoriesResponse = Array<string>;
 
 export type SearchCategoriesError = HTTPValidationError;
+
+export type SearchSuppliersData = {
+  query?: {
+    limit?: number;
+    /**
+     * Search prefix
+     */
+    q?: string | null;
+  };
+};
+
+export type SearchSuppliersResponse = Array<SupplierRead>;
+
+export type SearchSuppliersError = HTTPValidationError;

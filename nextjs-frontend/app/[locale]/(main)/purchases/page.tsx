@@ -190,7 +190,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                     {new Date(purchase.purchase_date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="font-medium text-gray-800">
-                    {purchase.supplier_name ?? (
+                    {purchase?.supplier?.name ?? (
                       <span className="text-gray-400 italic text-xs">
                         {t("detail.noSupplier")}
                       </span>

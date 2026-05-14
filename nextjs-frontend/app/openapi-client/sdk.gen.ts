@@ -133,6 +133,9 @@ import type {
   SearchCategoriesData,
   SearchCategoriesError,
   SearchCategoriesResponse,
+  SearchSuppliersData,
+  SearchSuppliersError,
+  SearchSuppliersResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -827,5 +830,21 @@ export const searchCategories = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/categories/",
+  });
+};
+
+/**
+ * Search Suppliers
+ */
+export const searchSuppliers = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<SearchSuppliersData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    SearchSuppliersResponse,
+    SearchSuppliersError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/suppliers/",
   });
 };

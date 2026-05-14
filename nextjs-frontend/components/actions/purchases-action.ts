@@ -2,10 +2,21 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { UUID } from "crypto";
 
 export type PurchaseStatus = "received" | "partial" | "cancelled";
 export type PurchasePaymentStatus = "paid" | "unpaid" | "partial";
 export type PurchasePaymentMethod = "cash" | "card" | "transfer" | "credit";
+
+export interface SupplierCreate {
+  id?: UUID | undefined;
+  name: string;
+}
+
+export interface SupplierRead {
+  id: UUID;
+  name: string;
+}
 
 export interface PurchaseItemCreate {
   item_id?: string;
@@ -20,7 +31,7 @@ export interface PurchaseItemCreate {
 }
 
 export interface PurchaseCreate {
-  supplier_name?: string;
+  supplier?: SupplierCreate;
   reference_number?: string;
   purchase_date?: string; // ISO string
   payment_method: PurchasePaymentMethod;
@@ -42,7 +53,7 @@ export interface PurchaseItemRead {
 
 export interface PurchaseRead {
   id: string;
-  supplier_name: string | null;
+  supplier: SupplierRead | null;
   reference_number: string | null;
   purchase_date: string;
   created_at: string;
@@ -88,6 +99,7 @@ export async function createPurchase(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    console.error("CreatePurchase ~ error: ", err)
     return {
       error:
         typeof err.detail === "string" ? err.detail : `Error ${res.status}`,

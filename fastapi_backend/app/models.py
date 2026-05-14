@@ -187,13 +187,23 @@ class QuantityDiscountRule(Base):
     free_qty = Column(Numeric(10, 3), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+class Supplier(Base):
+    __tablename__ = "suppliers"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+
+    purchases = relationship("Purchase", back_populates="supplier")
 
 class Purchase(Base):
     __tablename__ = "purchases"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
-    supplier_name = Column(String, nullable=True)
+    supplier_id = Column(UUID(as_uuid=True), ForeignKey("suppliers.id"), nullable=True)
     reference_number = Column(String, nullable=True)
     purchase_date = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -207,7 +217,7 @@ class Purchase(Base):
 
     purchase_items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
     user = relationship("User", back_populates="purchases")
-
+    supplier = relationship("Supplier", back_populates="purchases")
 
 class PurchaseItem(Base):
     __tablename__ = "purchase_items"

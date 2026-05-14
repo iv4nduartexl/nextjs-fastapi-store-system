@@ -11,12 +11,13 @@ from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from app.database import User, get_async_session
-from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, UnitType
+from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, Supplier, UnitType
 from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import PurchaseCreate, PurchaseRead
 from app.users import current_active_user
 from app.routes.cashbox import record_auto_transaction
 from app.routes.categories import upsert_category
+from app.routes.suppliers import upsert_supplier
 
 router = APIRouter(tags=["purchases"])
 
@@ -107,10 +108,12 @@ async def create_purchase(
         )
 
     total_cost = (subtotal + tax).quantize(Decimal("0.01"))
+    
+    supplier = await upsert_supplier(data.supplier, db)
 
     purchase = Purchase(
         user_id=user.id,
-        supplier_name=data.supplier_name,
+        supplier_id=supplier.id if supplier else None,
         reference_number=data.reference_number,
         purchase_date=data.purchase_date or datetime.now(timezone.utc),
         status=PurchaseStatus.received,
@@ -160,7 +163,7 @@ async def create_purchase(
                 payment_method=pmethod,
                 reference_type="purchase",
                 reference_id=purchase.id,
-                description=f"Purchase{' - ' + purchase.supplier_name if purchase.supplier_name else ''}",
+                description=f"Purchase{' - ' + supplier.name if supplier else ''}",
             )
             await db.commit()
 
@@ -185,14 +188,14 @@ async def list_purchases(
     params = Params(page=page, size=size)
     query = (
         select(Purchase)
-        .options(selectinload(Purchase.purchase_items))
+        .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
         .filter(Purchase.user_id == user.id)
-        .order_by(Purchase.purchase_date.desc())
+        .order_by(Purchase.purchase_date.desc(), Purchase.created_at.desc(), Purchase.id.desc())
     )
     if q:
         query = query.filter(
             or_(
-                Purchase.supplier_name.ilike(f"%{q}%"),
+                Purchase.supplier.name.has(Supplier.name.ilike(f"%{q}%")),
                 Purchase.reference_number.ilike(f"%{q}%"),
             )
         )
@@ -211,7 +214,7 @@ async def get_purchase(
 ):
     result = await db.execute(
         select(Purchase)
-        .options(selectinload(Purchase.purchase_items))
+        .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
         .filter(Purchase.id == purchase_id, Purchase.user_id == user.id)
     )
     purchase = result.scalars().first()

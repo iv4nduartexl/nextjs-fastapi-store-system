@@ -255,6 +255,18 @@ class CustomerDetailRead(CustomerRead):
     payments: list[CustomerPaymentRead] = []
     outcomes: list[CustomerOutcomeRead] = []
 
+# --- Suppliers ---
+class SupplierCreate(BaseModel):
+    id: UUID | None = None
+    name: str
+
+    model_config = {"from_attributes": True}
+
+class SupplierRead(BaseModel):
+    id: UUID
+    name: str
+
+    model_config = {"from_attributes": True}
 
 # --- Purchases ---
 
@@ -272,7 +284,7 @@ class PurchaseItemCreate(BaseModel):
 
 
 class PurchaseCreate(BaseModel):
-    supplier_name: str | None = None
+    supplier: SupplierCreate | None = None
     reference_number: str | None = None
     purchase_date: datetime | None = None
     payment_method: PurchasePaymentMethod = PurchasePaymentMethod.cash
@@ -296,7 +308,7 @@ class PurchaseItemRead(BaseModel):
 
 class PurchaseRead(BaseModel):
     id: UUID
-    supplier_name: str | None
+    supplier: SupplierRead| None
     reference_number: str | None
     purchase_date: datetime
     created_at: datetime

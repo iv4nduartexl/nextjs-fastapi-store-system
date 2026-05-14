@@ -10,6 +10,7 @@ import {
   createPurchase,
   PurchasePaymentMethod,
   PurchasePaymentStatus,
+  SupplierCreate,
 } from "@/components/actions/purchases-action";
 import type { ItemRead } from "@/app/openapi-client";
 import { formatCurrency } from "@/lib/currency";
@@ -27,6 +28,8 @@ import {
   Tag,
 } from "lucide-react";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
+import { SupplierCombobox } from "@/components/ui/suppliers-combobox";
+import { UUID } from "crypto";
 
 interface LineItem {
   itemId?: string;
@@ -66,10 +69,10 @@ export default function NewPurchasePage() {
   const router = useRouter();
 
   // Header fields
-  const [supplierName, setSupplierName] = useState("");
+  const [supplier, setSupplier] = useState<SupplierCreate>({ name: "" });
   const [referenceNumber, setReferenceNumber] = useState("");
-  const [purchaseDate, setPurchaseDate] = useState(
-    new Date().toISOString().slice(0, 10),
+  const [purchaseDate, setPurchaseDate] = useState<Date | null>(
+    null
   );
   const [paymentMethod, setPaymentMethod] =
     useState<PurchasePaymentMethod>("cash");
@@ -235,10 +238,11 @@ export default function NewPurchasePage() {
     setSubmitting(true);
     setErrorMsg("");
 
+
     const result = await createPurchase({
-      supplier_name: supplierName || undefined,
+      supplier: supplier || undefined,
       reference_number: referenceNumber || undefined,
-      purchase_date: new Date(purchaseDate).toISOString(),
+      purchase_date: purchaseDate ? purchaseDate.toISOString() : undefined,
       payment_method: paymentMethod,
       payment_status: paymentStatus,
       tax: taxNum,
@@ -292,11 +296,11 @@ export default function NewPurchasePage() {
               <label className="text-xs font-medium text-gray-600">
                 {t("form.supplierName")}
               </label>
-              <Input
-                value={supplierName}
-                onChange={(e) => setSupplierName(e.target.value)}
+              <SupplierCombobox
+                onChange={(supplier) => setSupplier(supplier)}
                 placeholder={t("form.supplierNamePlaceholder")}
-                className="h-9 text-sm"
+                className="w-full"
+                value={supplier}
               />
             </div>
 
@@ -318,8 +322,8 @@ export default function NewPurchasePage() {
               </label>
               <Input
                 type="date"
-                value={purchaseDate}
-                onChange={(e) => setPurchaseDate(e.target.value)}
+                value={purchaseDate ? purchaseDate.toISOString().slice(0, 10) : ""}
+                onChange={(e) => setPurchaseDate(e.target.value ? new Date(e.target.value) : null)}
                 className="h-9 text-sm"
               />
             </div>
@@ -861,11 +865,13 @@ export default function NewPurchasePage() {
                   {lines[metaModal].unitType === "gram"
                     ? formatCurrency(
                         (1000 * lines[metaModal].totalCostPrice) /
-                          lines[metaModal].quantity, 2
+                          lines[metaModal].quantity,
+                        2,
                       )
                     : formatCurrency(
                         lines[metaModal].totalCostPrice /
-                          lines[metaModal].quantity, 2
+                          lines[metaModal].quantity,
+                        2,
                       )}
                 </span>
               </div>

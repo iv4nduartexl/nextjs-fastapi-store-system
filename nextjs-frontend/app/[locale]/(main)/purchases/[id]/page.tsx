@@ -21,6 +21,7 @@ import {
 } from "@/components/actions/purchases-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
+import LocalSpan from "@/lib/LocalDateSpan";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -36,16 +37,6 @@ export default async function PurchaseDetailPage({ params }: Props) {
   const purchase = result as PurchaseRead;
 
   const purchaseDate = new Date(purchase.purchase_date);
-  const dateStr = purchaseDate.toLocaleDateString(locale, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const timeStr = purchaseDate.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   const shortId = purchase.id.split("-")[0].toUpperCase();
 
@@ -126,7 +117,25 @@ export default async function PurchaseDetailPage({ params }: Props) {
               <div className="flex items-center gap-1.5 mt-0.5 text-sm text-gray-500">
                 <CalendarDays size={13} />
                 <span>
-                  {dateStr} · {timeStr}
+                  <LocalSpan
+                    dateIso={purchase.purchase_date}
+                    locale={locale}
+                    options={{
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }}
+                  />{" "}
+                  ·{" "}
+                  <LocalSpan
+                    dateIso={purchase.purchase_date}
+                    locale={locale}
+                    options={{
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }}
+                  />
                 </span>
               </div>
             </div>
@@ -203,7 +212,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
             {t("detail.supplier")}
           </p>
           <p className="font-semibold text-gray-800">
-            {purchase.supplier_name ?? (
+            {purchase?.supplier?.name ?? (
               <span className="italic text-gray-400 font-normal">
                 {t("detail.noSupplier")}
               </span>

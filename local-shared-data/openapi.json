@@ -2461,6 +2461,73 @@
           }
         }
       }
+    },
+    "/suppliers/": {
+      "get": {
+        "tags": [
+          "suppliers"
+        ],
+        "summary": "Search Suppliers",
+        "operationId": "search_suppliers",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search prefix",
+              "title": "Q"
+            },
+            "description": "Search prefix"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierRead"
+                  },
+                  "title": "Response Suppliers-Search Suppliers"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4060,16 +4127,15 @@
       },
       "PurchaseCreate": {
         "properties": {
-          "supplier_name": {
+          "supplier": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/SupplierCreate"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Supplier Name"
+            ]
           },
           "reference_number": {
             "anyOf": [
@@ -4312,16 +4378,15 @@
             "format": "uuid",
             "title": "Id"
           },
-          "supplier_name": {
+          "supplier": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/SupplierRead"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Supplier Name"
+            ]
           },
           "reference_number": {
             "anyOf": [
@@ -4387,7 +4452,7 @@
         "type": "object",
         "required": [
           "id",
-          "supplier_name",
+          "supplier",
           "reference_number",
           "purchase_date",
           "created_at",
@@ -5154,6 +5219,50 @@
           "refunded"
         ],
         "title": "SaleStatus"
+      },
+      "SupplierCreate": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SupplierCreate"
+      },
+      "SupplierRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "SupplierRead"
       },
       "UnitType": {
         "type": "string",

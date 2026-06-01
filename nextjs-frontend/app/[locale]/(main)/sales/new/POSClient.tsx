@@ -27,8 +27,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { CustomerRead } from "@/components/actions/customers-action";
+import {
+  recordPayment,
+  type CustomerRead,
+} from "@/components/actions/customers-action";
 import autoAnimate from "@formkit/auto-animate";
+import ProductQuantityModal from "@/components/Modals/product-quantity-modal";
+import { PartialPaymentInput } from "@/components/Pages/sales/new/PosClient/partial-payment-input";
 
 interface CartItem {
   itemId: string;
@@ -189,8 +194,12 @@ export default function POSClient() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [receipt, setReceipt] = useState<SaleRead | null>(null);
-  const [discountRules, setDiscountRules] = useState<QuantityDiscountRule[]>([]);
+  const [discountRules, setDiscountRules] = useState<QuantityDiscountRule[]>(
+    [],
+  );
   const [priceModalItemId, setPriceModalItemId] = useState<string | null>(null);
+  const [selectedWeightQuantityProduct, setSelectedWeightQuantityProduct] =
+    useState<ItemRead | null>(null);
   const [priceOverrideMode, setPriceOverrideMode] =
     useState<PriceOverrideMode>("line_total");
   const [overridePriceDraft, setOverridePriceDraft] = useState("");
@@ -216,6 +225,9 @@ export default function POSClient() {
   // Credit customer state
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerResults, setCustomerResults] = useState<CustomerRead[]>([]);
+  const [customerPartialPayment, setCustomerPartialPayment] = useState<
+    number | null
+  >(null);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRead | null>(
     null,
   );
@@ -332,7 +344,7 @@ export default function POSClient() {
   }, [activeCategory]);
 
   // Debounced search: fetch from backend only when user has typed something
-  useEffect(() => {
+  const getProductsBySearch = (triggeredByEnter = false) => {
     const q = search.trim();
     if (!q) {
       setProducts([]);
@@ -349,6 +361,9 @@ export default function POSClient() {
         if (res.ok) {
           const data = await res.json();
           setProducts(data.items ?? []);
+          if (triggeredByEnter && data.items && data.items.length === 1) {
+            addToCart(data.items[0]);
+          }
         }
       } catch {
         // silent fail
@@ -357,7 +372,7 @@ export default function POSClient() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  };
 
   function toSaleUnits(quantity: number, unitType: string) {
     return unitType === "gram" ? quantity / 1000 : quantity;
@@ -371,7 +386,11 @@ export default function POSClient() {
 
   function getPricing(item: CartItem) {
     const baseUnitPrice = item.unitPrice;
-    const baseSubtotal = lineSubtotal(baseUnitPrice, item.quantity, item.unitType);
+    const baseSubtotal = lineSubtotal(
+      baseUnitPrice,
+      item.quantity,
+      item.unitType,
+    );
 
     if (item.manualOverridePrice != null) {
       const effectiveSubtotal = lineSubtotal(
@@ -426,7 +445,10 @@ export default function POSClient() {
           const groups = Math.floor(saleUnits / group);
           const freeUnits = groups * freeQty;
           const payableUnits = Math.max(0, saleUnits - freeUnits);
-          candidate = saleUnits > 0 ? (baseUnitPrice * payableUnits) / saleUnits : baseUnitPrice;
+          candidate =
+            saleUnits > 0
+              ? (baseUnitPrice * payableUnits) / saleUnits
+              : baseUnitPrice;
         }
       }
 
@@ -436,7 +458,11 @@ export default function POSClient() {
       }
     }
 
-    const effectiveSubtotal = lineSubtotal(effectiveUnitPrice, item.quantity, item.unitType);
+    const effectiveSubtotal = lineSubtotal(
+      effectiveUnitPrice,
+      item.quantity,
+      item.unitType,
+    );
     return {
       baseUnitPrice,
       effectiveUnitPrice,
@@ -444,7 +470,9 @@ export default function POSClient() {
       effectiveSubtotal,
       discountAmount: Math.max(0, baseSubtotal - effectiveSubtotal),
       discountRuleName: ruleName,
-      pricingSource: ruleName ? ("quantity_discount" as const) : ("base" as const),
+      pricingSource: ruleName
+        ? ("quantity_discount" as const)
+        : ("base" as const),
     };
   }
 
@@ -457,7 +485,8 @@ export default function POSClient() {
   const change = tenderedNum - finalTotal;
 
   const hasInvalidOverride = cart.some(
-    (c) => c.manualOverridePrice != null && !(c.manualOverrideReason || "").trim(),
+    (c) =>
+      c.manualOverridePrice != null && !(c.manualOverrideReason || "").trim(),
   );
 
   const canComplete =
@@ -466,7 +495,13 @@ export default function POSClient() {
     (paymentMethod !== "credit" || selectedCustomer != null) &&
     !hasInvalidOverride;
 
-  function addToCart(product: ItemRead) {
+  function addToCart(product: ItemRead, weightQuantity: number | null = null) {
+    const isWeightBased = product.unit_type === "gram";
+    if (isWeightBased && weightQuantity == null) {
+      setSelectedWeightQuantityProduct(product);
+      return;
+    }
+
     if (!product.price) return;
     const price = parseFloat(product.price as unknown as string);
     const step = (product.unit_type ?? "unit") === "gram" ? 100 : 1;
@@ -485,7 +520,8 @@ export default function POSClient() {
           unitType: product.unit_type ?? "unit",
           category: product.category ?? null,
           unitPrice: price,
-          quantity: step,
+          quantity:
+            isWeightBased && weightQuantity != null ? weightQuantity : step,
         },
       ];
     });
@@ -512,13 +548,20 @@ export default function POSClient() {
   }
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && products.length > 0) {
-      addToCart(products[0]);
+    if (search) {
+      if (e.key === "Enter") {
+        getProductsBySearch(true);
+      }
+      getProductsBySearch();
     }
   }
 
   async function handleCompleteSale() {
     if (!canComplete) return;
+    if (customerPartialPayment && customerPartialPayment > finalTotal) {
+      setErrorMsg(t("partialPaymentExceedsTotal"));
+      return;
+    }
     setSubmitting(true);
     setErrorMsg("");
     const result = await createSale({
@@ -535,11 +578,31 @@ export default function POSClient() {
       subtotal_override: appliedSubtotalOverride?.amount,
       subtotal_override_reason: appliedSubtotalOverride?.reason,
     });
+    let partialPaymentResult: { data?: unknown; error?: unknown } | null = null;
+    if (
+      paymentMethod === "credit" &&
+      selectedCustomer &&
+      customerPartialPayment != null
+    ) {
+      partialPaymentResult = await recordPayment(selectedCustomer.id, {
+        amount: customerPartialPayment,
+        payment_method: "cash",
+        notes: "Pago parcial por venta de productos a crédito",
+      });
+    }
+
     setSubmitting(false);
-    if (result.error) {
+    if (result.error || partialPaymentResult?.error) {
       setErrorMsg(typeof result.error === "string" ? result.error : "Error");
     } else if (result.data) {
-      setReceipt(result.data);
+      const finalReceipt = {
+        ...result.data,
+        customer_partial_payment:
+          customerPartialPayment != null
+            ? String(customerPartialPayment)
+            : null,
+      };
+      setReceipt(finalReceipt);
       setCart([]);
       setAmountTendered("");
       setSelectedCustomer(null);
@@ -622,9 +685,7 @@ export default function POSClient() {
 
   function openSubtotalEditor() {
     setSubtotalModalOpen(true);
-    setSubtotalDraft(
-      String(appliedSubtotalOverride?.amount ?? cartTotal),
-    );
+    setSubtotalDraft(String(appliedSubtotalOverride?.amount ?? cartTotal));
     setSubtotalReasonDraft(appliedSubtotalOverride?.reason ?? "");
     setSubtotalModalError("");
   }
@@ -703,14 +764,25 @@ export default function POSClient() {
                 </div>
               )}
             {receipt.payment_method === "credit" && receipt.customer_name && (
-              <div className="flex justify-between items-center bg-amber-50 rounded-lg px-3 py-2">
-                <span className="text-sm font-medium text-amber-700">
-                  {tSales("pos.receiptCustomer")}
-                </span>
-                <span className="text-sm font-bold text-amber-700">
-                  {receipt.customer_name}
-                </span>
-              </div>
+              <>
+                <div className="flex justify-between items-center bg-amber-50 rounded-lg px-3 py-2">
+                  <span className="text-sm font-medium text-amber-700">
+                    {tSales("pos.receiptCustomer")}
+                  </span>
+                  <span className="text-sm font-bold text-amber-700">
+                    {receipt.customer_name}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    {" "}
+                    {tSales("pos.receiptCustomerPartialPayment")}
+                  </span>
+                  <span className="text-xl font-bold text-green-600">
+                    {formatCurrency(receipt.customer_partial_payment)}
+                  </span>
+                </div>
+              </>
             )}
           </div>
 
@@ -756,737 +828,760 @@ export default function POSClient() {
   return (
     <>
       <div className="flex h-[calc(100vh-6rem)] gap-0 -m-8">
-      {/* ── LEFT: Product Search + Grid ── */}
-      <div className="flex flex-col flex-1 bg-gray-50 border-r overflow-hidden">
-        {/* Search header */}
-        <div className="px-4 pt-4 pb-3 bg-white border-b">
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={16}
-            />
-            <Input
-              ref={searchRef}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              placeholder={t("searchPlaceholder")}
-              className="pl-9 h-11 rounded-lg border-gray-200 bg-gray-50 focus:bg-white text-sm"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X size={14} />
-              </button>
+        {/* ── LEFT: Product Search + Grid ── */}
+        <div className="flex flex-col flex-1 bg-gray-50 border-r overflow-hidden">
+          {/* Search header */}
+          <div className="px-4 pt-4 pb-3 bg-white border-b">
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={16}
+              />
+              <Input
+                ref={searchRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder={t("searchPlaceholder")}
+                className="pl-9 h-11 rounded-lg border-gray-200 bg-gray-50 focus:bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Search result count */}
+            {search.trim() && products.length > 0 && (
+              <p className="text-[11px] text-gray-400 mt-2 ml-1">
+                {products.length}{" "}
+                {products.length === 1
+                  ? t("resultsHint")
+                  : t("resultsHintPlural")}
+              </p>
+            )}
+
+            {/* Category breadcrumb */}
+            {!search.trim() && activeCategory && (
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => setActiveCategory(null)}
+                  className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors"
+                >
+                  <X size={12} />
+                  {t("allCategories")}
+                </button>
+                <span className="text-gray-300">/</span>
+                <span className="text-xs font-semibold text-gray-700 truncate">
+                  {activeCategory}
+                </span>
+              </div>
             )}
           </div>
 
-          {/* Search result count */}
-          {search.trim() && products.length > 0 && (
-            <p className="text-[11px] text-gray-400 mt-2 ml-1">
-              {products.length}{" "}
-              {products.length === 1
-                ? t("resultsHint")
-                : t("resultsHintPlural")}
-            </p>
-          )}
-
-          {/* Category breadcrumb */}
-          {!search.trim() && activeCategory && (
-            <div className="flex items-center gap-2 mt-2">
-              <button
-                onClick={() => setActiveCategory(null)}
-                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors"
-              >
-                <X size={12} />
-                {t("allCategories")}
-              </button>
-              <span className="text-gray-300">/</span>
-              <span className="text-xs font-semibold text-gray-700 truncate">
-                {activeCategory}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Content area: search results | category products | category grid */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {/* ── SEARCH MODE ── */}
-          {search.trim() ? (
-            loadingProducts ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-28 rounded-xl bg-gray-200 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
-                <PackageX size={32} className="text-gray-300" />
-                <p className="text-sm">{t("noProducts")}</p>
-              </div>
-            ) : (
-              <ProductGrid
-                products={products}
-                onAdd={addToCart}
-                t={tDash}
-                tPos={t}
-              />
-            )
-          ) : /* ── CATEGORY PRODUCTS MODE ── */
-          activeCategory ? (
-            loadingCategoryProducts ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-28 rounded-xl bg-gray-200 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : categoryProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
-                <PackageX size={32} className="text-gray-300" />
-                <p className="text-sm">{t("noCategoryProducts")}</p>
-              </div>
-            ) : (
-              <ProductGrid
-                products={categoryProducts}
-                onAdd={addToCart}
-                t={tDash}
-                tPos={t}
-              />
-            )
-          ) : (
-            /* ── CATEGORY BROWSE MODE ── */
-            <>
-              {loadingCategories ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
+          {/* Content area: search results | category products | category grid */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* ── SEARCH MODE ── */}
+            {search.trim() ? (
+              loadingProducts ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {Array.from({ length: 8 }).map((_, i) => (
                     <div
                       key={i}
-                      className="h-24 rounded-2xl bg-gray-200 animate-pulse"
+                      className="h-28 rounded-xl bg-gray-200 animate-pulse"
                     />
                   ))}
                 </div>
-              ) : categories.length === 0 ? (
+              ) : products.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
-                  <ScanBarcode size={36} className="text-gray-300" />
-                  <p className="text-sm text-center leading-relaxed max-w-[200px]">
-                    {t("noCategories")}
-                  </p>
+                  <PackageX size={32} className="text-gray-300" />
+                  <p className="text-sm">{t("noProducts")}</p>
                 </div>
               ) : (
-                <>
-                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-3">
-                    {t("browseCategories")}
-                  </p>
+                <ProductGrid
+                  products={products}
+                  onAdd={addToCart}
+                  t={tDash}
+                  tPos={t}
+                />
+              )
+            ) : /* ── CATEGORY PRODUCTS MODE ── */
+            activeCategory ? (
+              loadingCategoryProducts ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-28 rounded-xl bg-gray-200 animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : categoryProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
+                  <PackageX size={32} className="text-gray-300" />
+                  <p className="text-sm">{t("noCategoryProducts")}</p>
+                </div>
+              ) : (
+                <ProductGrid
+                  products={categoryProducts}
+                  onAdd={addToCart}
+                  t={tDash}
+                  tPos={t}
+                />
+              )
+            ) : (
+              /* ── CATEGORY BROWSE MODE ── */
+              <>
+                {loadingCategories ? (
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                    {categories.map((cat, i) => (
-                      <CategoryTile
-                        key={cat}
-                        name={cat}
-                        colorIndex={i}
-                        onClick={() => setActiveCategory(cat)}
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-24 rounded-2xl bg-gray-200 animate-pulse"
                       />
                     ))}
                   </div>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── RIGHT: Cart + Payment ── */}
-      <div className="w-[26rem] flex flex-col bg-white overflow-hidden">
-        {/* Cart header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b bg-white">
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={18} className="text-gray-600" />
-            <h3 className="font-semibold text-gray-800">{t("cart")}</h3>
-            {cart.length > 0 && (
-              <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
-                {formatNumber(
-                  cart.reduce((s, c) => {
-                    const val = c.quantity ? c.quantity : 0;
-                    return s + (c.unitType === "gram" ? val / 1000 : val);
-                  }, 0),
+                ) : categories.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
+                    <ScanBarcode size={36} className="text-gray-300" />
+                    <p className="text-sm text-center leading-relaxed max-w-[200px]">
+                      {t("noCategories")}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-3">
+                      {t("browseCategories")}
+                    </p>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                      {categories.map((cat, i) => (
+                        <CategoryTile
+                          key={cat}
+                          name={cat}
+                          colorIndex={i}
+                          onClick={() => setActiveCategory(cat)}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
-              </span>
+              </>
             )}
           </div>
-          {cart.length > 0 && (
-            <button
-              onClick={() => {
-                setCart([]);
-                setAppliedSubtotalOverride(null);
-              }}
-              className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
-            >
-              <Trash2 size={12} />
-              {t("clearCart")}
-            </button>
-          )}
         </div>
 
-        {/* Cart items */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
-          {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 gap-2 text-gray-400">
-              <ShoppingCart size={28} className="text-gray-200" />
-              <p className="text-sm">{t("emptyCart")}</p>
+        {/* ── RIGHT: Cart + Payment ── */}
+        <div className="w-[26rem] flex flex-col bg-white overflow-hidden">
+          {/* Cart header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b bg-white">
+            <div className="flex items-center gap-2">
+              <ShoppingCart size={18} className="text-gray-600" />
+              <h3 className="font-semibold text-gray-800">{t("cart")}</h3>
+              {cart.length > 0 && (
+                <span className="bg-green-100 text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {formatNumber(
+                    cart.reduce((s, c) => {
+                      const val = c.quantity ? c.quantity : 0;
+                      return s + (c.unitType === "gram" ? val / 1000 : val);
+                    }, 0),
+                  )}
+                </span>
+              )}
             </div>
-          ) : (
-            cart.map((item) => {
-              const pricing = getPricing(item);
-              return (
-                <div
-                  key={item.itemId}
-                  className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
-                >
-                  <div className="flex items-center gap-2">
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate leading-tight">
-                        {item.name}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        {pricing.pricingSource === "base" ? (
-                          <span className="text-xs text-gray-500">
-                            {item.unitType === "gram"
-                              ? `${formatCurrency(pricing.effectiveUnitPrice)}/kg`
-                              : formatCurrency(pricing.effectiveUnitPrice)}
-                          </span>
-                        ) : (
-                          <>
-                            <span className="text-xs text-gray-400 line-through">
-                              {item.unitType === "gram"
-                                ? `${formatCurrency(pricing.baseUnitPrice)}/kg`
-                                : formatCurrency(pricing.baseUnitPrice)}
-                            </span>
-                            <span className="text-xs text-green-700 font-semibold">
+            {cart.length > 0 && (
+              <button
+                onClick={() => {
+                  setCart([]);
+                  setAppliedSubtotalOverride(null);
+                }}
+                className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
+              >
+                <Trash2 size={12} />
+                {t("clearCart")}
+              </button>
+            )}
+          </div>
+
+          {/* Cart items */}
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 gap-2 text-gray-400">
+                <ShoppingCart size={28} className="text-gray-200" />
+                <p className="text-sm">{t("emptyCart")}</p>
+              </div>
+            ) : (
+              cart.map((item) => {
+                const pricing = getPricing(item);
+                return (
+                  <div
+                    key={item.itemId}
+                    className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate leading-tight">
+                          {item.name}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          {pricing.pricingSource === "base" ? (
+                            <span className="text-xs text-gray-500">
                               {item.unitType === "gram"
                                 ? `${formatCurrency(pricing.effectiveUnitPrice)}/kg`
                                 : formatCurrency(pricing.effectiveUnitPrice)}
                             </span>
-                          </>
-                        )}
-                        <span className="text-[10px] font-bold text-gray-400 bg-gray-200 px-1 py-0.5 rounded leading-none">
-                          {tDash(`unitAbbr.${item.unitType}`)}
-                        </span>
-                        {pricing.pricingSource === "manual_override" && (
-                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 py-0.5 rounded leading-none">
-                            {t("manualPrice")}
+                          ) : (
+                            <>
+                              <span className="text-xs text-gray-400 line-through">
+                                {item.unitType === "gram"
+                                  ? `${formatCurrency(pricing.baseUnitPrice)}/kg`
+                                  : formatCurrency(pricing.baseUnitPrice)}
+                              </span>
+                              <span className="text-xs text-green-700 font-semibold">
+                                {item.unitType === "gram"
+                                  ? `${formatCurrency(pricing.effectiveUnitPrice)}/kg`
+                                  : formatCurrency(pricing.effectiveUnitPrice)}
+                              </span>
+                            </>
+                          )}
+                          <span className="text-[10px] font-bold text-gray-400 bg-gray-200 px-1 py-0.5 rounded leading-none">
+                            {tDash(`unitAbbr.${item.unitType}`)}
                           </span>
-                        )}
-                        {pricing.pricingSource === "quantity_discount" &&
-                          pricing.discountRuleName && (
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1 py-0.5 rounded leading-none">
-                              {t("discountApplied")}: {pricing.discountRuleName}
+                          {pricing.pricingSource === "manual_override" && (
+                            <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 py-0.5 rounded leading-none">
+                              {t("manualPrice")}
                             </span>
                           )}
+                          {pricing.pricingSource === "quantity_discount" &&
+                            pricing.discountRuleName && (
+                              <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1 py-0.5 rounded leading-none">
+                                {t("discountApplied")}:{" "}
+                                {pricing.discountRuleName}
+                              </span>
+                            )}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Qty controls */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() =>
-                          updateQty(
-                            item.itemId,
-                            item.quantity - (item.unitType === "gram" ? 100 : 1),
-                          )
-                        }
-                        className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
-                      >
-                        <Minus size={11} />
-                      </button>
-                      <input
-                        type="number"
-                        value={String(item.quantity)}
-                        min={1}
-                        step={item.unitType === "gram" ? 100 : 1}
-                        onChange={(e) =>
-                          updateQty(item.itemId, parseFloat(e.target.value))
-                        }
-                        onBlur={() => {
-                          if (!item.quantity) {
-                            updateQty(item.itemId, 1);
-                          }
-                        }}
-                        className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
-                      />
-                      <button
-                        onClick={() =>
-                          updateQty(
-                            item.itemId,
-                            item.quantity + (item.unitType === "gram" ? 100 : 1),
-                          )
-                        }
-                        className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
-                      >
-                        <Plus size={11} />
-                      </button>
-                    </div>
-
-                    {/* Subtotal */}
-                    <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
-                      {formatCurrency(pricing.effectiveSubtotal)}
-                    </span>
-
-                    {/* Price Edit */}
-                    <button
-                      onClick={() => openPriceEditor(item)}
-                      className="text-gray-300 hover:text-blue-500 transition-colors ml-0.5 shrink-0"
-                      title={t("editLinePrice")}
-                    >
-                      <DollarSign size={14} />
-                    </button>
-
-                    {/* Remove */}
-                    <button
-                      onClick={() => removeFromCart(item.itemId)}
-                      className="text-gray-300 hover:text-red-400 transition-colors ml-0.5 shrink-0"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* ── Payment section ── */}
-        <div ref={paymentRef}>
-          {/* 1. Basic Toggle Button */}
-          <button
-            onClick={togglePaymentSection}
-            className="border border-emerald-600 px-6 py-3 font-semibold rounded-t-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm hover:-translate-y-0.5 transition-all duration-150 p-3.5 text-white leading-none select-none w-full"
-          >
-            {t("openPayment")}
-          </button>
-          {showPaymentSection && (
-            <div className=" bg-white">
-              {/* Total */}
-              <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-500">
-                    {t("subtotal")}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={openSubtotalEditor}
-                    className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 hover:border-blue-300 hover:text-blue-600"
-                  >
-                    <DollarSign size={12} />
-                    {t("editSubtotal")}
-                  </button>
-                  {appliedSubtotalOverride && (
-                    <button
-                      type="button"
-                      onClick={clearSubtotalOverride}
-                      className="text-[11px] font-semibold text-red-500 hover:text-red-600"
-                    >
-                      {t("resetPrice")}
-                    </button>
-                  )}
-                </div>
-                <span className="text-2xl font-bold text-gray-900 tabular-nums">
-                  {formatCurrency(finalTotal)}
-                </span>
-              </div>
-
-              <div className="px-4 py-3 space-y-3">
-                {/* Payment method */}
-                <div>
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1.5">
-                    {t("paymentMethod")}
-                  </p>
-                  <div className="relative">
-                    <div
-                      ref={scrollRef}
-                      onScroll={checkScroll}
-                      className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth"
-                    >
-                      {(
-                        [
-                          { method: "cash", Icon: Banknote },
-                          { method: "credit", Icon: Users },
-                          { method: "internal", Icon: Crown },
-                          { method: "card", Icon: CreditCard },
-                          { method: "other", Icon: RefreshCcw },
-                        ] as {
-                          method: PaymentMethod;
-                          Icon: React.ElementType;
-                        }[]
-                      ).map(({ method: m, Icon }) => (
+                      {/* Qty controls */}
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
-                          key={m}
-                          onClick={() => {
-                            setPaymentMethod(m);
-                            if (m !== "credit") {
-                              setSelectedCustomer(null);
-                              setCustomerSearch("");
-                              setCustomerResults([]);
+                          onClick={() =>
+                            updateQty(
+                              item.itemId,
+                              item.quantity -
+                                (item.unitType === "gram" ? 100 : 1),
+                            )
+                          }
+                          className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
+                        >
+                          <Minus size={11} />
+                        </button>
+                        <input
+                          type="number"
+                          value={String(item.quantity)}
+                          min={1}
+                          step={item.unitType === "gram" ? 100 : 1}
+                          onChange={(e) =>
+                            updateQty(item.itemId, parseFloat(e.target.value))
+                          }
+                          onBlur={() => {
+                            if (!item.quantity) {
+                              updateQty(item.itemId, 1);
                             }
                           }}
-                          className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold border-2 transition-all shrink-0 snap-start w-[calc((100%-18px)/4)] ${
-                            paymentMethod === m
-                              ? "border-green-500 bg-green-50/50 text-green-700 shadow-sm"
-                              : "border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50"
+                          className="w-14 text-center text-xs border border-gray-200 rounded-md py-1 font-mono bg-white"
+                        />
+                        <button
+                          onClick={() =>
+                            updateQty(
+                              item.itemId,
+                              item.quantity +
+                                (item.unitType === "gram" ? 100 : 1),
+                            )
+                          }
+                          className="w-6 h-6 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition-colors"
+                        >
+                          <Plus size={11} />
+                        </button>
+                      </div>
+
+                      {/* Subtotal */}
+                      <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
+                        {formatCurrency(pricing.effectiveSubtotal)}
+                      </span>
+
+                      {/* Price Edit */}
+                      <button
+                        onClick={() => openPriceEditor(item)}
+                        className="text-gray-300 hover:text-blue-500 transition-colors ml-0.5 shrink-0"
+                        title={t("editLinePrice")}
+                      >
+                        <DollarSign size={14} />
+                      </button>
+
+                      {/* Remove */}
+                      <button
+                        onClick={() => removeFromCart(item.itemId)}
+                        className="text-gray-300 hover:text-red-400 transition-colors ml-0.5 shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* ── Payment section ── */}
+          <div ref={paymentRef}>
+            {/* 1. Basic Toggle Button */}
+            <button
+              onClick={togglePaymentSection}
+              className="border border-emerald-600 px-6 py-3 font-semibold rounded-t-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm hover:-translate-y-0.5 transition-all duration-150 p-3.5 text-white leading-none select-none w-full"
+            >
+              {t("openPayment")}
+            </button>
+            {showPaymentSection && (
+              <div className=" bg-white">
+                {/* Total */}
+                <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">
+                      {t("subtotal")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={openSubtotalEditor}
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                    >
+                      <DollarSign size={12} />
+                      {t("editSubtotal")}
+                    </button>
+                    {appliedSubtotalOverride && (
+                      <button
+                        type="button"
+                        onClick={clearSubtotalOverride}
+                        className="text-[11px] font-semibold text-red-500 hover:text-red-600"
+                      >
+                        {t("resetPrice")}
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900 tabular-nums">
+                    {formatCurrency(finalTotal)}
+                  </span>
+                </div>
+
+                <div className="px-4 py-3 space-y-3">
+                  {/* Payment method */}
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1.5">
+                      {t("paymentMethod")}
+                    </p>
+                    <div className="relative">
+                      <div
+                        ref={scrollRef}
+                        onScroll={checkScroll}
+                        className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth"
+                      >
+                        {(
+                          [
+                            { method: "cash", Icon: Banknote },
+                            { method: "credit", Icon: Users },
+                            { method: "internal", Icon: Crown },
+                            { method: "card", Icon: CreditCard },
+                            { method: "other", Icon: RefreshCcw },
+                          ] as {
+                            method: PaymentMethod;
+                            Icon: React.ElementType;
+                          }[]
+                        ).map(({ method: m, Icon }) => (
+                          <button
+                            key={m}
+                            onClick={() => {
+                              setPaymentMethod(m);
+                              if (m !== "credit") {
+                                setSelectedCustomer(null);
+                                setCustomerSearch("");
+                                setCustomerResults([]);
+                              }
+                            }}
+                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold border-2 transition-all shrink-0 snap-start w-[calc((100%-18px)/4)] ${
+                              paymentMethod === m
+                                ? "border-green-500 bg-green-50/50 text-green-700 shadow-sm"
+                                : "border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            <Icon size={16} />
+                            <span className="overflow-hidden text-ellipsis w-full px-1 text-center">
+                              {tSales(`paymentMethod.${m}`)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Left Fade/Button */}
+                      {showLeftArrow && (
+                        <div className="rounded-xl absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-start group/btn">
+                          <button
+                            onClick={() => scroll("left")}
+                            className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
+                          >
+                            <ChevronLeft size={20} />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Right Fade/Button */}
+                      {showRightArrow && (
+                        <div className="rounded-xl absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-end group/btn">
+                          <button
+                            onClick={() => scroll("right")}
+                            className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
+                          >
+                            <ChevronRight size={20} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Credit: customer picker */}
+                  {paymentMethod === "credit" && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+                        {tSales("pos.selectCustomer")}
+                      </label>
+                      {selectedCustomer ? (
+                        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                          <div>
+                            <p className="text-sm font-bold text-amber-900">
+                              {selectedCustomer.name}
+                            </p>
+                            {selectedCustomer.phone && (
+                              <p className="text-xs text-amber-600">
+                                {selectedCustomer.phone}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedCustomer(null);
+                              setCustomerSearch("");
+                            }}
+                            className="text-amber-400 hover:text-amber-700"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <Search
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            size={13}
+                          />
+                          <input
+                            type="text"
+                            value={customerSearch}
+                            onChange={(e) => setCustomerSearch(e.target.value)}
+                            placeholder={tSales("pos.searchCustomer")}
+                            className="w-full h-9 pl-8 pr-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
+                          />
+                          {customerResults.length > 0 && (
+                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                              {customerResults.map((c) => {
+                                const bal = parseFloat(c.balance);
+                                return (
+                                  <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedCustomer(c);
+                                      setCustomerSearch("");
+                                      setCustomerResults([]);
+                                    }}
+                                    className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-amber-50 transition-colors"
+                                  >
+                                    <div>
+                                      <p className="font-semibold text-gray-800">
+                                        {c.name}
+                                      </p>
+                                      {c.phone && (
+                                        <p className="text-xs text-gray-400">
+                                          {c.phone}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {bal > 0 && (
+                                      <span className="text-xs font-mono text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                                        {formatCurrency(bal)}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {loadingCustomers && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              {tSales("pos.searching")}
+                            </p>
+                          )}
+                          {!loadingCustomers &&
+                            customerSearch.trim() &&
+                            customerResults.length === 0 && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                {tSales("pos.noCustomer")}
+                              </p>
+                            )}
+                        </div>
+                      )}
+                      <PartialPaymentInput
+                        amount={customerPartialPayment}
+                        setAmount={setCustomerPartialPayment}
+                      />
+                    </div>
+                  )}
+
+                  {/* Cash tendered + change */}
+                  {paymentMethod === "cash" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+                        {t("amountTendered")}
+                      </label>
+                      <Input
+                        type="number"
+                        min={finalTotal ? finalTotal.toString() : "0"}
+                        step="1"
+                        value={amountTendered}
+                        onChange={(e) => setAmountTendered(e.target.value)}
+                        placeholder="0"
+                        className="text-base font-mono h-10 border-gray-200"
+                      />
+                      {tenderedNum > 0 && (
+                        <div
+                          className={`flex justify-between text-sm font-semibold rounded-lg px-3 py-2 ${
+                            change >= 0
+                              ? "bg-green-50 text-green-700"
+                              : "bg-red-50 text-red-600"
                           }`}
                         >
-                          <Icon size={16} />
-                          <span className="overflow-hidden text-ellipsis w-full px-1 text-center">
-                            {tSales(`paymentMethod.${m}`)}
+                          <span>{t("change")}</span>
+                          <span className="font-mono tabular-nums">
+                            {formatCurrency(Math.max(0, change))}
                           </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Left Fade/Button */}
-                    {showLeftArrow && (
-                      <div className="rounded-xl absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-start group/btn">
-                        <button
-                          onClick={() => scroll("left")}
-                          className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
-                        >
-                          <ChevronLeft size={20} />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Right Fade/Button */}
-                    {showRightArrow && (
-                      <div className="rounded-xl absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-end group/btn">
-                        <button
-                          onClick={() => scroll("right")}
-                          className="h-full w-full flex items-center justify-center text-white drop-shadow-md"
-                        >
-                          <ChevronRight size={20} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Credit: customer picker */}
-                {paymentMethod === "credit" && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
-                      {tSales("pos.selectCustomer")}
-                    </label>
-                    {selectedCustomer ? (
-                      <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                        <div>
-                          <p className="text-sm font-bold text-amber-900">
-                            {selectedCustomer.name}
-                          </p>
-                          {selectedCustomer.phone && (
-                            <p className="text-xs text-amber-600">
-                              {selectedCustomer.phone}
-                            </p>
-                          )}
                         </div>
-                        <button
-                          onClick={() => {
-                            setSelectedCustomer(null);
-                            setCustomerSearch("");
-                          }}
-                          className="text-amber-400 hover:text-amber-700"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Search
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                          size={13}
-                        />
-                        <input
-                          type="text"
-                          value={customerSearch}
-                          onChange={(e) => setCustomerSearch(e.target.value)}
-                          placeholder={tSales("pos.searchCustomer")}
-                          className="w-full h-9 pl-8 pr-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
-                        />
-                        {customerResults.length > 0 && (
-                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                            {customerResults.map((c) => {
-                              const bal = parseFloat(c.balance);
-                              return (
-                                <button
-                                  key={c.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedCustomer(c);
-                                    setCustomerSearch("");
-                                    setCustomerResults([]);
-                                  }}
-                                  className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-amber-50 transition-colors"
-                                >
-                                  <div>
-                                    <p className="font-semibold text-gray-800">
-                                      {c.name}
-                                    </p>
-                                    {c.phone && (
-                                      <p className="text-xs text-gray-400">
-                                        {c.phone}
-                                      </p>
-                                    )}
-                                  </div>
-                                  {bal > 0 && (
-                                    <span className="text-xs font-mono text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
-                                      {formatCurrency(bal)}
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {loadingCustomers && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            {tSales("pos.searching")}
-                          </p>
-                        )}
-                        {!loadingCustomers &&
-                          customerSearch.trim() &&
-                          customerResults.length === 0 && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              {tSales("pos.noCustomer")}
-                            </p>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Cash tendered + change */}
-                {paymentMethod === "cash" && (
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
-                      {t("amountTendered")}
-                    </label>
-                    <Input
-                      type="number"
-                      min={finalTotal ? finalTotal.toString() : "0"}
-                      step="1"
-                      value={amountTendered}
-                      onChange={(e) => setAmountTendered(e.target.value)}
-                      placeholder="0"
-                      className="text-base font-mono h-10 border-gray-200"
-                    />
-                    {tenderedNum > 0 && (
-                      <div
-                        className={`flex justify-between text-sm font-semibold rounded-lg px-3 py-2 ${
-                          change >= 0
-                            ? "bg-green-50 text-green-700"
-                            : "bg-red-50 text-red-600"
-                        }`}
-                      >
-                        <span>{t("change")}</span>
-                        <span className="font-mono tabular-nums">
-                          {formatCurrency(Math.max(0, change))}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {/* Owner Withdrawal Warning */}
-                {paymentMethod === "internal" && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2.5 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
-                    <Crown
-                      size={16}
-                      className="text-purple-500 shrink-0 mt-0.5"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-purple-900">
-                        {tSales("pos.ownerWithdrawal")}
-                      </p>
-                      <p className="text-[10px] text-purple-600 leading-tight">
-                        {tSales("pos.ownerWithdrawalDesc")}
-                      </p>
+                      )}
                     </div>
-                  </div>
-                )}
+                  )}
+                  {/* Owner Withdrawal Warning */}
+                  {paymentMethod === "internal" && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2.5 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
+                      <Crown
+                        size={16}
+                        className="text-purple-500 shrink-0 mt-0.5"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-purple-900">
+                          {tSales("pos.ownerWithdrawal")}
+                        </p>
+                        <p className="text-[10px] text-purple-600 leading-tight">
+                          {tSales("pos.ownerWithdrawalDesc")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Error */}
-                {errorMsg && (
-                  <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">
-                    {errorMsg}
-                  </p>
-                )}
+                  {/* Error */}
+                  {errorMsg && (
+                    <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">
+                      {errorMsg}
+                    </p>
+                  )}
 
-                {/* Complete sale */}
-                <button
-                  onClick={handleCompleteSale}
-                  disabled={!canComplete || submitting}
-                  className={`w-full py-3.5 rounded-xl text-sm font-bold tracking-wide transition-all ${
-                    canComplete && !submitting
-                      ? "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 active:scale-[0.98]"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {submitting ? t("processing") : t("completeSale")}
-                </button>
+                  {/* Complete sale */}
+                  <button
+                    onClick={handleCompleteSale}
+                    disabled={!canComplete || submitting}
+                    className={`w-full py-3.5 rounded-xl text-sm font-bold tracking-wide transition-all ${
+                      canComplete && !submitting
+                        ? "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 active:scale-[0.98]"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {submitting ? t("processing") : t("completeSale")}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-      </div>
 
-      {priceModalItemId && (() => {
-        const modalItem = cart.find((item) => item.itemId === priceModalItemId);
-        if (!modalItem) return null;
-        const pricing = getPricing(modalItem);
-        return (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setPriceModalItemId(null);
-            }}
-          >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <DollarSign size={16} className="text-blue-500" />
-                  <h3 className="font-semibold text-gray-800">
-                    {t("priceOverrideTitle")}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setPriceModalItemId(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="px-5 py-5 space-y-4">
-                <div className="rounded-xl bg-gray-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-gray-800">{modalItem.name}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {t("currentUnitPrice")}: {formatCurrency(pricing.effectiveUnitPrice)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {t("currentLineTotal")}: {formatCurrency(pricing.effectiveSubtotal)}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPriceOverrideMode("line_total")}
-                    className={`rounded-xl border-2 px-3 py-2 text-xs font-semibold transition-colors ${
-                      priceOverrideMode === "line_total"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
-                    }`}
-                  >
-                    {t("overrideByLineTotal")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPriceOverrideMode("unit")}
-                    className={`rounded-xl border-2 px-3 py-2 text-xs font-semibold transition-colors ${
-                      priceOverrideMode === "unit"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
-                    }`}
-                  >
-                    {t("overrideByUnit")}
-                  </button>
-                </div>
-
-                {priceOverrideMode === "unit" ? (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-600">
-                      {t("newUnitPrice")}
-                    </label>
-                    <Input
-                      type="number"
-                      step="1"
-                      min="0"
-                      value={overridePriceDraft}
-                      onChange={(e) => setOverridePriceDraft(e.target.value)}
-                      className="h-10 text-sm font-mono"
-                    />
+      {priceModalItemId &&
+        (() => {
+          const modalItem = cart.find(
+            (item) => item.itemId === priceModalItemId,
+          );
+          if (!modalItem) return null;
+          const pricing = getPricing(modalItem);
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setPriceModalItemId(null);
+              }}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <DollarSign size={16} className="text-blue-500" />
+                    <h3 className="font-semibold text-gray-800">
+                      {t("priceOverrideTitle")}
+                    </h3>
                   </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-600">
-                      {t("lineTotalPrice")}
-                    </label>
-                    <Input
-                      type="number"
-                      step="100"
-                      min="0"
-                      value={overrideLineTotalDraft}
-                      onChange={(e) => setOverrideLineTotalDraft(e.target.value)}
-                      className="h-10 text-sm font-mono"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-600">
-                    {t("overrideReason")}
-                  </label>
-                  <Input
-                    value={overrideReasonDraft}
-                    onChange={(e) => setOverrideReasonDraft(e.target.value)}
-                    placeholder={t("overrideReason")}
-                    className="h-10 text-sm"
-                  />
-                </div>
-
-                {priceModalError && (
-                  <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">
-                    {priceModalError}
-                  </p>
-                )}
-              </div>
-
-              <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
+                  <button
                     onClick={() => setPriceModalItemId(null)}
-                    className="h-10 text-sm"
+                    className="text-gray-400 hover:text-gray-600"
                   >
-                    {t("cancel")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => clearManualOverride(modalItem.itemId)}
-                    className="h-10 text-sm"
-                  >
-                    {t("resetPrice")}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => applyManualOverride(modalItem.itemId)}
-                    className="h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {t("applyPrice")}
-                  </Button>
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="px-5 py-5 space-y-4">
+                  <div className="rounded-xl bg-gray-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-gray-800">
+                      {modalItem.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t("currentUnitPrice")}:{" "}
+                      {formatCurrency(pricing.effectiveUnitPrice)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {t("currentLineTotal")}:{" "}
+                      {formatCurrency(pricing.effectiveSubtotal)}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPriceOverrideMode("line_total")}
+                      className={`rounded-xl border-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                        priceOverrideMode === "line_total"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      {t("overrideByLineTotal")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPriceOverrideMode("unit")}
+                      className={`rounded-xl border-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                        priceOverrideMode === "unit"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      {t("overrideByUnit")}
+                    </button>
+                  </div>
+
+                  {priceOverrideMode === "unit" ? (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-600">
+                        {t("newUnitPrice")}
+                      </label>
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={overridePriceDraft}
+                        onChange={(e) => setOverridePriceDraft(e.target.value)}
+                        className="h-10 text-sm font-mono"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-600">
+                        {t("lineTotalPrice")}
+                      </label>
+                      <Input
+                        type="number"
+                        step="100"
+                        min="0"
+                        value={overrideLineTotalDraft}
+                        onChange={(e) =>
+                          setOverrideLineTotalDraft(e.target.value)
+                        }
+                        className="h-10 text-sm font-mono"
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-600">
+                      {t("overrideReason")}
+                    </label>
+                    <Input
+                      value={overrideReasonDraft}
+                      onChange={(e) => setOverrideReasonDraft(e.target.value)}
+                      placeholder={t("overrideReason")}
+                      className="h-10 text-sm"
+                    />
+                  </div>
+
+                  {priceModalError && (
+                    <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">
+                      {priceModalError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="px-5 py-4 border-t border-gray-100 bg-white rounded-b-2xl">
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPriceModalItemId(null)}
+                      className="h-10 text-sm"
+                    >
+                      {t("cancel")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => clearManualOverride(modalItem.itemId)}
+                      className="h-10 text-sm"
+                    >
+                      {t("resetPrice")}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => applyManualOverride(modalItem.itemId)}
+                      className="h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {t("applyPrice")}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
+
+      <ProductQuantityModal
+        isOpen={!!selectedWeightQuantityProduct}
+        onClose={() => setSelectedWeightQuantityProduct(null)}
+        onConfirm={addToCart}
+        itemSelected={selectedWeightQuantityProduct}
+      />
 
       {subtotalModalOpen && (
         <div

@@ -36,6 +36,7 @@ export interface SaleRead {
   notes: string | null;
   customer_id: string | null;
   customer_name: string | null;
+  customer_partial_payment: string | null;
   sale_items: SaleItemRead[];
 }
 

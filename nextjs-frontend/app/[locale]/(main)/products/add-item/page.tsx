@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addItem } from "@/components/actions/items-action";
@@ -9,14 +9,23 @@ import { SubmitButton } from "@/components/ui/submitButton";
 import { unitTypes } from "@/lib/definitions";
 import { useTranslations } from "next-intl";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
+import { useRouter } from "next/navigation";
 
-const initialState = { message: "" };
+const initialState = { success: false, message: "" };
 
 export default function CreateItemPage() {
+  const router = useRouter();
   const [state, dispatch] = useActionState(addItem, initialState);
   const t = useTranslations("addItem");
   const [category, setCategory] = useState("");
   const tDash = useTranslations("dashboard");
+
+  useEffect(() => {
+    if (state?.success) {
+      router.push("/products");
+      router.refresh();
+    }
+  }, [state, router]);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">

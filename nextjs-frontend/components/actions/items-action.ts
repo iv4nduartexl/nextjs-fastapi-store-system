@@ -283,11 +283,12 @@ export async function addItem(prevState: {}, formData: FormData) {
   if (error) {
     const detail = (error as { detail?: unknown }).detail;
     return {
+      success: false,
       message:
         typeof detail === "string"
           ? detail
           : (JSON.stringify(detail) ?? "Unknown error"),
     };
   }
-  redirect(`/products`);
+  return { success: true, message: "" }; 
 }

@@ -47,6 +47,7 @@ interface LineItem {
   // Original catalog values — to highlight unchanged fields in blue
   catalogSku?: string;
   catalogCategory?: string;
+  catalogUnitType?: string;
 }
 
 const UNIT_TYPES = ["unit", "gram", "liter", "pack"];
@@ -156,6 +157,7 @@ export default function NewPurchasePage() {
         category: product.category ?? undefined,
         catalogSku: product.sku ?? undefined,
         catalogCategory: product.category ?? undefined,
+        catalogUnitType: product.unit_type ?? undefined,
       },
     ]);
     setSearchQuery("");
@@ -218,9 +220,9 @@ export default function NewPurchasePage() {
       .filter(
         ({ l }) =>
           l.itemId &&
-          l.sellPrice !== undefined &&
+          (l.sellPrice !== undefined || l.sku !== undefined || l.category !== undefined || l.unitType !== undefined) &&
           (l.existingStock ?? 0) > 0 &&
-          l.sellPrice !== l.existingPrice,
+          (l.sellPrice !== l.existingPrice || l.sku !== l.catalogSku || l.category !== l.catalogCategory || l.unitType !== l.catalogUnitType),
       )
       .map(({ i }) => i);
 
@@ -235,6 +237,7 @@ export default function NewPurchasePage() {
 
   async function doSubmit(confirmedOverwrites?: number[]) {
     const overwriteSet = new Set(confirmedOverwrites ?? []);
+    console.log("🚀 ~ doSubmit ~ overwriteSet:", overwriteSet)
     setSubmitting(true);
     setErrorMsg("");
 
@@ -256,7 +259,7 @@ export default function NewPurchasePage() {
         sku: l.sku || undefined,
         category: l.category || undefined,
         sell_price: l.sellPrice !== undefined ? l.sellPrice : undefined,
-        overwrite_sell_price: overwriteSet.has(i),
+        overwrite_previous_value: overwriteSet.has(i),
       })),
     });
 
@@ -947,7 +950,7 @@ export default function NewPurchasePage() {
               <div className="flex items-center gap-2">
                 <Tag size={16} className="text-amber-500" />
                 <h3 className="font-semibold text-gray-800 text-sm">
-                  {t("form.overwritePriceTitle")}
+                  {t("form.overwriteProductTitle")}
                 </h3>
               </div>
               <button
@@ -959,7 +962,7 @@ export default function NewPurchasePage() {
             </div>
             <div className="px-5 py-5 space-y-4">
               <p className="text-sm text-gray-600 leading-relaxed">
-                {t("form.overwritePriceDesc")}
+                {t("form.overwriteProductDesc")}
               </p>
               <div className="space-y-2">
                 {pendingOverwrites.map((idx) => {
@@ -973,7 +976,7 @@ export default function NewPurchasePage() {
                         <p className="text-sm font-semibold text-gray-800 truncate">
                           {l.itemName}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        {/* <p className="text-xs text-gray-500">
                           {t("form.currentSellPrice")}:{" "}
                           {l.existingPrice
                             ? formatCurrency(l.existingPrice)
@@ -982,7 +985,7 @@ export default function NewPurchasePage() {
                           <span className="font-bold text-blue-600">
                             {formatCurrency(l.sellPrice ?? 0)}
                           </span>
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                   );

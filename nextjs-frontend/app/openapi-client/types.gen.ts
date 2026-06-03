@@ -275,7 +275,7 @@ export type PurchaseItemCreate = {
   sku?: string | null;
   category?: string | null;
   sell_price?: number | string | null;
-  overwrite_sell_price?: boolean;
+  overwrite_previous_value?: boolean;
 };
 
 export type PurchaseItemRead = {

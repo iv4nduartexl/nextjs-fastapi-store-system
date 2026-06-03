@@ -369,10 +369,10 @@
       "editSellPrice": "Editar precio de venta",
       "details": "Detalles",
       "additionalDetailsTitle": "Detalles adicionales",
-      "overwritePriceTitle": "\u00bfActualizar precio de venta?",
-      "overwritePriceDesc": "Algunos productos vinculados ya tienen stock a un precio de venta diferente. \u00bfDeseas actualizar el precio de venta para todo el stock existente tambi\u00e9n?",
+      "overwriteProductTitle": "\u00bfActualizar producto en stock?",
+      "overwriteProductDesc": "Algunos productos vinculados ya tienen stock con un SKU, Categoria, Unidad o Precio de Venta diferente. \u00bfDeseas actualizar el producto para todo el stock existente tambi\u00e9n?",
       "overwriteYes": "S\u00ed, actualizar todo",
-      "overwriteNo": "No, conservar precio anterior"
+      "overwriteNo": "No, conservar anterior"
     },
     "detail": {
       "back": "Volver a Compras",

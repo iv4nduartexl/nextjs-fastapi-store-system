@@ -280,7 +280,7 @@ class PurchaseItemCreate(BaseModel):
     sku: str | None = None
     category: str | None = None
     sell_price: Decimal | None = None
-    overwrite_sell_price: bool = False
+    overwrite_previous_value: bool = False
 
 
 class PurchaseCreate(BaseModel):

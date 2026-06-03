@@ -84,7 +84,7 @@ async def create_purchase(
         if line.item_id and line.item_id in items_map:
             db_item = items_map[line.item_id]
             item_name = db_item.name
-            unit_type = db_item.unit_type
+            unit_type = db_item.unit_type if not line.overwrite_previous_value else UnitType(line.unit_type) if line.unit_type else db_item.unit_type
             resolved_item_id = line.item_id
         elif idx in new_catalog_items:
             db_item = new_catalog_items[idx]
@@ -136,8 +136,17 @@ async def create_purchase(
             if line.sell_price is not None:
                 # If no stock (before this purchase), always overwrite
                 # If stock existed and user confirmed, overwrite too
-                if db_item.stock <= line.quantity or line.overwrite_sell_price:
+                if db_item.stock <= line.quantity or line.overwrite_previous_value:
                     db_item.price = line.sell_price
+            if line.sku is not None:
+                if db_item.sku is None or line.overwrite_previous_value:
+                    db_item.sku = line.sku
+            if line.category is not None:
+                if db_item.category is None or line.overwrite_previous_value:
+                    db_item.category = line.category
+            if line.unit_type is not None:
+                if db_item.unit_type is None or line.overwrite_previous_value:
+                    db_item.unit_type = UnitType(line.unit_type)
 
     await db.commit()
     await db.refresh(purchase)

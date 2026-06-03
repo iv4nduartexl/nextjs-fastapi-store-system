@@ -369,10 +369,10 @@
       "editSellPrice": "Edit sell price",
       "details": "Details",
       "additionalDetailsTitle": "Additional details",
-      "overwritePriceTitle": "Update Sell Price?",
-      "overwritePriceDesc": "Some linked products already have stock at a different sell price. Do you want to update the sell price for all existing stock too?",
+      "overwriteProductTitle": "Update Previous Product?",
+      "overwriteProductDesc": "Some linked products already have stock with a different SKU, Category, Unit or Sell Price. Do you want to update the product for all existing stock too?",
       "overwriteYes": "Yes, update all",
-      "overwriteNo": "No, keep old price"
+      "overwriteNo": "No, keep old values"
     },
     "detail": {
       "back": "Back to Purchases",

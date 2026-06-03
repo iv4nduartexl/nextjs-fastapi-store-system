@@ -4286,9 +4286,9 @@
             ],
             "title": "Sell Price"
           },
-          "overwrite_sell_price": {
+          "overwrite_previous_value": {
             "type": "boolean",
-            "title": "Overwrite Sell Price",
+            "title": "Overwrite Previous Value",
             "default": false
           }
         },

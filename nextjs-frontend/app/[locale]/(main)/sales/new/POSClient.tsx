@@ -234,6 +234,7 @@ export default function POSClient() {
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -343,36 +344,58 @@ export default function POSClient() {
     })();
   }, [activeCategory]);
 
+  function handleTyping(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setSearch(value); // Update state normally
+
+    // 1. Clear any pending search from the previous keystroke
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    if (!value.trim()) {
+      setProducts([]);
+      return;
+    }
+
+    // 2. Schedule the network request in 300ms
+    searchTimerRef.current = setTimeout(() => {
+      getProductsBySearch(value);
+    }, 300);
+  }
+
   // Debounced search: fetch from backend only when user has typed something
-  const getProductsBySearch = (triggeredByEnter = false) => {
-    const q = search.trim();
+  const getProductsBySearch = async (
+    currentSearchTerm: string,
+    triggeredByEnter = false,
+  ) => {
+    const q = currentSearchTerm.trim();
     if (!q) {
       setProducts([]);
       setLoadingProducts(false);
       return;
     }
+
     setLoadingProducts(true);
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `/api/items?size=50&q=${encodeURIComponent(q)}`,
-          { cache: "no-store" },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (triggeredByEnter && data.items && data.items.length === 1) {
-            addToCart(data.items[0]);
-          } else {
-            setProducts(data.items ?? []);
-          }
+    try {
+      const res = await fetch(`/api/items?size=50&q=${encodeURIComponent(q)}`, {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+
+        // Fixed: data.items[0] might be what you meant for addToCart, passed cleanly
+        if (triggeredByEnter && data.items && data.items.length === 1) {
+          addToCart(data.items[0]);
+        } else {
+          setProducts(data.items ?? []);
         }
-      } catch {
-        // silent fail
-      } finally {
-        setLoadingProducts(false);
       }
-    }, 300);
-    return () => clearTimeout(timer);
+    } catch {
+      // silent fail
+    } finally {
+      setLoadingProducts(false);
+    }
   };
 
   function toSaleUnits(quantity: number, unitType: string) {
@@ -548,12 +571,15 @@ export default function POSClient() {
     setCart((prev) => prev.filter((c) => c.itemId !== itemId));
   }
 
-  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (search) {
-      if (e.key === "Enter") {
-        getProductsBySearch(true);
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" && search.trim()) {
+      // Cancel the pending typing timer so it doesn't fire twice
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
       }
-      getProductsBySearch();
+
+      // Execute immediately with Enter logic enabled
+      getProductsBySearch(search, true);
     }
   }
 
@@ -901,8 +927,8 @@ export default function POSClient() {
               <Input
                 ref={searchRef}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
+                onChange={handleTyping}
+                onKeyDown={handleKeyDown}
                 placeholder={t("searchPlaceholder")}
                 className="pl-9 h-11 rounded-lg border-gray-200 bg-gray-50 focus:bg-white text-sm"
               />

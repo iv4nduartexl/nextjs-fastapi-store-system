@@ -612,6 +612,7 @@ export default function POSClient() {
       setAppliedSubtotalOverride(null);
       setSubtotalDraft("");
       setSubtotalReasonDraft("");
+      setCustomerPartialPayment(null);
     }
   }
 

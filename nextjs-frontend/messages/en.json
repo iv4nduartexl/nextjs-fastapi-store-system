@@ -215,6 +215,7 @@
       "manualPrice": "Manual",
       "discountApplied": "Discount",
       "editLinePrice": "Edit line price",
+      "roundPrice": "Round line price",
       "editSubtotal": "Edit",
       "newUnitPrice": "New unit price",
       "lineTotalPrice": "Line total",

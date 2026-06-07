@@ -625,7 +625,66 @@ export default function POSClient() {
       String(item.manualOverridePrice ?? pricing.effectiveUnitPrice),
     );
     setOverrideLineTotalDraft(String(pricing.effectiveSubtotal));
-    setOverrideReasonDraft(item.manualOverrideReason ?? "");
+    setOverrideReasonDraft(item.manualOverrideReason ?? "Cambio de precio"); // put translation here
+    setPriceModalError("");
+  }
+
+  function roundUpToNearest500(itemId: string) {
+    const item = cart.find((entry) => entry.itemId === itemId);
+    if (!item) return;
+
+    if (item.manualOverrideReason === "Redondeo") {
+      clearManualOverride(itemId);
+      return;
+    }
+
+    let currentLinePrice = 0;
+    let finalOverrideUnitPrice = 0;
+
+    if (item.unitType === "gram") {
+      // 1. Calculate what they are currently paying for this weight
+      // If unitPrice is 7000 (per kg), then 7000 / 1000 = 7₲ per gram.
+      // 7₲ * 121 grams = 847₲ raw total.
+      const pricePerSingleGram = item.unitPrice / 1000;
+      currentLinePrice = pricePerSingleGram * item.quantity;
+
+      // 2. Round that total line price up to the nearest 500
+      // Math.ceil(847 / 500) * 500 = 1000₲
+      const roundedLinePrice = Math.ceil(currentLinePrice / 500) * 500;
+
+      // 3. Back-calculate the new price per single gram
+      // 1000₲ total / 121 grams = 8.264₲ per gram
+      const roundedPricePerGram = roundedLinePrice / item.quantity;
+
+      // 4. Convert it back to your system's base unit price (per kilo)
+      // 8.264₲ * 1000 = 8264₲ per kilo
+      finalOverrideUnitPrice = roundedPricePerGram * 1000;
+    } else {
+      // Standard item calculation (pieces/units)
+      currentLinePrice = item.unitPrice * item.quantity;
+      const roundedLinePrice = Math.ceil(currentLinePrice / 500) * 500;
+
+      // Divide by quantity to get the new unit price for a single piece
+      finalOverrideUnitPrice = roundedLinePrice / item.quantity;
+    }
+
+    if (Number.isNaN(finalOverrideUnitPrice) || finalOverrideUnitPrice < 0) {
+      setPriceModalError(t("invalidOverrideAmount"));
+      return;
+    }
+
+    setCart((prev) =>
+      prev.map((c) =>
+        c.itemId === itemId
+          ? {
+              ...c,
+              // We now safely pass the adjusted per-unit price back to the cart
+              manualOverridePrice: finalOverrideUnitPrice,
+              manualOverrideReason: "Redondeo", // put translation here
+            }
+          : c,
+      ),
+    );
     setPriceModalError("");
   }
 
@@ -1111,16 +1170,22 @@ export default function POSClient() {
                         </button>
                       </div>
 
-                      {/* Subtotal */}
-                      <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
-                        {formatCurrency(pricing.effectiveSubtotal)}
-                      </span>
-
-                      {/* Price Edit */}
+                      {/* Subtotal and Price Edit */}
                       <button
                         onClick={() => openPriceEditor(item)}
                         className="text-gray-300 hover:text-blue-500 transition-colors ml-0.5 shrink-0"
                         title={t("editLinePrice")}
+                      >
+                        <span className="text-sm font-semibold text-gray-800 font-mono w-16 text-right shrink-0">
+                          {formatCurrency(pricing.effectiveSubtotal)}
+                        </span>
+                      </button>
+
+                      {/* Round up money */}
+                      <button
+                        onClick={() => roundUpToNearest500(item.itemId)}
+                        className="text-gray-300 hover:text-blue-500 transition-colors ml-0.5 shrink-0"
+                        title={t("roundPrice")}
                       >
                         <DollarSign size={14} />
                       </button>

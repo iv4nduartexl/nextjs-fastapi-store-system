@@ -360,9 +360,10 @@ export default function POSClient() {
         );
         if (res.ok) {
           const data = await res.json();
-          setProducts(data.items ?? []);
           if (triggeredByEnter && data.items && data.items.length === 1) {
             addToCart(data.items[0]);
+          } else {
+            setProducts(data.items ?? []);
           }
         }
       } catch {

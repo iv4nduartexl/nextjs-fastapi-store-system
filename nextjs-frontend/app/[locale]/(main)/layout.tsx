@@ -9,6 +9,7 @@ import {
   Truck,
   Users,
   Wallet,
+  Calculator,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -29,6 +30,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/components/actions/logout-action";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useEffect, useState } from "react";
+import CalculatorModal from "@/components/Modals/calculator-modal";
 
 export default function DashboardLayout({
   children,
@@ -37,6 +40,17 @@ export default function DashboardLayout({
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+
+  const [isOpenCalulator, setIsOpenCalculator] = useState(false);
+
+  useEffect(() => {
+    const openCalculatorShortcut = (e: { key: string }) => {
+      e.key === "+" && setIsOpenCalculator(true);
+    };
+    window.addEventListener("keydown", openCalculatorShortcut);
+    return () => window.removeEventListener("keydown", openCalculatorShortcut);
+  }, []);
+
   return (
     <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-10 w-16 flex flex-col border-r bg-background p-4">
@@ -115,6 +129,14 @@ export default function DashboardLayout({
             </BreadcrumbList>
           </Breadcrumb>
           <div className="flex items-center gap-3">
+            <Calculator
+              className="h-5 w-5 cursor-pointer"
+              onClick={() => setIsOpenCalculator(true)}
+            />
+            <CalculatorModal
+              isOpen={isOpenCalulator}
+              onClose={() => setIsOpenCalculator(false)}
+            />
             <LanguageSwitcher />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

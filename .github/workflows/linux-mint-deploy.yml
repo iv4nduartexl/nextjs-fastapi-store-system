@@ -10,11 +10,6 @@ jobs:
     runs-on: self-hosted
     
     steps:
-      - name: Ensure Docker daemon persists across reboots
-        run: |
-          sudo systemctl enable docker
-          sudo systemctl start docker
-
       - name: Fix permissions for checkout
         run: docker run --rm -v "${{ github.workspace }}:/workspace" alpine sh -c "chown -R $(id -u):$(id -g) /workspace || true"
 
@@ -23,6 +18,7 @@ jobs:
 
       - name: Prepare environment variables
         run: |
+          # Copy example env files so containers have required variables
           cp fastapi_backend/.env.example fastapi_backend/.env
 
       - name: Backup database before deploy
@@ -37,6 +33,7 @@ jobs:
             sync /backups gdrive:db-backups --config /config/rclone/rclone.conf \
             && echo "Backup pushed to Google Drive" || echo "GDrive push failed — rclone not configured?"
 
+      # Only deploy. No tests to keep it clean.
       - name: Run with Docker Compose
         run: |
           docker compose down

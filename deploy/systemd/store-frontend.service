@@ -1,0 +1,21 @@
+[Unit]
+Description=Store Frontend (Next.js)
+After=network.target store-backend.service
+Requires=store-backend.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/store/nextjs-frontend
+Environment=NODE_ENV=production
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=API_BASE_URL=http://localhost:8000
+ExecStart=/usr/bin/pnpm run start
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

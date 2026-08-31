@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Store Google Drive Sync Timer
+Requires=store-gdrive-sync.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=2h
+
+[Install]
+WantedBy=timers.target

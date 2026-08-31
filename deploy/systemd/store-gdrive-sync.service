@@ -1,0 +1,14 @@
+[Unit]
+Description=Store Google Drive Backup Sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/store
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/rclone sync /opt/store/backups gdrive:db-backups --config /home/deploy/.config/rclone/rclone.conf
+StandardOutput=journal
+StandardError=journal

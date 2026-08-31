@@ -11,38 +11,44 @@ jobs:
     
     steps:
       - name: Fix permissions for checkout
-        run: docker run --rm -v "${{ github.workspace }}:/workspace" alpine sh -c "chown -R $(id -u):$(id -g) /workspace || true"
+        run: sudo chown -R $(id -u):$(id -g) ${{ github.workspace }} || true
 
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Prepare environment variables
         run: |
-          # Copy example env files so containers have required variables
+          # Copy example env files
           cp fastapi_backend/.env.example fastapi_backend/.env
+          cp nextjs-frontend/.env.example nextjs-frontend/.env
 
       - name: Backup database before deploy
-        run: make docker-db-backup
+        run: make db-backup
 
       - name: Push backup to Google Drive
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}/backups:/backups:ro" \
-            -v "$HOME/.config/rclone:/config/rclone:ro" \
-            rclone/rclone:latest \
-            sync /backups gdrive:db-backups --config /config/rclone/rclone.conf \
-            && echo "Backup pushed to Google Drive" || echo "GDrive push failed — rclone not configured?"
+          make push-backup-to-gdrive
 
-      # Only deploy. No tests to keep it clean.
-      - name: Run with Docker Compose
+      - name: Install system dependencies
+        run: make setup-system-deps
+
+      - name: Setup PostgreSQL and run migrations
+        run: make setup-postgres
+
+      - name: Setup backend dependencies
+        run: make setup-backend
+
+      - name: Setup frontend dependencies and build
+        run: make setup-frontend
+
+      - name: Install systemd services (first run only)
         run: |
-          docker compose down
-          export NODE_ENV=production
-          docker compose up --build -d
-          docker image prune -f
-          
-      - name: Run Database Migrations
-        run: docker compose exec -T backend alembic upgrade head
+          if [ ! -f /etc/systemd/system/store-backend.service ]; then
+            make install-systemd-services
+          fi
 
-      - name: Start Google Drive sync service
-        run: make docker-start-gdrive
+      - name: Restart services
+        run: make restart-services
+
+      - name: Enable and start backup/sync timers
+        run: make enable-timers

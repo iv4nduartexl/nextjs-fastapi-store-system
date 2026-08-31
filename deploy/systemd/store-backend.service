@@ -1,0 +1,21 @@
+[Unit]
+Description=Store Backend (FastAPI)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/store/fastapi_backend
+Environment=NODE_ENV=production
+Environment=PATH=/opt/store/fastapi_backend/.venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/mydatabase
+ExecStart=/opt/store/fastapi_backend/.venv/bin/fastapi run app/main.py --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

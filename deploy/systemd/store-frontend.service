@@ -5,8 +5,8 @@ Requires=store-backend.service
 
 [Service]
 Type=simple
-User=deploy
-Group=deploy
+User=pc
+Group=staff
 WorkingDirectory=/opt/store/nextjs-frontend
 Environment=NODE_ENV=production
 Environment=PATH=/usr/local/bin:/usr/bin:/bin

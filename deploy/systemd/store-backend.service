@@ -5,8 +5,8 @@ Requires=postgresql.service
 
 [Service]
 Type=simple
-User=deploy
-Group=deploy
+User=pc
+Group=staff
 WorkingDirectory=/opt/store/fastapi_backend
 Environment=NODE_ENV=production
 Environment=PATH=/opt/store/fastapi_backend/.venv/bin:/usr/local/bin:/usr/bin:/bin

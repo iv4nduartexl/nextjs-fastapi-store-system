@@ -53,7 +53,7 @@ jobs:
       - name: Backup database before deploy
         run: |
           sudo mkdir -p ${{ env.DEPLOY_DIR }}/backups
-          sudo chown -R deploy:deploy ${{ env.DEPLOY_DIR }}/backups
+          sudo chown -R $USER:$USER ${{ env.DEPLOY_DIR }}/backups
           PGPASSWORD=${{ env.DB_PASSWORD }} pg_dump -h localhost -p ${{ env.DB_PORT }} -U ${{ env.DB_USER }} -Fc ${{ env.DB_NAME }} > ${{ env.DEPLOY_DIR }}/backups/$(date +%Y-%m-%d_%H%M%S).dump
           echo "Backup saved to ${{ env.DEPLOY_DIR }}/backups/"
 
@@ -73,12 +73,12 @@ jobs:
       - name: Deploy backend to server
         run: |
           sudo rsync -av --delete ${{ env.BACKEND_DIR }}/ ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}/ --exclude '.venv' --exclude '__pycache__' --exclude '*.pyc' --exclude '.env.example'
-          sudo chown -R deploy:deploy ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}
+          sudo chown -R $USER:$USER ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}
 
       - name: Deploy frontend to server
         run: |
           sudo rsync -av --delete ${{ env.FRONTEND_DIR }}/ ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}/ --exclude 'node_modules' --exclude '.next' --exclude '.env.example' --exclude '*.log'
-          sudo chown -R deploy:deploy ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}
+          sudo chown -R $USER:$USER ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}
 
       - name: Install systemd services (first run only)
         run: |

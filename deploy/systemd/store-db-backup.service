@@ -5,8 +5,8 @@ Requires=postgresql.service
 
 [Service]
 Type=oneshot
-User=deploy
-Group=deploy
+User=pc
+Group=staff
 WorkingDirectory=/opt/store
 Environment=PGPASSWORD=password123
 ExecStart=/usr/bin/pg_dump -h localhost -p 5432 -U deploy -Fc mydatabase -f /opt/store/backups/$(date +%Y-%m-%d_%H%M%S).dump

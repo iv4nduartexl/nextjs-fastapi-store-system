@@ -74,13 +74,13 @@ jobs:
         run: |
           sudo rsync -av --delete ${{ env.BACKEND_DIR }}/ ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}/ --exclude '.venv' --exclude '__pycache__' --exclude '*.pyc' --exclude '.env.example'
           sudo chown -R $USER:$USER ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}
-          sudo -u $USER bash -c "cd ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }} && uv sync --frozen"
+          sudo -u $USER bash -c "export PATH=\$HOME/.local/bin:\$PATH && cd ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }} && uv sync --frozen"
 
       - name: Deploy frontend to server
         run: |
           sudo rsync -av --delete ${{ env.FRONTEND_DIR }}/ ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}/ --exclude 'node_modules' --exclude '.next' --exclude '.env.example' --exclude '*.log'
           sudo chown -R $USER:$USER ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}
-          sudo -u $USER bash -c "cd ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }} && pnpm install --frozen-lockfile && pnpm run build"
+          sudo -u $USER bash -c "export PATH=\$HOME/.nvm/versions/node/v20.15.1/bin:\$HOME/.local/bin:\$PATH && cd ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }} && pnpm install --frozen-lockfile && pnpm run build"
 
       - name: Install systemd services (first run only)
         run: |

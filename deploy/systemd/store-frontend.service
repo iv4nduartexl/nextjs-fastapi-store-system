@@ -9,8 +9,8 @@ User=pc
 Group=staff
 WorkingDirectory=/opt/store/nextjs-frontend
 Environment=NODE_ENV=production
-Environment=PATH=/opt/store/nextjs-frontend/node_modules/.bin:/usr/local/bin:/usr/bin:/bin
-Environment=NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+Environment=PATH=/opt/store/nextjs-frontend/node_modules/.bin:/home/pc/.nvm/versions/node/v20.15.1/bin:/usr/local/bin:/usr/bin:/bin
+Environment=API_BASE_URL=http://localhost:8000
 ExecStart=/opt/store/nextjs-frontend/node_modules/.bin/next start
 Restart=on-failure
 RestartSec=5

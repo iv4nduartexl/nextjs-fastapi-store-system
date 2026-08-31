@@ -59,16 +59,16 @@ jobs:
 
       - name: Run database migrations
         run: |
-          cd ${{ env.BACKEND_DIR }} && uv run alembic upgrade head
+          cd ${{ github.workspace }}/${{ env.BACKEND_DIR }} && uv run alembic upgrade head
 
       - name: Setup backend dependencies
         run: |
-          cd ${{ env.BACKEND_DIR }} && uv sync --frozen
+          cd ${{ github.workspace }}/${{ env.BACKEND_DIR }} && uv sync --frozen
 
       - name: Setup frontend dependencies and build
         run: |
-          cd ${{ env.FRONTEND_DIR }} && pnpm install --frozen-lockfile
-          cd ${{ env.FRONTEND_DIR }} && pnpm run build
+          cd ${{ github.workspace }}/${{ env.FRONTEND_DIR }} && pnpm install --frozen-lockfile
+          cd ${{ github.workspace }}/${{ env.FRONTEND_DIR }} && pnpm run build
 
       - name: Deploy backend to server
         run: |

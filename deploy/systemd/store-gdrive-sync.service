@@ -5,10 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=deploy
-Group=deploy
+User=pc
+Group=staff
 WorkingDirectory=/opt/store
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-ExecStart=/usr/bin/rclone sync /opt/store/backups gdrive:db-backups --config /home/deploy/.config/rclone/rclone.conf
+ExecStart=/usr/bin/rclone sync /opt/store/backups gdrive:db-backups --config /home/pc/.config/rclone/rclone.conf
 StandardOutput=journal
 StandardError=journal

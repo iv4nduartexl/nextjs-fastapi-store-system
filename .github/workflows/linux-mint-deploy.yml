@@ -52,7 +52,8 @@ jobs:
 
       - name: Backup database before deploy
         run: |
-          mkdir -p ${{ env.DEPLOY_DIR }}/backups
+          sudo mkdir -p ${{ env.DEPLOY_DIR }}/backups
+          sudo chown -R deploy:deploy ${{ env.DEPLOY_DIR }}/backups
           PGPASSWORD=${{ env.DB_PASSWORD }} pg_dump -h localhost -p ${{ env.DB_PORT }} -U ${{ env.DB_USER }} -Fc ${{ env.DB_NAME }} > ${{ env.DEPLOY_DIR }}/backups/$(date +%Y-%m-%d_%H%M%S).dump
           echo "Backup saved to ${{ env.DEPLOY_DIR }}/backups/"
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { ProductsTable } from "./ProductsTable";
 import { TableFilters } from "@/components/ui/table-filters";
 
@@ -24,6 +24,7 @@ export default async function ProductsPage({
   const size = Number(params.size) || 10;
   const q = params.q ?? undefined;
   const t = await getTranslations("products");
+  const locale = await getLocale();
 
   const items = (await fetchItems(page, size, q)) as ReadItemResponse;
   const totalPages = Math.ceil((items.total || 0) / size);
@@ -34,7 +35,7 @@ export default async function ProductsPage({
       <p className="text-lg mb-6">{t("subtitle")}</p>
 
       <div className="mb-6">
-        <Link href="/products/add-item">
+        <Link href={`/${locale}/products/add-item`}>
           <Button variant="outline" className="text-lg px-4 py-2">
             {t("addNewProduct")}
           </Button>
@@ -66,7 +67,7 @@ export default async function ProductsPage({
           totalPages={totalPages}
           pageSize={size}
           totalItems={items.total || 0}
-          basePath="/products"
+          basePath={`/${locale}/products`}
         />
       </section>
     </div>

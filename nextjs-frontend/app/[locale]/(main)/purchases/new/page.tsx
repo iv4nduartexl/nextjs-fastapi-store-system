@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { SupplierCombobox } from "@/components/ui/suppliers-combobox";
-import { UUID } from "crypto";
 
 interface LineItem {
   itemId?: string;
@@ -68,6 +67,7 @@ export default function NewPurchasePage() {
   const t = useTranslations("purchases");
   const tDash = useTranslations("dashboard");
   const router = useRouter();
+  const locale = useLocale();
 
   // Header fields
   const [supplier, setSupplier] = useState<SupplierCreate>({ name: "" });
@@ -267,18 +267,18 @@ export default function NewPurchasePage() {
     if (result.error) {
       setErrorMsg(result.error);
     } else if (result.data) {
-      router.push(`/purchases/${result.data.id}`);
+      router.push(`/${locale}/purchases/${result.data.id}`);
     }
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <Link
-          href="/purchases"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-4"
-        >
+<div>
+         <Link
+           href={`/${locale}/purchases`}
+           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-4"
+         >
           <ArrowLeft size={15} />
           {t("detail.back")}
         </Link>

@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/components/actions/logout-action";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useEffect, useState } from "react";
 import CalculatorModal from "@/components/Modals/calculator-modal";
@@ -40,6 +40,7 @@ export default function DashboardLayout({
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
 
   const [isOpenCalulator, setIsOpenCalculator] = useState(false);
 
@@ -67,65 +68,65 @@ export default function DashboardLayout({
               className="object-cover transition-transform duration-200 hover:scale-105"
             />
           </Link>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <LayoutDashboard className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/products"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ShoppingBag className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/sales"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ShoppingCart className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/purchases"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <Truck className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/customers"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <Users className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/cashbox"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <Wallet className="h-5 w-5" />
-          </Link>
+           <Link
+             href={`/${locale}/dashboard`}
+             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+           >
+             <LayoutDashboard className="h-5 w-5" />
+           </Link>
+           <Link
+             href={`/${locale}/products`}
+             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+           >
+             <ShoppingBag className="h-5 w-5" />
+           </Link>
+           <Link
+             href={`/${locale}/sales`}
+             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+           >
+             <ShoppingCart className="h-5 w-5" />
+           </Link>
+           <Link
+             href={`/${locale}/purchases`}
+             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+           >
+             <Truck className="h-5 w-5" />
+           </Link>
+           <Link
+             href={`/${locale}/customers`}
+             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+           >
+             <Users className="h-5 w-5" />
+           </Link>
+           <Link
+             href={`/${locale}/cashbox`}
+             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+           >
+             <Wallet className="h-5 w-5" />
+           </Link>
         </div>
       </aside>
       <main className="ml-16 w-full p-8 bg-muted/40">
         <header className="flex justify-between items-center mb-6">
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href="/" className="flex items-center gap-2">
-                    <Home className="h-4 w-4" />
-                    <span>{t("home")}</span>
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator>/</BreadcrumbSeparator>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href="/dashboard" className="flex items-center gap-2">
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span>{t("dashboardTitle")}</span>
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/${locale}/`} className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                <span>{t("home")}</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator>/</BreadcrumbSeparator>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                <span>{t("dashboardTitle")}</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
           <div className="flex items-center gap-3">
@@ -148,12 +149,12 @@ export default function DashboardLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="bottom">
                 <DropdownMenuItem>
-                  <Link
-                    href="/support"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Support
-                  </Link>
+                <Link
+                     href={`/${locale}/support`}
+                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                   >
+                     Support
+                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button

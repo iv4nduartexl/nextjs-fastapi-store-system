@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   Table,
   TableBody,
@@ -49,6 +49,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
   const paymentStatus = params.payment_status ?? undefined;
   const status = params.status ?? undefined;
   const t = await getTranslations("purchases");
+  const locale = await getLocale();
 
   const result = await fetchPurchases(page, size, q, paymentStatus, status);
   const data = "message" in result ? null : (result as PurchasesPage);
@@ -68,7 +69,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
           <h2 className="text-2xl font-semibold">{t("title")}</h2>
           <p className="text-gray-500 mt-1">{t("subtitle")}</p>
         </div>
-        <Link href="/purchases/new">
+        <Link href={`/${locale}/purchases/new`}>
           <Button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 gap-2">
             <Truck size={15} /> {t("newPurchase")}
           </Button>
@@ -226,7 +227,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                   </TableCell>
                   <TableCell className="text-center">
                     <Link
-                      href={`/purchases/${purchase.id}`}
+                      href={`/${locale}/purchases/${purchase.id}`}
                       className="text-blue-600 hover:underline text-xs font-medium"
                     >
                       {t("table.view")}
@@ -245,7 +246,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
               totalPages={totalPages}
               pageSize={size}
               totalItems={data.total || 0}
-              basePath="/purchases"
+              basePath={`/${locale}/purchases`}
             />
           </div>
         )}

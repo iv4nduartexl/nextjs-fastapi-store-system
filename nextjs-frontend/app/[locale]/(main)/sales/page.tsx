@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { formatCurrency } from "@/lib/currency";
 import { fetchSales, SalesPage } from "@/components/actions/sales-action";
 import { PageSizeSelector } from "@/components/page-size-selector";
@@ -34,6 +34,7 @@ export default async function SalesHistoryPage({
   const paymentMethod = params.payment_method ?? undefined;
   const status = params.status ?? undefined;
   const t = await getTranslations("sales");
+  const locale = await getLocale();
 
   const result = await fetchSales(page, size, paymentMethod, status);
   const sales = "message" in result ? null : (result as SalesPage);
@@ -46,7 +47,7 @@ export default async function SalesHistoryPage({
           <h2 className="text-2xl font-semibold">{t("title")}</h2>
           <p className="text-gray-500 mt-1">{t("subtitle")}</p>
         </div>
-        <Link href="/sales/new">
+        <Link href={`/${locale}/sales/new`}>
           <Button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6">
             + {t("newSale")}
           </Button>
@@ -144,7 +145,7 @@ export default async function SalesHistoryPage({
                   </TableCell>
                   <TableCell className="text-center">
                     <Link
-                      href={`/sales/${sale.id}`}
+                      href={`/${locale}/sales/${sale.id}`}
                       className="text-blue-600 hover:underline text-xs"
                     >
                       {t("table.view")}

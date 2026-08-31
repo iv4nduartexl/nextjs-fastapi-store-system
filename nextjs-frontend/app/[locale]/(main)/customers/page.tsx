@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   Users,
   Plus,
@@ -25,6 +25,7 @@ export default async function CustomersPage({ searchParams }: Props) {
   const { page: pageStr, q } = await searchParams;
   const page = Math.max(1, parseInt(pageStr ?? "1"));
   const t = await getTranslations("customers");
+  const locale = await getLocale();
 
   const result = await fetchCustomers(page, 20, q);
   if ("message" in result) notFound();
@@ -57,7 +58,7 @@ export default async function CustomersPage({ searchParams }: Props) {
           </div>
         </div>
         <Link
-          href="/customers/new"
+          href={`/${locale}/customers/new`}
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
         >
           <Plus size={16} />
@@ -129,7 +130,7 @@ export default async function CustomersPage({ searchParams }: Props) {
             </p>
             {!q && (
               <Link
-                href="/customers/new"
+                href={`/${locale}/customers/new`}
                 className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-900 hover:underline"
               >
                 <Plus size={14} />
@@ -242,7 +243,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                     </td>
                     <td className="pr-4 py-3.5 text-right">
                       <Link
-                        href={`/customers/${customer.id}`}
+                        href={`/${locale}/customers/${customer.id}`}
                         className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
                       >
                         {t("table.view")}

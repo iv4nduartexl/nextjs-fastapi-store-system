@@ -25,7 +25,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Prepare environment variables
+      - name: Prepare environment variables from our secret
         run: |
           # Backend .env with production database credentials
           cat > ${{ env.BACKEND_DIR }}/.env << 'EOF'

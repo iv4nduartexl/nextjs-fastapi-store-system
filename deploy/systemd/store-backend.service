@@ -10,7 +10,7 @@ Group=deploy
 WorkingDirectory=/opt/store/fastapi_backend
 Environment=NODE_ENV=production
 Environment=PATH=/opt/store/fastapi_backend/.venv/bin:/usr/local/bin:/usr/bin:/bin
-Environment=DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/mydatabase
+Environment=DATABASE_URL=postgresql+asyncpg://deploy:password123@localhost:5432/mydatabase
 ExecStart=/opt/store/fastapi_backend/.venv/bin/fastapi run app/main.py --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=5

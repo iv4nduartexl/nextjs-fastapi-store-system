@@ -5,6 +5,15 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  DB_NAME: mydatabase
+  DB_USER: deploy
+  DB_PASSWORD: password123
+  DB_PORT: 5432
+  DEPLOY_DIR: /opt/store
+  BACKEND_DIR: fastapi_backend
+  FRONTEND_DIR: nextjs-frontend
+
 jobs:
   deploy:
     runs-on: self-hosted
@@ -18,37 +27,82 @@ jobs:
 
       - name: Prepare environment variables
         run: |
-          # Copy example env files
-          cp fastapi_backend/.env.example fastapi_backend/.env
-          cp nextjs-frontend/.env.example nextjs-frontend/.env
+          # Backend .env with production database credentials
+          cat > ${{ env.BACKEND_DIR }}/.env << 'EOF'
+          DATABASE_URL=postgresql+asyncpg://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@localhost:${{ env.DB_PORT }}/${{ env.DB_NAME }}
+          ACCESS_SECRET_KEY=${{ secrets.ACCESS_SECRET_KEY }}
+          RESET_PASSWORD_SECRET_KEY=${{ secrets.RESET_PASSWORD_SECRET_KEY }}
+          VERIFICATION_SECRET_KEY=${{ secrets.VERIFICATION_SECRET_KEY }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          CORS_ORIGINS=["${{ secrets.FRONTEND_URL }}"]
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM=${{ secrets.MAIL_FROM }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_SERVER=${{ secrets.MAIL_SERVER }}
+          MAIL_STARTTLS=${{ secrets.MAIL_STARTTLS }}
+          OPENAPI_OUTPUT_FILE=../nextjs-frontend/openapi.json
+          EOF
+
+          # Frontend .env
+          cat > ${{ env.FRONTEND_DIR }}/.env << 'EOF'
+          API_BASE_URL=${{ secrets.API_BASE_URL }}
+          OPENAPI_OUTPUT_FILE=openapi.json
+          EOF
 
       - name: Backup database before deploy
-        run: make db-backup
-
-      - name: Push backup to Google Drive
         run: |
-          make push-backup-to-gdrive
+          mkdir -p ${{ env.DEPLOY_DIR }}/backups
+          PGPASSWORD=${{ env.DB_PASSWORD }} pg_dump -h localhost -p ${{ env.DB_PORT }} -U ${{ env.DB_USER }} -Fc ${{ env.DB_NAME }} > ${{ env.DEPLOY_DIR }}/backups/$(date +%Y-%m-%d_%H%M%S).dump
+          echo "Backup saved to ${{ env.DEPLOY_DIR }}/backups/"
 
-      - name: Install system dependencies
-        run: make setup-system-deps
-
-      - name: Setup PostgreSQL and run migrations
-        run: make setup-postgres
+      - name: Run database migrations
+        run: |
+          cd ${{ env.BACKEND_DIR }} && uv run alembic upgrade head
 
       - name: Setup backend dependencies
-        run: make setup-backend
+        run: |
+          cd ${{ env.BACKEND_DIR }} && uv sync --frozen
 
       - name: Setup frontend dependencies and build
-        run: make setup-frontend
+        run: |
+          cd ${{ env.FRONTEND_DIR }} && pnpm install --frozen-lockfile
+          cd ${{ env.FRONTEND_DIR }} && pnpm run build
+
+      - name: Deploy backend to server
+        run: |
+          sudo rsync -av --delete ${{ env.BACKEND_DIR }}/ ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}/ --exclude '.venv' --exclude '__pycache__' --exclude '*.pyc' --exclude '.env.example'
+          sudo chown -R deploy:deploy ${{ env.DEPLOY_DIR }}/${{ env.BACKEND_DIR }}
+
+      - name: Deploy frontend to server
+        run: |
+          sudo rsync -av --delete ${{ env.FRONTEND_DIR }}/ ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}/ --exclude 'node_modules' --exclude '.next' --exclude '.env.example' --exclude '*.log'
+          sudo chown -R deploy:deploy ${{ env.DEPLOY_DIR }}/${{ env.FRONTEND_DIR }}
 
       - name: Install systemd services (first run only)
         run: |
           if [ ! -f /etc/systemd/system/store-backend.service ]; then
-            make install-systemd-services
+            sudo cp deploy/systemd/store-backend.service /etc/systemd/system/
+            sudo cp deploy/systemd/store-frontend.service /etc/systemd/system/
+            sudo cp deploy/systemd/store-db-backup.service /etc/systemd/system/
+            sudo cp deploy/systemd/store-db-backup.timer /etc/systemd/system/
+            sudo cp deploy/systemd/store-gdrive-sync.service /etc/systemd/system/
+            sudo cp deploy/systemd/store-gdrive-sync.timer /etc/systemd/system/
+            sudo systemctl daemon-reload
           fi
 
+      - name: Update systemd service database credentials
+        run: |
+          sudo sed -i 's|postgresql+asyncpg://postgres:password@localhost:5432/mydatabase|postgresql+asyncpg://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@localhost:${{ env.DB_PORT }}/${{ env.DB_NAME }}|g' /etc/systemd/system/store-backend.service
+          sudo sed -i 's|PGPASSWORD=password|PGPASSWORD=${{ env.DB_PASSWORD }}|g' /etc/systemd/system/store-db-backup.service
+          sudo sed -i 's|-U postgres|-U ${{ env.DB_USER }}|g' /etc/systemd/system/store-db-backup.service
+          sudo systemctl daemon-reload
+
       - name: Restart services
-        run: make restart-services
+        run: |
+          sudo systemctl restart store-backend store-frontend
 
       - name: Enable and start backup/sync timers
-        run: make enable-timers
+        run: |
+          sudo systemctl enable --now store-db-backup.timer
+          sudo systemctl enable --now store-gdrive-sync.timer

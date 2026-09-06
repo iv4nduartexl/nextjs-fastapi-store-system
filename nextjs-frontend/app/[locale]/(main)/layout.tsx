@@ -10,6 +10,7 @@ import {
   Users,
   Wallet,
   Calculator,
+  TrendingUp as TrendingUpIcon,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -93,19 +94,26 @@ export default function DashboardLayout({
              <Truck className="h-5 w-5" />
            </Link>
            <Link
-             href={`/${locale}/customers`}
-             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-           >
-             <Users className="h-5 w-5" />
-           </Link>
-           <Link
-             href={`/${locale}/cashbox`}
-             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-           >
-             <Wallet className="h-5 w-5" />
-           </Link>
-        </div>
-      </aside>
+              href={`/${locale}/customers`}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <Users className="h-5 w-5" />
+            </Link>
+            <Link
+              href={`/${locale}/statistics`}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <TrendingUpIcon className="h-5 w-5" />
+            </Link>
+            <Link
+               href={`/${locale}/cashbox`}
+               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+             >
+               <Wallet className="h-5 w-5" />
+             </Link>
+         </div>
+       </aside>
+
       <main className="ml-16 w-full p-8 bg-muted/40">
         <header className="flex justify-between items-center mb-6">
           <Breadcrumb>

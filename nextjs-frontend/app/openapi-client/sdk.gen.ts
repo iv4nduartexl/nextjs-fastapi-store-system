@@ -77,6 +77,53 @@ import type {
   CancelSaleData,
   CancelSaleError,
   CancelSaleResponse,
+  AnalyticsSummaryData,
+  AnalyticsSummaryError,
+  AnalyticsSummaryResponse,
+  AnalyticsByCategoryData,
+  AnalyticsByCategoryError,
+  AnalyticsByCategoryResponse,
+  AnalyticsByPaymentMethodData,
+  AnalyticsByPaymentMethodError,
+  AnalyticsByPaymentMethodResponse,
+  AnalyticsTopProductsData,
+  AnalyticsTopProductsError,
+  AnalyticsTopProductsResponse,
+  AnalyticsCustomerInsightsData,
+  AnalyticsCustomerInsightsError,
+  AnalyticsCustomerInsightsResponse,
+  AnalyticsProfitabilityData,
+  AnalyticsProfitabilityError,
+  AnalyticsProfitabilityResponse,
+  AnalyticsRevenueTrendData,
+  AnalyticsRevenueTrendError,
+  AnalyticsRevenueTrendResponse,
+  AnalyticsDayOfWeekData,
+  AnalyticsDayOfWeekError,
+  AnalyticsDayOfWeekResponse,
+  AnalyticsPurchasesData,
+  AnalyticsPurchasesError,
+  AnalyticsPurchasesResponse,
+  AnalyticsInventoryError,
+  AnalyticsInventoryResponse,
+  AnalyticsDiscountsData,
+  AnalyticsDiscountsError,
+  AnalyticsDiscountsResponse,
+  AnalyticsCustomersAdvancedData,
+  AnalyticsCustomersAdvancedError,
+  AnalyticsCustomersAdvancedResponse,
+  AnalyticsCancellationsData,
+  AnalyticsCancellationsError,
+  AnalyticsCancellationsResponse,
+  AnalyticsCashboxData,
+  AnalyticsCashboxError,
+  AnalyticsCashboxResponse,
+  AnalyticsPeakTimesData,
+  AnalyticsPeakTimesError,
+  AnalyticsPeakTimesResponse,
+  AnalyticsBasketData,
+  AnalyticsBasketError,
+  AnalyticsBasketResponse,
   CreatePurchaseData,
   CreatePurchaseError,
   CreatePurchaseResponse,
@@ -526,6 +573,264 @@ export const cancelSale = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/sales/{sale_id}/cancel",
+  });
+};
+
+/**
+ * Analytics Summary
+ */
+export const analyticsSummary = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsSummaryData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsSummaryResponse,
+    AnalyticsSummaryError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/summary",
+  });
+};
+
+/**
+ * Analytics By Category
+ */
+export const analyticsByCategory = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsByCategoryData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsByCategoryResponse,
+    AnalyticsByCategoryError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/by-category",
+  });
+};
+
+/**
+ * Analytics By Payment Method
+ */
+export const analyticsByPaymentMethod = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsByPaymentMethodData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsByPaymentMethodResponse,
+    AnalyticsByPaymentMethodError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/by-payment-method",
+  });
+};
+
+/**
+ * Analytics Top Products
+ */
+export const analyticsTopProducts = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsTopProductsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsTopProductsResponse,
+    AnalyticsTopProductsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/top-products",
+  });
+};
+
+/**
+ * Analytics Customer Insights
+ */
+export const analyticsCustomerInsights = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsCustomerInsightsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsCustomerInsightsResponse,
+    AnalyticsCustomerInsightsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/customer-insights",
+  });
+};
+
+/**
+ * Analytics Profitability
+ */
+export const analyticsProfitability = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsProfitabilityData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsProfitabilityResponse,
+    AnalyticsProfitabilityError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/profitability",
+  });
+};
+
+/**
+ * Analytics Revenue Trend
+ */
+export const analyticsRevenueTrend = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsRevenueTrendData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsRevenueTrendResponse,
+    AnalyticsRevenueTrendError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/revenue-trend",
+  });
+};
+
+/**
+ * Analytics Day Of Week
+ */
+export const analyticsDayOfWeek = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsDayOfWeekData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsDayOfWeekResponse,
+    AnalyticsDayOfWeekError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/day-of-week",
+  });
+};
+
+/**
+ * Analytics Purchases
+ */
+export const analyticsPurchases = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsPurchasesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsPurchasesResponse,
+    AnalyticsPurchasesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/purchases",
+  });
+};
+
+/**
+ * Analytics Inventory
+ */
+export const analyticsInventory = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsInventoryResponse,
+    AnalyticsInventoryError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/inventory",
+  });
+};
+
+/**
+ * Analytics Discounts
+ */
+export const analyticsDiscounts = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsDiscountsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsDiscountsResponse,
+    AnalyticsDiscountsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/discounts",
+  });
+};
+
+/**
+ * Analytics Customers Advanced
+ */
+export const analyticsCustomersAdvanced = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<AnalyticsCustomersAdvancedData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsCustomersAdvancedResponse,
+    AnalyticsCustomersAdvancedError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/customers-advanced",
+  });
+};
+
+/**
+ * Analytics Cancellations
+ */
+export const analyticsCancellations = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsCancellationsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsCancellationsResponse,
+    AnalyticsCancellationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/cancellations",
+  });
+};
+
+/**
+ * Analytics Cashbox
+ */
+export const analyticsCashbox = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsCashboxData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsCashboxResponse,
+    AnalyticsCashboxError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/cashbox",
+  });
+};
+
+/**
+ * Analytics Peak Times
+ */
+export const analyticsPeakTimes = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsPeakTimesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsPeakTimesResponse,
+    AnalyticsPeakTimesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/peak-times",
+  });
+};
+
+/**
+ * Analytics Basket
+ */
+export const analyticsBasket = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<AnalyticsBasketData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    AnalyticsBasketResponse,
+    AnalyticsBasketError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/sales/analytics/basket",
   });
 };
 

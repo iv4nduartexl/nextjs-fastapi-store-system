@@ -9,12 +9,17 @@ const intlMiddleware = createMiddleware(routing);
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Skip middleware for server action requests and Next.js internal requests
+  if (request.headers.get("next-action") || request.headers.get("next-router-state-tree")) {
+    return NextResponse.next();
+  }
+
   // Check if path is a protected route (with or without locale prefix)
   const isProtected =
-    /^\/(en|es)?\/(dashboard|products|sales|purchases|customers|cashbox)(\/.*)?$/.test(
+    /^\/(en|es)?\/(dashboard|products|sales|purchases|customers|cashbox|statistics)(\/.*)?$/.test(
       pathname,
     ) ||
-    /^\/(dashboard|products|sales|purchases|customers|cashbox)(\/.*)?$/.test(
+    /^\/(dashboard|products|sales|purchases|customers|cashbox|statistics)(\/.*)?$/.test(
       pathname,
     );
 

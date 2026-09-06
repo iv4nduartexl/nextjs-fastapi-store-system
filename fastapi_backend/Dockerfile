@@ -1,33 +1,31 @@
 FROM python:3.12-bookworm
 
-# Set the working directory
 WORKDIR /app
 
-# The uv installer requires curl (and certificates) to download the release archive
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
-# Download the latest uv installer
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the uv installer then remove it
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
-# Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
 
-# Copy dependency files first to leverage Docker caching
+# 1. Force uv to place the virtual environment in a standard location
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv
+
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies using uv
-RUN uv sync --frozen
+# 2. Sync dependencies into the isolated /opt/venv directory
+RUN uv sync --frozen --all-groups
 
-ENV PATH="/app/.venv/bin:$PATH"
+# 3. Add the isolated venv path to your PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose the application port
+# 4. Prevent your local .venv folder from overwriting the container
+# (Make sure to also add .venv to your .dockerignore file!)
+RUN rm -rf .venv
+
 EXPOSE 8000
 
-# Command to run the application
 CMD ["./start.sh"]

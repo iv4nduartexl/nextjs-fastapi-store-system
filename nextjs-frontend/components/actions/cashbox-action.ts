@@ -47,6 +47,14 @@ export interface CashboxSessionRead {
   transaction_count: number;
 }
 
+export interface CashboxSessionList {
+  items: CashboxSessionRead[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
 // ─── Session actions ──────────────────────────────────────────────────────────
 
 export async function fetchCurrentSession(): Promise<CashboxSessionRead | null> {
@@ -131,13 +139,20 @@ export async function fetchTransactions(
   return res.json();
 }
 
-export async function fetchSessions(limit = 20): Promise<CashboxSessionRead[]> {
+export async function fetchSessions(
+  page = 1,
+  size = 20,
+  filter = "all",
+  filterDate?: string,
+): Promise<CashboxSessionList> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE_URL}/cashbox/sessions?limit=${limit}`, {
+  const params = new URLSearchParams({ page: String(page), size: String(size), filter });
+  if (filterDate) params.set("filter_date", filterDate);
+  const res = await fetch(`${API_BASE_URL}/cashbox/sessions?${params}`, {
     headers,
     cache: "no-store",
   });
-  if (!res.ok) return [];
+  if (!res.ok) return { items: [], total: 0, page: 1, size, pages: 0 };
   return res.json();
 }
 

@@ -369,6 +369,14 @@ class CashboxSessionRead(BaseModel):
     difference: Decimal | None = None
     transaction_count: int = 0
 
+
+class CashboxSessionList(BaseModel):
+    items: list[CashboxSessionRead]
+    total: int
+    page: int
+    size: int
+    pages: int
+
     model_config = {"from_attributes": True}
 
 
@@ -377,4 +385,213 @@ class CashboxManualTransaction(BaseModel):
     amount: Decimal
     payment_method: str = "cash"
     description: str | None = None
+
+
+# --- Analytics ---
+
+class TopCategorySchema(BaseModel):
+    name: str        # 👈 This fixes "CARNE" failing validation
+    revenue: float
+
+class AnalyticsSummarySchema(BaseModel):
+    totalRevenue: float
+    totalOrders: int
+    avgOrderValue: float
+    topCategory: TopCategorySchema | None
+
+
+class CategoryStatSchema(BaseModel):
+    category: str
+    revenue: float
+    quantity: int
+    orderCount: int
+
+
+class PaymentMethodStatSchema(BaseModel):
+    method: str
+    revenue: float
+    count: int
+    percentage: float
+
+
+class TopProductSchema(BaseModel):
+    itemId: str
+    name: str
+    revenue: float
+    quantity: int
+    orderCount: int
+    category: str
+
+
+class CustomerInsightSchema(BaseModel):
+    customerId: str
+    name: str
+    totalSpent: float
+    orderCount: int
+    avgOrder: float
+    lastOrder: str
+
+
+class ProfitableProductSchema(BaseModel):
+    itemId: str
+    name: str
+    category: str
+    revenue: float
+    cost: float
+    profit: float
+    margin: float
+    quantity: int
+
+
+class ProfitabilitySchema(BaseModel):
+    totalRevenue: float
+    totalCOGS: float
+    grossProfit: float
+    grossMarginPercent: float
+    topProfitableProducts: list[ProfitableProductSchema]
+    leastProfitableProducts: list[ProfitableProductSchema]
+
+
+class TrendPointSchema(BaseModel):
+    period: str
+    revenue: float
+    orders: int
+    avgOrderValue: float
+
+
+class RevenueTrendSchema(BaseModel):
+    data: list[TrendPointSchema]
+
+
+class DayOfWeekSchema(BaseModel):
+    day: str
+    revenue: float
+    orders: int
+    avgOrderValue: float
+
+
+class SupplierSpendSchema(BaseModel):
+    supplierId: str
+    name: str
+    totalSpend: float
+    purchaseCount: int
+
+
+class PurchasePaymentStatusSchema(BaseModel):
+    status: str
+    count: int
+    total: float
+
+
+class PurchaseAnalyticsSchema(BaseModel):
+    totalSpend: float
+    totalPurchases: int
+    avgPurchaseValue: float
+    bySupplier: list[SupplierSpendSchema]
+    byPaymentStatus: list[PurchasePaymentStatusSchema]
+
+
+class LowStockItemSchema(BaseModel):
+    itemId: str
+    name: str
+    stock: float
+    minStock: float | None
+    category: str
+    unitType: str
+
+
+class DeadStockItemSchema(BaseModel):
+    itemId: str
+    name: str
+    stock: float
+    category: str
+    lastSold: str | None
+
+
+class InventoryAnalyticsSchema(BaseModel):
+    totalInventoryValue: float
+    totalItems: int
+    lowStockItems: list[LowStockItemSchema]
+    deadStockItems: list[DeadStockItemSchema]
+
+
+class DiscountRuleStatSchema(BaseModel):
+    ruleName: str
+    usageCount: int
+    totalDiscount: float
+
+
+class DiscountAnalyticsSchema(BaseModel):
+    totalDiscountAmount: float
+    discountedSaleCount: int
+    totalSalesCount: int
+    discountRate: float
+    byRule: list[DiscountRuleStatSchema]
+
+
+class AdvancedCustomerSchema(BaseModel):
+    customerId: str
+    name: str
+    totalSpent: float
+    orderCount: int
+    creditOwed: float
+
+
+class CustomersAdvancedSchema(BaseModel):
+    totalCustomers: int
+    activeCustomers: int
+    repeatCustomers: int
+    repeatRate: float
+    creditOutstanding: float
+    topByValue: list[AdvancedCustomerSchema]
+
+
+class CancellationAnalyticsSchema(BaseModel):
+    cancelledCount: int
+    cancelledRevenue: float
+    refundedCount: int
+    refundedRevenue: float
+    totalLostRevenue: float
+    refundRate: float
+
+
+class CashboxTypeStatSchema(BaseModel):
+    type: str
+    direction: str
+    amount: float
+    count: int
+
+
+class CashboxAnalyticsSchema(BaseModel):
+    totalInflow: float
+    totalOutflow: float
+    netCashflow: float
+    byType: list[CashboxTypeStatSchema]
+
+
+class TimeBlockStatSchema(BaseModel):
+    block: str
+    label: str
+    revenue: float
+    orders: int
+    percentage: float
+
+
+class PeakTimesSchema(BaseModel):
+    byTimeBlock: list[TimeBlockStatSchema]
+    byDayOfWeek: list[dict]
+
+
+class CategoryPairSchema(BaseModel):
+    categoryA: str
+    categoryB: str
+    count: int
+    percentage: float
+    totalRevenue: float
+
+
+class BasketAnalysisSchema(BaseModel):
+    topPairs: list[CategoryPairSchema]
+    totalBaskets: int
+    avgItemsPerBasket: float
 

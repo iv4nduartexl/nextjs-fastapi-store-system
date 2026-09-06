@@ -1387,6 +1387,1321 @@
         }
       }
     },
+    "/sales/analytics/summary": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Summary",
+        "operationId": "analytics_summary",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsSummarySchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/by-category": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics By Category",
+        "operationId": "analytics_by_category",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryStatSchema"
+                  },
+                  "title": "Response Sales-Analytics By Category"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/by-payment-method": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics By Payment Method",
+        "operationId": "analytics_by_payment_method",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentMethodStatSchema"
+                  },
+                  "title": "Response Sales-Analytics By Payment Method"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/top-products": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Top Products",
+        "operationId": "analytics_top_products",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TopProductSchema"
+                  },
+                  "title": "Response Sales-Analytics Top Products"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/customer-insights": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Customer Insights",
+        "operationId": "analytics_customer_insights",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 5,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerInsightSchema"
+                  },
+                  "title": "Response Sales-Analytics Customer Insights"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/profitability": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Profitability",
+        "operationId": "analytics_profitability",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfitabilitySchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/revenue-trend": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Revenue Trend",
+        "operationId": "analytics_revenue_trend",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevenueTrendSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/day-of-week": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Day Of Week",
+        "operationId": "analytics_day_of_week",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DayOfWeekSchema"
+                  },
+                  "title": "Response Sales-Analytics Day Of Week"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/purchases": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Purchases",
+        "operationId": "analytics_purchases",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseAnalyticsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/inventory": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Inventory",
+        "operationId": "analytics_inventory",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryAnalyticsSchema"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/sales/analytics/discounts": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Discounts",
+        "operationId": "analytics_discounts",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountAnalyticsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/customers-advanced": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Customers Advanced",
+        "operationId": "analytics_customers_advanced",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomersAdvancedSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/cancellations": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Cancellations",
+        "operationId": "analytics_cancellations",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancellationAnalyticsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/cashbox": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Cashbox",
+        "operationId": "analytics_cashbox",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashboxAnalyticsSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/peak-times": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Peak Times",
+        "operationId": "analytics_peak_times",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeakTimesSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/analytics/basket": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Analytics Basket",
+        "operationId": "analytics_basket",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(7d|30d|90d|1y|all)$",
+              "default": "30d",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasketAnalysisSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/purchases/": {
       "post": {
         "tags": [
@@ -2302,7 +3617,18 @@
         ],
         "parameters": [
           {
-            "name": "limit",
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "size",
             "in": "query",
             "required": false,
             "schema": {
@@ -2310,8 +3636,38 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Size"
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "all|today|yesterday|week|custom",
+              "default": "all",
+              "title": "Filter"
+            },
+            "description": "all|today|yesterday|week|custom"
+          },
+          {
+            "name": "filter_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD for custom filter",
+              "title": "Filter Date"
+            },
+            "description": "YYYY-MM-DD for custom filter"
           }
         ],
         "responses": {
@@ -2320,11 +3676,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CashboxSessionRead"
-                  },
-                  "title": "Response Cashbox-List Sessions"
+                  "$ref": "#/components/schemas/CashboxSessionList"
                 }
               }
             }
@@ -2532,6 +3884,99 @@
   },
   "components": {
     "schemas": {
+      "AdvancedCustomerSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "title": "Customerid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "totalSpent": {
+            "type": "number",
+            "title": "Totalspent"
+          },
+          "orderCount": {
+            "type": "integer",
+            "title": "Ordercount"
+          },
+          "creditOwed": {
+            "type": "number",
+            "title": "Creditowed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customerId",
+          "name",
+          "totalSpent",
+          "orderCount",
+          "creditOwed"
+        ],
+        "title": "AdvancedCustomerSchema"
+      },
+      "AnalyticsSummarySchema": {
+        "properties": {
+          "totalRevenue": {
+            "type": "number",
+            "title": "Totalrevenue"
+          },
+          "totalOrders": {
+            "type": "integer",
+            "title": "Totalorders"
+          },
+          "avgOrderValue": {
+            "type": "number",
+            "title": "Avgordervalue"
+          },
+          "topCategory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TopCategorySchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalRevenue",
+          "totalOrders",
+          "avgOrderValue",
+          "topCategory"
+        ],
+        "title": "AnalyticsSummarySchema"
+      },
+      "BasketAnalysisSchema": {
+        "properties": {
+          "topPairs": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryPairSchema"
+            },
+            "type": "array",
+            "title": "Toppairs"
+          },
+          "totalBaskets": {
+            "type": "integer",
+            "title": "Totalbaskets"
+          },
+          "avgItemsPerBasket": {
+            "type": "number",
+            "title": "Avgitemsperbasket"
+          }
+        },
+        "type": "object",
+        "required": [
+          "topPairs",
+          "totalBaskets",
+          "avgItemsPerBasket"
+        ],
+        "title": "BasketAnalysisSchema"
+      },
       "BearerResponse": {
         "properties": {
           "access_token": {
@@ -2608,6 +4053,75 @@
           "token"
         ],
         "title": "Body_auth-verify:verify"
+      },
+      "CancellationAnalyticsSchema": {
+        "properties": {
+          "cancelledCount": {
+            "type": "integer",
+            "title": "Cancelledcount"
+          },
+          "cancelledRevenue": {
+            "type": "number",
+            "title": "Cancelledrevenue"
+          },
+          "refundedCount": {
+            "type": "integer",
+            "title": "Refundedcount"
+          },
+          "refundedRevenue": {
+            "type": "number",
+            "title": "Refundedrevenue"
+          },
+          "totalLostRevenue": {
+            "type": "number",
+            "title": "Totallostrevenue"
+          },
+          "refundRate": {
+            "type": "number",
+            "title": "Refundrate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cancelledCount",
+          "cancelledRevenue",
+          "refundedCount",
+          "refundedRevenue",
+          "totalLostRevenue",
+          "refundRate"
+        ],
+        "title": "CancellationAnalyticsSchema"
+      },
+      "CashboxAnalyticsSchema": {
+        "properties": {
+          "totalInflow": {
+            "type": "number",
+            "title": "Totalinflow"
+          },
+          "totalOutflow": {
+            "type": "number",
+            "title": "Totaloutflow"
+          },
+          "netCashflow": {
+            "type": "number",
+            "title": "Netcashflow"
+          },
+          "byType": {
+            "items": {
+              "$ref": "#/components/schemas/CashboxTypeStatSchema"
+            },
+            "type": "array",
+            "title": "Bytype"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalInflow",
+          "totalOutflow",
+          "netCashflow",
+          "byType"
+        ],
+        "title": "CashboxAnalyticsSchema"
       },
       "CashboxManualTransaction": {
         "properties": {
@@ -2709,6 +4223,42 @@
         },
         "type": "object",
         "title": "CashboxSessionCreate"
+      },
+      "CashboxSessionList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CashboxSessionRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size",
+          "pages"
+        ],
+        "title": "CashboxSessionList"
       },
       "CashboxSessionRead": {
         "properties": {
@@ -2923,6 +4473,95 @@
           "created_at"
         ],
         "title": "CashboxTransactionRead"
+      },
+      "CashboxTypeStatSchema": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "direction",
+          "amount",
+          "count"
+        ],
+        "title": "CashboxTypeStatSchema"
+      },
+      "CategoryPairSchema": {
+        "properties": {
+          "categoryA": {
+            "type": "string",
+            "title": "Categorya"
+          },
+          "categoryB": {
+            "type": "string",
+            "title": "Categoryb"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage"
+          },
+          "totalRevenue": {
+            "type": "number",
+            "title": "Totalrevenue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryA",
+          "categoryB",
+          "count",
+          "percentage",
+          "totalRevenue"
+        ],
+        "title": "CategoryPairSchema"
+      },
+      "CategoryStatSchema": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "orderCount": {
+            "type": "integer",
+            "title": "Ordercount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "revenue",
+          "quantity",
+          "orderCount"
+        ],
+        "title": "CategoryStatSchema"
       },
       "CustomerCreate": {
         "properties": {
@@ -3151,6 +4790,44 @@
           "created_at"
         ],
         "title": "CustomerDetailRead"
+      },
+      "CustomerInsightSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "title": "Customerid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "totalSpent": {
+            "type": "number",
+            "title": "Totalspent"
+          },
+          "orderCount": {
+            "type": "integer",
+            "title": "Ordercount"
+          },
+          "avgOrder": {
+            "type": "number",
+            "title": "Avgorder"
+          },
+          "lastOrder": {
+            "type": "string",
+            "title": "Lastorder"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customerId",
+          "name",
+          "totalSpent",
+          "orderCount",
+          "avgOrder",
+          "lastOrder"
+        ],
+        "title": "CustomerInsightSchema"
       },
       "CustomerOutcomeCreate": {
         "properties": {
@@ -3576,6 +5253,151 @@
         "type": "object",
         "title": "CustomerUpdate"
       },
+      "CustomersAdvancedSchema": {
+        "properties": {
+          "totalCustomers": {
+            "type": "integer",
+            "title": "Totalcustomers"
+          },
+          "activeCustomers": {
+            "type": "integer",
+            "title": "Activecustomers"
+          },
+          "repeatCustomers": {
+            "type": "integer",
+            "title": "Repeatcustomers"
+          },
+          "repeatRate": {
+            "type": "number",
+            "title": "Repeatrate"
+          },
+          "creditOutstanding": {
+            "type": "number",
+            "title": "Creditoutstanding"
+          },
+          "topByValue": {
+            "items": {
+              "$ref": "#/components/schemas/AdvancedCustomerSchema"
+            },
+            "type": "array",
+            "title": "Topbyvalue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalCustomers",
+          "activeCustomers",
+          "repeatCustomers",
+          "repeatRate",
+          "creditOutstanding",
+          "topByValue"
+        ],
+        "title": "CustomersAdvancedSchema"
+      },
+      "DayOfWeekSchema": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "title": "Day"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "orders": {
+            "type": "integer",
+            "title": "Orders"
+          },
+          "avgOrderValue": {
+            "type": "number",
+            "title": "Avgordervalue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "revenue",
+          "orders",
+          "avgOrderValue"
+        ],
+        "title": "DayOfWeekSchema"
+      },
+      "DeadStockItemSchema": {
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "title": "Itemid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "stock": {
+            "type": "number",
+            "title": "Stock"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "lastSold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastsold"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itemId",
+          "name",
+          "stock",
+          "category",
+          "lastSold"
+        ],
+        "title": "DeadStockItemSchema"
+      },
+      "DiscountAnalyticsSchema": {
+        "properties": {
+          "totalDiscountAmount": {
+            "type": "number",
+            "title": "Totaldiscountamount"
+          },
+          "discountedSaleCount": {
+            "type": "integer",
+            "title": "Discountedsalecount"
+          },
+          "totalSalesCount": {
+            "type": "integer",
+            "title": "Totalsalescount"
+          },
+          "discountRate": {
+            "type": "number",
+            "title": "Discountrate"
+          },
+          "byRule": {
+            "items": {
+              "$ref": "#/components/schemas/DiscountRuleStatSchema"
+            },
+            "type": "array",
+            "title": "Byrule"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalDiscountAmount",
+          "discountedSaleCount",
+          "totalSalesCount",
+          "discountRate",
+          "byRule"
+        ],
+        "title": "DiscountAnalyticsSchema"
+      },
       "DiscountRuleScope": {
         "type": "string",
         "enum": [
@@ -3584,6 +5406,29 @@
           "category"
         ],
         "title": "DiscountRuleScope"
+      },
+      "DiscountRuleStatSchema": {
+        "properties": {
+          "ruleName": {
+            "type": "string",
+            "title": "Rulename"
+          },
+          "usageCount": {
+            "type": "integer",
+            "title": "Usagecount"
+          },
+          "totalDiscount": {
+            "type": "number",
+            "title": "Totaldiscount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleName",
+          "usageCount",
+          "totalDiscount"
+        ],
+        "title": "DiscountRuleStatSchema"
       },
       "DiscountRuleType": {
         "type": "string",
@@ -3629,6 +5474,40 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "InventoryAnalyticsSchema": {
+        "properties": {
+          "totalInventoryValue": {
+            "type": "number",
+            "title": "Totalinventoryvalue"
+          },
+          "totalItems": {
+            "type": "integer",
+            "title": "Totalitems"
+          },
+          "lowStockItems": {
+            "items": {
+              "$ref": "#/components/schemas/LowStockItemSchema"
+            },
+            "type": "array",
+            "title": "Lowstockitems"
+          },
+          "deadStockItems": {
+            "items": {
+              "$ref": "#/components/schemas/DeadStockItemSchema"
+            },
+            "type": "array",
+            "title": "Deadstockitems"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalInventoryValue",
+          "totalItems",
+          "lowStockItems",
+          "deadStockItems"
+        ],
+        "title": "InventoryAnalyticsSchema"
       },
       "ItemCreate": {
         "properties": {
@@ -3916,6 +5795,51 @@
         "type": "object",
         "title": "ItemUpdate"
       },
+      "LowStockItemSchema": {
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "title": "Itemid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "stock": {
+            "type": "number",
+            "title": "Stock"
+          },
+          "minStock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minstock"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "unitType": {
+            "type": "string",
+            "title": "Unittype"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itemId",
+          "name",
+          "stock",
+          "minStock",
+          "category",
+          "unitType"
+        ],
+        "title": "LowStockItemSchema"
+      },
       "Page_ItemRead_": {
         "properties": {
           "items": {
@@ -4124,6 +6048,189 @@
           "internal"
         ],
         "title": "PaymentMethod"
+      },
+      "PaymentMethodStatSchema": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "revenue",
+          "count",
+          "percentage"
+        ],
+        "title": "PaymentMethodStatSchema"
+      },
+      "PeakTimesSchema": {
+        "properties": {
+          "byTimeBlock": {
+            "items": {
+              "$ref": "#/components/schemas/TimeBlockStatSchema"
+            },
+            "type": "array",
+            "title": "Bytimeblock"
+          },
+          "byDayOfWeek": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Bydayofweek"
+          }
+        },
+        "type": "object",
+        "required": [
+          "byTimeBlock",
+          "byDayOfWeek"
+        ],
+        "title": "PeakTimesSchema"
+      },
+      "ProfitabilitySchema": {
+        "properties": {
+          "totalRevenue": {
+            "type": "number",
+            "title": "Totalrevenue"
+          },
+          "totalCOGS": {
+            "type": "number",
+            "title": "Totalcogs"
+          },
+          "grossProfit": {
+            "type": "number",
+            "title": "Grossprofit"
+          },
+          "grossMarginPercent": {
+            "type": "number",
+            "title": "Grossmarginpercent"
+          },
+          "topProfitableProducts": {
+            "items": {
+              "$ref": "#/components/schemas/ProfitableProductSchema"
+            },
+            "type": "array",
+            "title": "Topprofitableproducts"
+          },
+          "leastProfitableProducts": {
+            "items": {
+              "$ref": "#/components/schemas/ProfitableProductSchema"
+            },
+            "type": "array",
+            "title": "Leastprofitableproducts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalRevenue",
+          "totalCOGS",
+          "grossProfit",
+          "grossMarginPercent",
+          "topProfitableProducts",
+          "leastProfitableProducts"
+        ],
+        "title": "ProfitabilitySchema"
+      },
+      "ProfitableProductSchema": {
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "title": "Itemid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "cost": {
+            "type": "number",
+            "title": "Cost"
+          },
+          "profit": {
+            "type": "number",
+            "title": "Profit"
+          },
+          "margin": {
+            "type": "number",
+            "title": "Margin"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itemId",
+          "name",
+          "category",
+          "revenue",
+          "cost",
+          "profit",
+          "margin",
+          "quantity"
+        ],
+        "title": "ProfitableProductSchema"
+      },
+      "PurchaseAnalyticsSchema": {
+        "properties": {
+          "totalSpend": {
+            "type": "number",
+            "title": "Totalspend"
+          },
+          "totalPurchases": {
+            "type": "integer",
+            "title": "Totalpurchases"
+          },
+          "avgPurchaseValue": {
+            "type": "number",
+            "title": "Avgpurchasevalue"
+          },
+          "bySupplier": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierSpendSchema"
+            },
+            "type": "array",
+            "title": "Bysupplier"
+          },
+          "byPaymentStatus": {
+            "items": {
+              "$ref": "#/components/schemas/PurchasePaymentStatusSchema"
+            },
+            "type": "array",
+            "title": "Bypaymentstatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalSpend",
+          "totalPurchases",
+          "avgPurchaseValue",
+          "bySupplier",
+          "byPaymentStatus"
+        ],
+        "title": "PurchaseAnalyticsSchema"
       },
       "PurchaseCreate": {
         "properties": {
@@ -4370,6 +6477,29 @@
           "partial"
         ],
         "title": "PurchasePaymentStatus"
+      },
+      "PurchasePaymentStatusSchema": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "count",
+          "total"
+        ],
+        "title": "PurchasePaymentStatusSchema"
       },
       "PurchaseRead": {
         "properties": {
@@ -4877,6 +7007,22 @@
         "type": "object",
         "title": "QuantityDiscountRuleUpdate"
       },
+      "RevenueTrendSchema": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPointSchema"
+            },
+            "type": "array",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "RevenueTrendSchema"
+      },
       "SaleCreate": {
         "properties": {
           "items": {
@@ -5263,6 +7409,151 @@
           "name"
         ],
         "title": "SupplierRead"
+      },
+      "SupplierSpendSchema": {
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "title": "Supplierid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "totalSpend": {
+            "type": "number",
+            "title": "Totalspend"
+          },
+          "purchaseCount": {
+            "type": "integer",
+            "title": "Purchasecount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "supplierId",
+          "name",
+          "totalSpend",
+          "purchaseCount"
+        ],
+        "title": "SupplierSpendSchema"
+      },
+      "TimeBlockStatSchema": {
+        "properties": {
+          "block": {
+            "type": "string",
+            "title": "Block"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "orders": {
+            "type": "integer",
+            "title": "Orders"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "block",
+          "label",
+          "revenue",
+          "orders",
+          "percentage"
+        ],
+        "title": "TimeBlockStatSchema"
+      },
+      "TopCategorySchema": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "revenue"
+        ],
+        "title": "TopCategorySchema"
+      },
+      "TopProductSchema": {
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "title": "Itemid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "orderCount": {
+            "type": "integer",
+            "title": "Ordercount"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itemId",
+          "name",
+          "revenue",
+          "quantity",
+          "orderCount",
+          "category"
+        ],
+        "title": "TopProductSchema"
+      },
+      "TrendPointSchema": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue"
+          },
+          "orders": {
+            "type": "integer",
+            "title": "Orders"
+          },
+          "avgOrderValue": {
+            "type": "number",
+            "title": "Avgordervalue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period",
+          "revenue",
+          "orders",
+          "avgOrderValue"
+        ],
+        "title": "TrendPointSchema"
       },
       "UnitType": {
         "type": "string",

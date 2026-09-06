@@ -20,6 +20,7 @@ from app.schemas import (
     CashboxSessionClose,
     CashboxSessionCreate,
     CashboxSessionRead,
+    CashboxSessionList,
     CashboxTransactionRead,
 )
 from app.users import current_active_user
@@ -31,7 +32,16 @@ router = APIRouter(tags=["cashbox"])
 
 def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
     """Compute balance stats from a session's loaded transactions."""
-    sr = CashboxSessionRead.model_validate(session)
+    sr = CashboxSessionRead.model_validate({
+        "id": session.id,
+        "opening_amount": session.opening_amount,
+        "status": session.status.value if hasattr(session.status, 'value') else session.status,
+        "opened_at": session.opened_at,
+        "closed_at": session.closed_at,
+        "closing_amount_counted": session.closing_amount_counted,
+        "notes": session.notes,
+        "created_at": session.created_at,
+    })
     sr.transaction_count = len(session.transactions)
 
     cash_in = Decimal("0")
@@ -252,20 +262,65 @@ async def list_transactions(
     return [CashboxTransactionRead.model_validate(tx) for tx in result.scalars().all()]
 
 
-@router.get("/sessions", response_model=list[CashboxSessionRead])
+@router.get("/sessions", response_model=CashboxSessionList)
 async def list_sessions(
-    limit: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    filter: str = Query("all", description="all|today|yesterday|week|custom"),
+    filter_date: str | None = Query(None, description="YYYY-MM-DD for custom filter"),
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
+    from datetime import date, timedelta
+
+    base = select(CashboxSession).where(CashboxSession.user_id == user.id)
+
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if filter == "today":
+        base = base.where(CashboxSession.opened_at >= today_start)
+    elif filter == "yesterday":
+        yesterday_start = today_start - timedelta(days=1)
+        base = base.where(
+            CashboxSession.opened_at >= yesterday_start,
+            CashboxSession.opened_at < today_start,
+        )
+    elif filter == "week":
+        week_start = today_start - timedelta(days=7)
+        base = base.where(CashboxSession.opened_at >= week_start)
+    elif filter == "custom" and filter_date:
+        try:
+            d = date.fromisoformat(filter_date)
+            day_start = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
+            day_end = day_start + timedelta(days=1)
+            base = base.where(
+                CashboxSession.opened_at >= day_start,
+                CashboxSession.opened_at < day_end,
+            )
+        except ValueError:
+            pass
+
+    count_result = await db.execute(select(CashboxSession.id).where(base.whereclause))
+    total = len(count_result.all())
+
+    offset = (page - 1) * size
     result = await db.execute(
-        select(CashboxSession)
-        .where(CashboxSession.user_id == user.id)
+        base
         .options(selectinload(CashboxSession.transactions))
         .order_by(CashboxSession.opened_at.desc())
-        .limit(limit)
+        .offset(offset)
+        .limit(size)
     )
-    return [_build_session_read(s) for s in result.scalars().all()]
+    items = [_build_session_read(s) for s in result.scalars().all()]
+    pages = (total + size - 1) // size
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": pages,
+    }
 
 
 @router.get("/sessions/{session_id}", response_model=CashboxSessionRead)

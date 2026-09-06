@@ -6,25 +6,38 @@ import {
 } from "@/components/actions/cashbox-action";
 import CashboxDashboard from "./CashboxDashboard";
 
-export default async function CashboxPage() {
-  const locale = await getLocale();
+interface CashboxPageProps {
+  searchParams: Promise<{
+    page?: string;
+    size?: string;
+    filter?: string;
+    filter_date?: string;
+  }>;
+}
 
-  const [session, pastSessions] = await Promise.all([
+export default async function CashboxPage({ searchParams }: CashboxPageProps) {
+  const locale = await getLocale();
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+  const size = Number(params.size) || 20;
+  const filter = params.filter || "all";
+  const filterDate = params.filter_date || "";
+
+  const [session, sessionData] = await Promise.all([
     fetchCurrentSession(),
-    fetchSessions(50),
+    fetchSessions(page, size, filter, filterDate || undefined),
   ]);
 
   const transactions = session ? await fetchTransactions(session.id, 100) : [];
-
-  // Past sessions excludes the currently open one
-  const history = pastSessions.filter((s) => s.status !== "open");
 
   return (
     <CashboxDashboard
       initialSession={session}
       initialTransactions={transactions}
-      pastSessions={history}
+      sessionsData={sessionData}
       locale={locale}
+      initialFilter={filter}
+      initialFilterDate={filterDate}
     />
   );
 }

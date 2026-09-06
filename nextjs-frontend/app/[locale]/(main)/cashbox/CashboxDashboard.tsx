@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Wallet,
   TrendingUp,
@@ -32,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   CashboxSessionRead,
+  CashboxSessionList,
   CashboxTransactionRead,
   openSession,
   closeSession,
@@ -88,10 +90,6 @@ function isYesterday(ds: string) {
   return isSameDay(new Date(ds), y);
 }
 
-function isThisWeek(ds: string) {
-  return new Date(ds) >= new Date(Date.now() - 7 * 24 * 3_600_000);
-}
-
 function groupByDay(txs: CashboxTransactionRead[]) {
   const map = new Map<string, CashboxTransactionRead[]>();
   for (const tx of txs) {
@@ -105,17 +103,22 @@ function groupByDay(txs: CashboxTransactionRead[]) {
 interface Props {
   initialSession: CashboxSessionRead | null;
   initialTransactions: CashboxTransactionRead[];
-  pastSessions: CashboxSessionRead[];
+  sessionsData: CashboxSessionList;
   locale: string;
+  initialFilter: string;
+  initialFilterDate: string;
 }
 
 export default function CashboxDashboard({
   initialSession,
   initialTransactions,
-  pastSessions,
+  sessionsData,
   locale,
+  initialFilter,
+  initialFilterDate,
 }: Props) {
   const t = useTranslations("cashbox");
+  const router = useRouter();
   const [session, setSession] = useState<CashboxSessionRead | null>(
     initialSession,
   );
@@ -123,6 +126,24 @@ export default function CashboxDashboard({
     useState<CashboxTransactionRead[]>(initialTransactions);
   const [txFilter, setTxFilter] = useState<TxFilter>("all");
   const [, startTransition] = useTransition();
+
+  const currentFilter = initialFilter;
+  const currentFilterDate = initialFilterDate;
+
+  function buildHref(overrides: Record<string, string | undefined>) {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries({
+      filter: currentFilter,
+      filter_date: currentFilterDate || undefined,
+      page: "1",
+      size: String(sessionsData.size),
+      ...overrides,
+    })) {
+      if (v) p.set(k, v);
+      else p.delete(k);
+    }
+    return `/${locale}/cashbox?${p.toString()}`;
+  }
 
   // ── Open session modal ──
   const [openModal, setOpenModal] = useState(false);
@@ -145,12 +166,6 @@ export default function CashboxDashboard({
   const [txDesc, setTxDesc] = useState("");
   const [txSubmitting, setTxSubmitting] = useState(false);
   const [txError, setTxError] = useState("");
-
-  // ── History filter ──
-  const [historyFilter, setHistoryFilter] = useState<
-    "all" | "today" | "yesterday" | "week" | "custom"
-  >("all");
-  const [customDate, setCustomDate] = useState<string>("");
 
   // ── Computed values ──
   const expectedCash = session ? parseFloat(session.expected_cash_balance) : 0;
@@ -175,21 +190,9 @@ export default function CashboxDashboard({
     return true;
   });
 
-  const lastClosed = pastSessions.find(
+  const lastClosed = sessionsData.items.find(
     (s) => s.status === "closed" && s.closing_amount_counted,
   );
-
-  const filteredHistory = pastSessions.filter((s) => {
-    if (historyFilter === "today") return isToday(s.opened_at);
-    if (historyFilter === "yesterday") return isYesterday(s.opened_at);
-    if (historyFilter === "week") return isThisWeek(s.opened_at);
-    if (historyFilter === "custom" && customDate) {
-      const d = new Date(s.opened_at);
-      const y = new Date(customDate + "T00:00:00");
-      return isSameDay(d, y);
-    }
-    return true;
-  });
 
   const txGroups = groupByDay(filteredTx);
   const [isMounted, setIsMounted] = useState(false);
@@ -715,37 +718,39 @@ export default function CashboxDashboard({
             <h2 className="font-semibold text-sm text-gray-700">
               {t("sessionHistory")}
             </h2>
+            <span className="text-xs text-gray-400 ml-auto">
+              {sessionsData.total} {t("sessions")}
+            </span>
           </div>
-          {/* Quick filter pills + date picker */}
           <div className="flex flex-wrap items-center gap-2">
             {(["all", "today", "yesterday", "week"] as const).map((f) => (
-              <button
+              <Link
                 key={f}
-                onClick={() => {
-                  setHistoryFilter(f);
-                  setCustomDate("");
-                }}
+                href={buildHref({ filter: f, filter_date: undefined, page: "1" })}
                 className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-colors ${
-                  historyFilter === f
+                  currentFilter === f && !currentFilterDate
                     ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
               >
                 {t(`historyFilter.${f}`)}
-              </button>
+              </Link>
             ))}
-            {/* Date picker */}
             <div className="flex items-center gap-1.5 ml-auto">
               <Calendar size={12} className="text-gray-400 shrink-0" />
               <input
                 type="date"
-                value={customDate}
+                defaultValue={currentFilterDate || ""}
                 onChange={(e) => {
-                  setCustomDate(e.target.value);
-                  setHistoryFilter(e.target.value ? "custom" : "all");
+                  const val = e.target.value;
+                  router.push(
+                    val
+                      ? buildHref({ filter: "custom", filter_date: val, page: "1" })
+                      : buildHref({ filter: "all", filter_date: undefined, page: "1" }),
+                  );
                 }}
                 className={`text-[11px] font-semibold rounded-full px-2.5 py-1 border transition-colors outline-none focus:ring-2 focus:ring-gray-300 ${
-                  historyFilter === "custom"
+                  currentFilter === "custom" && currentFilterDate
                     ? "bg-gray-900 text-white border-gray-900"
                     : "bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200"
                 }`}
@@ -753,88 +758,143 @@ export default function CashboxDashboard({
             </div>
           </div>
         </div>
-        {filteredHistory.length === 0 ? (
+        {sessionsData.items.length === 0 ? (
           <p className="text-center text-sm text-gray-400 py-8">
             {t("noHistory")}
           </p>
         ) : (
-          <div className="divide-y divide-gray-50">
-            {filteredHistory.map((s) => {
-              const diff = s.difference ? parseFloat(s.difference) : null;
-              const expected = parseFloat(s.expected_cash_balance);
-              const isOpen = s.status === "open";
-              return (
-                <Link
-                  key={s.id}
-                  href={`/${locale}/cashbox/session/${s.id}`}
-                  className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors"
-                >
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isOpen ? "bg-green-100" : "bg-gray-100"}`}
+          <>
+            <div className="divide-y divide-gray-50">
+              {sessionsData.items.map((s) => {
+                const diff = s.difference ? parseFloat(s.difference) : null;
+                const expected = parseFloat(s.expected_cash_balance);
+                const isOpen = s.status === "open";
+                return (
+                  <Link
+                    key={s.id}
+                    href={`/${locale}/cashbox/session/${s.id}`}
+                    className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors"
                   >
-                    {isOpen ? (
-                      <Unlock size={14} className="text-green-600" />
-                    ) : (
-                      <Lock size={14} className="text-gray-400" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-700">
-                      <LocalDateSpan
-                        dateIso={s.opened_at}
-                        locale={locale}
-                        options={{
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }}
-                      />
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {s.transaction_count} movs.
-                      {s.closed_at && (
-                        <>
-                          {" · "}
-                          <LocalDateSpan
-                            dateIso={s.closed_at!}
-                            locale={locale}
-                            options={{
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }}
-                          />
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <p className="text-sm font-bold tabular-nums text-gray-800 font-mono">
-                        {formatCurrency(expected)}
-                      </p>
-                      {diff !== null && (
-                        <p
-                          className={`text-[10px] font-bold ${diff === 0 ? "text-green-600" : diff < 0 ? "text-red-500" : "text-blue-600"}`}
-                        >
-                          {diff === 0
-                            ? "✓ " + t("balanced")
-                            : diff < 0
-                              ? `↓ ${t("short")} ${formatCurrency(Math.abs(diff))}`
-                              : `↑ ${t("over")} ${formatCurrency(diff)}`}
-                        </p>
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isOpen ? "bg-green-100" : "bg-gray-100"}`}
+                    >
+                      {isOpen ? (
+                        <Unlock size={14} className="text-green-600" />
+                      ) : (
+                        <Lock size={14} className="text-gray-400" />
                       )}
                     </div>
-                    <ChevronRight
-                      size={14}
-                      className="text-gray-300 shrink-0"
-                    />
-                  </div>
-                </Link>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-700">
+                        <LocalDateSpan
+                          dateIso={s.opened_at}
+                          locale={locale}
+                          options={{
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }}
+                        />
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {s.transaction_count} movs.
+                        {s.closed_at && (
+                          <>
+                            {" · "}
+                            <LocalDateSpan
+                              dateIso={s.closed_at!}
+                              locale={locale}
+                              options={{
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }}
+                            />
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="text-sm font-bold tabular-nums text-gray-800 font-mono">
+                          {formatCurrency(expected)}
+                        </p>
+                        {diff !== null && (
+                          <p
+                            className={`text-[10px] font-bold ${diff === 0 ? "text-green-600" : diff < 0 ? "text-red-500" : "text-blue-600"}`}
+                          >
+                            {diff === 0
+                              ? "✓ " + t("balanced")
+                              : diff < 0
+                                ? `↓ ${t("short")} ${formatCurrency(Math.abs(diff))}`
+                                : `↑ ${t("over")} ${formatCurrency(diff)}`}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight
+                        size={14}
+                        className="text-gray-300 shrink-0"
+                      />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {/* Pagination */}
+            {sessionsData.pages > 1 && (() => {
+              const { page, pages, size } = sessionsData;
+              const pageNumbers: (number | "...")[] = [];
+              if (pages <= 7) {
+                for (let i = 1; i <= pages; i++) pageNumbers.push(i);
+              } else {
+                pageNumbers.push(1);
+                if (page > 3) pageNumbers.push("...");
+                for (let i = Math.max(2, page - 1); i <= Math.min(pages - 1, page + 1); i++) {
+                  pageNumbers.push(i);
+                }
+                if (page < pages - 2) pageNumbers.push("...");
+                pageNumbers.push(pages);
+              }
+              return (
+                <div className="flex items-center justify-center gap-1 px-5 py-3 border-t border-gray-100">
+                  {page > 1 && (
+                    <Link
+                      href={buildHref({ page: String(page - 1) })}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      ← {t("prev")}
+                    </Link>
+                  )}
+                  {pageNumbers.map((p, i) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${i}`} className="px-1.5 py-1 text-[11px] text-gray-400">...</span>
+                    ) : (
+                      <Link
+                        key={p}
+                        href={buildHref({ page: String(p) })}
+                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-colors ${
+                          p === page
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {p}
+                      </Link>
+                    )
+                  )}
+                  {page < pages && (
+                    <Link
+                      href={buildHref({ page: String(page + 1) })}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      {t("next")} →
+                    </Link>
+                  )}
+                </div>
               );
-            })}
-          </div>
+            })()}
+          </>
         )}
       </div>
 

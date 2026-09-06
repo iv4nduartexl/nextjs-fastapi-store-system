@@ -2,7 +2,6 @@ import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
 import {
   ShoppingCart,
-  ReceiptText,
   PackagePlus,
   Boxes,
   Users,
@@ -25,13 +24,13 @@ export default async function DashboardPage() {
 
   const modules = [
     {
-      href: `/${locale}/sales`,
-      icon: <ReceiptText className="w-6 h-6" />,
-      label: t("salesHistory"),
-      desc: t("salesHistoryDesc"),
-      iconBg: "bg-blue-100 text-blue-600",
-      border: "hover:border-blue-300",
-      accent: "group-hover:text-blue-600",
+      href: `/${locale}/statistics`,
+      icon: <TrendingUp className="w-6 h-6" />,
+      label: t("statistics"),
+      desc: t("statisticsDesc"),
+      iconBg: "bg-purple-100 text-purple-600",
+      border: "hover:border-purple-300",
+      accent: "group-hover:text-purple-600",
       highlight: false,
     },
     {

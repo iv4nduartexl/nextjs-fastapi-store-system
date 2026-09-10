@@ -11,6 +11,7 @@ import {
   Wallet,
   Calculator,
   TrendingUp as TrendingUpIcon,
+  MessageSquare,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -111,8 +112,14 @@ export default function DashboardLayout({
              >
                <Wallet className="h-5 w-5" />
              </Link>
-         </div>
-       </aside>
+             <Link
+               href={`/${locale}/chat`}
+               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+             >
+               <MessageSquare className="h-5 w-5" />
+             </Link>
+           </div>
+         </aside>
 
       <main className="ml-16 w-full p-8 bg-muted/40">
         <header className="flex justify-between items-center mb-6">

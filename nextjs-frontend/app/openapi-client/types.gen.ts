@@ -730,9 +730,7 @@ export type UsersPatchCurrentUserData = {
 export type UsersPatchCurrentUserResponse = UserRead;
 
 export type UsersPatchCurrentUserError =
-  | ErrorModel
-  | unknown
-  | HTTPValidationError;
+  ErrorModel | unknown | HTTPValidationError;
 
 export type UsersUserData = {
   path: {
@@ -1315,3 +1313,23 @@ export type SearchSuppliersData = {
 export type SearchSuppliersResponse = Array<SupplierRead>;
 
 export type SearchSuppliersError = HTTPValidationError;
+
+export type ChatWithMcpData = {
+  body: {
+    [key: string]: unknown;
+  };
+};
+
+export type ChatWithMcpResponse = unknown;
+
+export type ChatWithMcpError = HTTPValidationError;
+
+export type ExecuteToolData = {
+  body: {
+    [key: string]: unknown;
+  };
+};
+
+export type ExecuteToolResponse = unknown;
+
+export type ExecuteToolError = HTTPValidationError;

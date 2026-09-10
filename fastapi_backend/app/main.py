@@ -11,7 +11,9 @@ from app.routes.customers import router as customers_router
 from app.routes.cashbox import router as cashbox_router
 from app.routes.categories import router as categories_router
 from app.routes.suppliers import router as suppliers_router
+from app.routes.chat import router as chat_router
 from app.config import settings
+from fastapi_mcp import FastApiMCP 
 
 app = FastAPI(
     generate_unique_id_function=simple_generate_unique_route_id,
@@ -62,4 +64,10 @@ app.include_router(customers_router, prefix="/customers")
 app.include_router(cashbox_router, prefix="/cashbox")
 app.include_router(categories_router, prefix="/categories")
 app.include_router(suppliers_router, prefix="/suppliers")
+app.include_router(chat_router, prefix="/chat")
 add_pagination(app)
+
+mcp = FastApiMCP(app)
+mcp.mount()
+
+app.state.mcp = mcp 

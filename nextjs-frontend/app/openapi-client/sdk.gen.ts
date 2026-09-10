@@ -183,6 +183,12 @@ import type {
   SearchSuppliersData,
   SearchSuppliersError,
   SearchSuppliersResponse,
+  ChatWithMcpData,
+  ChatWithMcpError,
+  ChatWithMcpResponse,
+  ExecuteToolData,
+  ExecuteToolError,
+  ExecuteToolResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -1151,5 +1157,37 @@ export const searchSuppliers = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/suppliers/",
+  });
+};
+
+/**
+ * Chat With Mcp
+ */
+export const chatWithMcp = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ChatWithMcpData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ChatWithMcpResponse,
+    ChatWithMcpError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/chat",
+  });
+};
+
+/**
+ * Execute Tool
+ */
+export const executeTool = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ExecuteToolData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ExecuteToolResponse,
+    ExecuteToolError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/chat/execute",
   });
 };

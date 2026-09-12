@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import {
   Home,
   ShoppingBag,
@@ -71,49 +71,49 @@ export default function DashboardLayout({
             />
           </Link>
            <Link
-             href={`/${locale}/dashboard`}
+             href="/dashboard"
              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
            >
              <LayoutDashboard className="h-5 w-5" />
            </Link>
            <Link
-             href={`/${locale}/products`}
+             href="/products"
              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
            >
              <ShoppingBag className="h-5 w-5" />
            </Link>
            <Link
-             href={`/${locale}/sales`}
+             href="/sales"
              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
            >
              <ShoppingCart className="h-5 w-5" />
            </Link>
            <Link
-             href={`/${locale}/purchases`}
+             href="/purchases"
              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
            >
              <Truck className="h-5 w-5" />
            </Link>
            <Link
-              href={`/${locale}/customers`}
+              href="/customers"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <Users className="h-5 w-5" />
             </Link>
             <Link
-              href={`/${locale}/statistics`}
+              href="/statistics"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <TrendingUpIcon className="h-5 w-5" />
             </Link>
             <Link
-               href={`/${locale}/cashbox`}
+               href="/cashbox"
                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
              >
                <Wallet className="h-5 w-5" />
              </Link>
              <Link
-               href={`/${locale}/chat`}
+               href="/chat"
                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
              >
                <MessageSquare className="h-5 w-5" />
@@ -127,19 +127,19 @@ export default function DashboardLayout({
             <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${locale}/`} className="flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                <span>{t("home")}</span>
-              </Link>
+               <Link href="/" className="flex items-center gap-2">
+                 <Home className="h-4 w-4" />
+                 <span>{t("home")}</span>
+               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator>/</BreadcrumbSeparator>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
-                <LayoutDashboard className="h-4 w-4" />
-                <span>{t("dashboardTitle")}</span>
-              </Link>
+               <Link href="/dashboard" className="flex items-center gap-2">
+                 <LayoutDashboard className="h-4 w-4" />
+                 <span>{t("dashboardTitle")}</span>
+               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
             </BreadcrumbList>
@@ -164,10 +164,10 @@ export default function DashboardLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="bottom">
                 <DropdownMenuItem>
-                <Link
-                     href={`/${locale}/support`}
-                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                   >
+                 <Link
+                      href="/support"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
                      Support
                    </Link>
                 </DropdownMenuItem>

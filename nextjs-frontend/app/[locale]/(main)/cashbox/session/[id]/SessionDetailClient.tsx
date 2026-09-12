@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
@@ -185,7 +185,7 @@ export default function SessionDetailClient({
       {/* ── Top nav bar ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <Link
-          href={`/${currentLocale}/cashbox`}
+          href="/cashbox"
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft size={16} />
@@ -434,12 +434,12 @@ export default function SessionDetailClient({
                   // Build drill-down href based on reference_type
                   const detailHref =
                     tx.reference_type === "sale" && tx.reference_id
-                      ? `/${currentLocale}/sales/${tx.reference_id}`
+                      ? `/sales/${tx.reference_id}`
                       : tx.reference_type === "purchase" && tx.reference_id
-                        ? `/${currentLocale}/purchases/${tx.reference_id}`
+                        ? `/purchases/${tx.reference_id}`
                         : tx.reference_type === "customer_payment" &&
                             tx.reference_id
-                          ? `/${currentLocale}/customers/${tx.reference_id}`
+                          ? `/customers/${tx.reference_id}`
                           : null;
 
                   const isManual =

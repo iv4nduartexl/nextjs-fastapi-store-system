@@ -7,7 +7,7 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { getTranslations, getLocale } from "next-intl/server";
 import { formatCurrency } from "@/lib/currency";
 import { fetchSales, SalesPage } from "@/components/actions/sales-action";
@@ -47,7 +47,7 @@ export default async function SalesHistoryPage({
           <h2 className="text-2xl font-semibold">{t("title")}</h2>
           <p className="text-gray-500 mt-1">{t("subtitle")}</p>
         </div>
-        <Link href={`/${locale}/sales/new`}>
+        <Link href="/sales/new">
           <Button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6">
             + {t("newSale")}
           </Button>
@@ -145,7 +145,7 @@ export default async function SalesHistoryPage({
                   </TableCell>
                   <TableCell className="text-center">
                     <Link
-                      href={`/${locale}/sales/${sale.id}`}
+                      href={`/sales/${sale.id}`}
                       className="text-blue-600 hover:underline text-xs"
                     >
                       {t("table.view")}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { getTranslations, getLocale } from "next-intl/server";
 import {
   Table,
@@ -69,7 +69,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
           <h2 className="text-2xl font-semibold">{t("title")}</h2>
           <p className="text-gray-500 mt-1">{t("subtitle")}</p>
         </div>
-        <Link href={`/${locale}/purchases/new`}>
+        <Link href="/purchases/new">
           <Button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 gap-2">
             <Truck size={15} /> {t("newPurchase")}
           </Button>
@@ -227,7 +227,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                   </TableCell>
                   <TableCell className="text-center">
                     <Link
-                      href={`/${locale}/purchases/${purchase.id}`}
+                      href={`/purchases/${purchase.id}`}
                       className="text-blue-600 hover:underline text-xs font-medium"
                     >
                       {t("table.view")}
@@ -246,7 +246,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
               totalPages={totalPages}
               pageSize={size}
               totalItems={data.total || 0}
-              basePath={`/${locale}/purchases`}
+              basePath="/purchases"
             />
           </div>
         )}

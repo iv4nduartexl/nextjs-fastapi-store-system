@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useRouter } from "next/navigation";
 import {
   Wallet,
@@ -142,7 +142,7 @@ export default function CashboxDashboard({
       if (v) p.set(k, v);
       else p.delete(k);
     }
-    return `/${locale}/cashbox?${p.toString()}`;
+    return `/cashbox?${p.toString()}`;
   }
 
   // ── Open session modal ──
@@ -772,7 +772,7 @@ export default function CashboxDashboard({
                 return (
                   <Link
                     key={s.id}
-                    href={`/${locale}/cashbox/session/${s.id}`}
+                    href={`/cashbox/session/${s.id}`}
                     className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors"
                   >
                     <div

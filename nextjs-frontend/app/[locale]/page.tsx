@@ -1,5 +1,5 @@
 import { getTranslations, getLocale } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import {
   ShoppingCart,
   Boxes,
@@ -81,13 +81,13 @@ export default async function Home() {
           </div>
           <nav className="flex items-center gap-3">
             <Link
-              href={`/${locale}/login`}
+              href="/login"
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
             >
               {t("heroCtaSecondary")}
             </Link>
             <Link
-              href={`/${locale}/dashboard`}
+              href="/dashboard"
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
             >
               {t("heroCta")}
@@ -127,14 +127,14 @@ export default async function Home() {
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href={`/${locale}/dashboard`}
+              href="/dashboard"
               className="group inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-8 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/30"
             >
               {t("heroCta")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
-              href={`/${locale}/login`}
+              href="/login"
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:-translate-y-0.5"
             >
               {t("heroCtaSecondary")}
@@ -186,7 +186,7 @@ export default async function Home() {
           </h2>
           <p className="mb-8 text-base text-emerald-100">{t("ctaDesc")}</p>
           <Link
-            href={`/${locale}/dashboard`}
+            href="/dashboard"
             className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-emerald-700 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
           >
             {t("ctaButton")}

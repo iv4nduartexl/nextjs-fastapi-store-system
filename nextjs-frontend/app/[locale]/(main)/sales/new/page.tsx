@@ -1,5 +1,5 @@
 import { getTranslations, getLocale } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Wallet, ArrowLeft, ArrowRight } from "lucide-react";
 import { fetchCurrentSession } from "@/components/actions/cashbox-action";
 import POSClient from "./POSClient";
@@ -29,7 +29,7 @@ export default async function NewSalePage() {
                 {t("cashboxClosedDesc")}
               </p>
               <Link
-                href={`/${locale}/cashbox`}
+                href="/cashbox"
                 className="group flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-amber-200 transition-all hover:bg-amber-400 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 <Wallet className="h-4 w-4" />
@@ -37,7 +37,7 @@ export default async function NewSalePage() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
-                href={`/${locale}/dashboard`}
+                href="/dashboard"
                 className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />

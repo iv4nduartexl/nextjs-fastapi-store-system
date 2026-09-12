@@ -1,5 +1,5 @@
 import { getTranslations, getLocale } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import {
   ShoppingCart,
   PackagePlus,
@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const modules = [
     {
-      href: `/${locale}/statistics`,
+      href: "/statistics",
       icon: <TrendingUp className="w-6 h-6" />,
       label: t("statistics"),
       desc: t("statisticsDesc"),
@@ -34,7 +34,7 @@ export default async function DashboardPage() {
       highlight: false,
     },
     {
-      href: `/${locale}/purchases/new`,
+      href: "/purchases/new",
       icon: <PackagePlus className="w-6 h-6" />,
       label: t("newPurchase"),
       desc: t("newPurchaseDesc"),
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       highlight: false,
     },
     {
-      href: `/${locale}/cashbox`,
+      href: "/cashbox",
       icon: <Wallet className="w-6 h-6" />,
       label: t("cashbox"),
       desc: t("cashboxDesc"),
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       highlight: !cashboxOpen,
     },
     {
-      href: `/${locale}/products`,
+      href: "/products",
       icon: <Boxes className="w-6 h-6" />,
       label: t("inventory"),
       desc: t("inventoryDesc"),
@@ -70,7 +70,7 @@ export default async function DashboardPage() {
       highlight: false,
     },
     {
-      href: `/${locale}/customers`,
+      href: "/customers",
       icon: <Users className="w-6 h-6" />,
       label: t("customers"),
       desc: t("customersDesc"),
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
       highlight: false,
     },
     {
-      href: `/${locale}/purchases`,
+      href: "/purchases",
       icon: <TrendingUp className="w-6 h-6" />,
       label: t("purchasesHistory"),
       desc: t("purchasesHistoryDesc"),
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
       {/* Cashbox closed banner */}
       {!cashboxOpen && (
         <Link
-          href={`/${locale}/cashbox`}
+          href="/cashbox"
           className="group flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 transition-all hover:border-amber-300 hover:bg-amber-100"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 ring-4 ring-amber-200">
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
 
       {/* Hero: Nueva Venta */}
       <Link
-        href={`/${locale}/sales/new`}
+        href="/sales/new"
         className="group relative flex items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-8 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
       >
         <div className="relative z-10 space-y-1.5 max-w-sm">

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { getTranslations, getLocale } from "next-intl/server";
 import {
@@ -58,7 +58,7 @@ export default async function CustomersPage({ searchParams }: Props) {
           </div>
         </div>
         <Link
-          href={`/${locale}/customers/new`}
+          href="/customers/new"
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
         >
           <Plus size={16} />
@@ -130,7 +130,7 @@ export default async function CustomersPage({ searchParams }: Props) {
             </p>
             {!q && (
               <Link
-                href={`/${locale}/customers/new`}
+                href="/customers/new"
                 className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-900 hover:underline"
               >
                 <Plus size={14} />
@@ -243,7 +243,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                     </td>
                     <td className="pr-4 py-3.5 text-right">
                       <Link
-                        href={`/${locale}/customers/${customer.id}`}
+                        href={`/customers/${customer.id}`}
                         className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
                       >
                         {t("table.view")}

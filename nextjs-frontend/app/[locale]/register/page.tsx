@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { register } from "@/components/actions/register-action";
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { FieldError, FormError } from "@/components/ui/FormError";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";

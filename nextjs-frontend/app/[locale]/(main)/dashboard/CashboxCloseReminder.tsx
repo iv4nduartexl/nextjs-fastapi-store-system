@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Wallet, X, ArrowRight, Moon } from "lucide-react";
 
 const DISMISS_KEY = "cashbox_eod_dismissed";
@@ -67,7 +67,7 @@ export default function CashboxCloseReminder({ locale }: { locale: string }) {
         {/* Actions */}
         <div className="flex items-center gap-2">
           <Link
-            href={`/${locale}/cashbox`}
+            href="/cashbox"
             className="group flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-violet-500"
           >
             <Wallet className="h-3.5 w-3.5" />

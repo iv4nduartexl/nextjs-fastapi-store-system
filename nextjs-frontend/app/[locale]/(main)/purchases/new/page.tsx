@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Link, useRouter } from "@/i18n/routing";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -267,7 +266,7 @@ export default function NewPurchasePage() {
     if (result.error) {
       setErrorMsg(result.error);
     } else if (result.data) {
-      router.push(`/${locale}/purchases/${result.data.id}`);
+      router.push(`/purchases/${result.data.id}`);
     }
   }
 
@@ -275,10 +274,10 @@ export default function NewPurchasePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
 <div>
-         <Link
-           href={`/${locale}/purchases`}
-           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-4"
-         >
+<Link
+            href="/purchases"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-4"
+          >
           <ArrowLeft size={15} />
           {t("detail.back")}
         </Link>

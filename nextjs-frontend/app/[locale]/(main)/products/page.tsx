@@ -1,7 +1,7 @@
 import { fetchItems } from "@/components/actions/items-action";
 import { ReadItemResponse } from "@/app/openapi-client";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
 import { getTranslations, getLocale } from "next-intl/server";
@@ -35,7 +35,7 @@ export default async function ProductsPage({
       <p className="text-lg mb-6">{t("subtitle")}</p>
 
       <div className="mb-6">
-        <Link href={`/${locale}/products/add-item`}>
+        <Link href="/products/add-item">
           <Button variant="outline" className="text-lg px-4 py-2">
             {t("addNewProduct")}
           </Button>
@@ -67,7 +67,7 @@ export default async function ProductsPage({
           totalPages={totalPages}
           pageSize={size}
           totalItems={items.total || 0}
-          basePath={`/${locale}/products`}
+          basePath="/products"
         />
       </section>
     </div>

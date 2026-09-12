@@ -10,14 +10,7 @@ export function LanguageSwitcher() {
   const pathname = usePathname();
 
   function switchLocale(next: string) {
-    // Replace the locale segment in the current path
-    const segments = pathname.split("/");
-    if (routing.locales.includes(segments[1] as "en" | "es")) {
-      segments[1] = next;
-    } else {
-      segments.splice(1, 0, next);
-    }
-    router.push(segments.join("/") || "/");
+    router.replace(pathname, { locale: next });
   }
 
   return (

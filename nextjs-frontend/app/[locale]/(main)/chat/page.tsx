@@ -297,6 +297,7 @@ export default function ChatPage() {
             placeholder={t.placeholder} 
             disabled={isLoading}
             className="flex-1"
+            autoFocus
           />
           <Button type="submit" disabled={isLoading || !input.trim()}>
             {t.send}

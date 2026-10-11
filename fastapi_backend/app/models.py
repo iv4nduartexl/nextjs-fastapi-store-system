@@ -173,6 +173,8 @@ class Sale(TenantMixin, Base):
     change_given = Column(Numeric(10, 2), nullable=True)
     notes = Column(String, nullable=True)
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
+    # Sent by the register for each checkout so a repeated submit returns the same sale
+    request_id = Column(String, nullable=True)
     cancelled_at = Column(DateTime(timezone=True), nullable=True)
     cancelled_by = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
     cancel_reason = Column(String, nullable=True)
@@ -189,7 +191,10 @@ class Sale(TenantMixin, Base):
     @property
     def cancelled_by_name(self) -> str | None:
         return _loaded_user_name(self, "cancelled_by_user")
+
     customer = relationship("Customer", back_populates="sales")
+
+    __table_args__ = (UniqueConstraint("business_id", "request_id", name="uq_sale_business_request"),)
 
 
 class SaleItem(Base):
@@ -277,6 +282,10 @@ class Purchase(TenantMixin, Base):
     subtotal = Column(Numeric(12, 2), nullable=False, default=0)
     tax = Column(Numeric(12, 2), nullable=False, default=0)
     total_cost = Column(Numeric(12, 2), nullable=False, default=0)
+    # What was actually paid now (total for "paid", 0 for "unpaid", the given amount for "partial")
+    paid_amount = Column(Numeric(12, 2), nullable=True)
+    # Total printed on the supplier's invoice (optional, for checking)
+    invoice_total = Column(Numeric(12, 2), nullable=True)
     notes = Column(String, nullable=True)
     cancelled_at = Column(DateTime(timezone=True), nullable=True)
     cancelled_by = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)

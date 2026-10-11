@@ -38,6 +38,10 @@ export interface PurchaseCreate {
   payment_status: PurchasePaymentStatus;
   tax?: number;
   notes?: string;
+  /** Required for payment_status "partial": the amount paid now */
+  paid_amount?: number;
+  /** Total printed on the supplier's invoice (for checking) */
+  invoice_total?: number;
   items: PurchaseItemCreate[];
 }
 
@@ -66,6 +70,8 @@ export interface PurchaseRead {
   notes: string | null;
   cancelled_at?: string | null;
   cancel_reason?: string | null;
+  paid_amount?: string | null;
+  invoice_total?: string | null;
   user_id?: string | null;
   /** Who registered / cancelled the purchase */
   user_name?: string | null;

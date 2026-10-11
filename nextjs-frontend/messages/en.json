@@ -180,6 +180,19 @@
     "pos": {
       "title": "New Sale",
       "searchPlaceholder": "Search product or scan barcode…",
+      "exactAmount": "Exact",
+      "pressEnterToCharge": "Press Enter again to charge {total} · Esc to cancel",
+      "codeNotFound": "Code “{code}” not found",
+      "shortcutsHint": "Scan or type · ↑↓ Enter to add · 3* = quantity · +/− Del last line · F2 cash · F3 card · F4 credit · F9 or Enter twice (empty search) charge",
+      "stepProducts": "Products",
+      "stepPayment": "Payment",
+      "stepDone": "Done",
+      "ticket": "Ticket",
+      "ticketThanks": "Thank you for your purchase!",
+      "saleDone": "Sale {total} registered",
+      "print": "Print",
+      "viewSale": "View",
+      "dismiss": "Close",
       "noProducts": "No products found.",
       "noPrice": "No price",
       "cart": "Cart",
@@ -287,6 +300,220 @@
     "deleting": "Deleting..."
   },
   "purchases": {
+    "wizard": {
+      "steps": {
+        "supplier": "Supplier",
+        "products": "Products",
+        "payment": "Payment",
+        "review": "Review"
+      },
+      "nav": {
+        "next": "Next: {step}",
+        "back": "Back",
+        "exit": "Exit",
+        "submit": "Register purchase",
+        "submitAnyway": "Register anyway",
+        "continueWithoutSupplier": "Continue without supplier"
+      },
+      "blocked": {
+        "chooseSupplier": "Choose a supplier or mark “No supplier”",
+        "invalidDate": "Choose the purchase date",
+        "addProducts": "Add at least one product",
+        "lineQuantity": "A product is missing its quantity",
+        "lineCost": "A product is missing its cost",
+        "lineName": "A new product is missing its name",
+        "newProductPrice": "New products need a sell price",
+        "choosePayment": "Choose how you paid",
+        "partialAmount": "Enter how much you paid (less than the total)",
+        "taxAmount": "Enter the tax amount"
+      },
+      "submitError": "Couldn't register the purchase. Please try again.",
+      "resume": {
+        "message": "You have an unfinished purchase from {supplier} ({count, plural, =1 {1 product} other {# products}})",
+        "continue": "Continue",
+        "discard": "Discard"
+      },
+      "totals": {
+        "lines": "{count, plural, =1 {1 product} other {# products}}",
+        "matches": "Matches the invoice",
+        "invoice": "Invoice {total}",
+        "missing": "{amount} missing",
+        "over": "{amount} over"
+      },
+      "done": {
+        "title": "Purchase registered",
+        "summary": "{count, plural, =1 {1 product} other {# products}} · {total}",
+        "newSameSupplier": "New purchase from {supplier}",
+        "newPurchase": "New purchase",
+        "view": "View purchase",
+        "products": "Go to products"
+      },
+      "supplier": {
+        "title": "Who did you buy from?",
+        "subtitle": "Choose the supplier of this purchase.",
+        "chosen": "Supplier",
+        "noSupplier": "No supplier",
+        "change": "Change",
+        "recent": "Recent",
+        "lastPurchase": "Last purchase:",
+        "searchPlaceholder": "Search supplier…",
+        "createNew": "Add “{name}” as a new supplier",
+        "date": "Purchase date",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "invoiceNumber": "Invoice number",
+        "optional": "optional",
+        "invoiceNumberHint": "Helps you find it later.",
+        "invoiceTotal": "Invoice total",
+        "recommended": "recommended",
+        "invoiceTotalHint": "We use it to warn you if something doesn't add up.",
+        "noSupplierHint": "No supplier for this purchase? Use “Continue without supplier” below."
+      },
+      "products": {
+        "title": "What arrived?",
+        "subtitle": "Add each product on the invoice: quantity and cost.",
+        "addPlaceholder": "Type or scan a product…",
+        "groupCatalog": "In your catalog · adds stock",
+        "groupCreate": "Create new product",
+        "stockShort": "stock {stock}",
+        "lastCostShort": "last cost {cost}",
+        "tipsTitle": "How to add products",
+        "tipLink": "If you already sell the product, search for it: the purchase adds stock to it.",
+        "tipCreate": "If it's new, type its name and choose “Create new product”.",
+        "tipCheck": "Enter the invoice total in step 1 and we'll warn you if something doesn't add up.",
+        "tipsDismiss": "Got it",
+        "usualTitle": "You usually buy from {supplier}",
+        "linesTitle": "{count, plural, =1 {1 product} other {# products}} in this purchase",
+        "costModeLabel": "How the invoice shows the cost",
+        "costMode": {
+          "unit": "Cost per unit",
+          "line": "Line total"
+        },
+        "empty": "Search a product you already sell to <b>add stock</b>, or type a new one to <b>create it</b>."
+      },
+      "line": {
+        "badgeLinked": "🔗 Linked: adds stock",
+        "badgeNew": "✨ New: will be created",
+        "linkedStock": "🔗 Linked: +{added} (stock {before} → {after})",
+        "remove": "Remove",
+        "unnamed": "Unnamed new product",
+        "name": "Product name",
+        "didYouMean": "Is it “{name}”? It already exists in your catalog.",
+        "useExisting": "Use that product",
+        "howSold": "How is it sold?",
+        "unitType": {
+          "unit": "Per unit",
+          "gram": "By weight",
+          "liter": "By the litre",
+          "pack": "By the pack"
+        },
+        "unitHint": {
+          "unit": "Sold one by one",
+          "gram": "Weighed, price per kg",
+          "liter": "Price per litre",
+          "pack": "The pack is sold"
+        },
+        "unitShort": {
+          "unit": "u.",
+          "gram": "kg",
+          "liter": "L",
+          "pack": "pk."
+        },
+        "stockNow": "Current stock: {stock}",
+        "lastCost": "last cost {cost}",
+        "quantity": "Quantity",
+        "lineTotal": "Line total",
+        "lineTotalIs": "= {total} in total",
+        "unitCostIs": "= {cost} per {unit}",
+        "sellPrice": "Sell price",
+        "was": "was {price}",
+        "editPrice": "Change price",
+        "loss": "The cost is higher than the sell price: you'd sell at a loss",
+        "margin": "Margin {percent}%",
+        "suggestNew": "Use {price} (your usual margin)",
+        "suggestRaise": "Raise to {price} to keep your margin?",
+        "moreData": "More details (optional)",
+        "category": "Category",
+        "optional": "optional",
+        "barcode": "Barcode",
+        "barcodeHint": "Scan or type it",
+        "done": "Done",
+        "missingQuantity": "no quantity",
+        "missingCost": "no cost",
+        "errors": {
+          "name": "Enter the product name.",
+          "quantity": "Enter a quantity greater than 0.",
+          "cost": "Enter the cost.",
+          "price": "Enter a sell price so it can be sold."
+        },
+        "in": "in {unit}",
+        "per": "per {unit}",
+        "cost": "Cost",
+        "enterHint": "Enter = Done"
+      },
+      "payment": {
+        "title": "How did you pay?",
+        "subtitle": "Purchase total: {total}",
+        "kind": {
+          "paid": "I paid everything",
+          "partial": "I paid part",
+          "later": "Pay later (on credit)"
+        },
+        "kindHint": {
+          "paid": "The whole invoice was paid",
+          "partial": "You paid some and there's a balance",
+          "later": "Nothing paid now"
+        },
+        "paidAmount": "How much did you pay now?",
+        "paidAmountInvalid": "Must be more than 0 and less than the total ({total}).",
+        "stillOwed": "Still owed to the supplier: {amount}",
+        "method": "How did you pay?",
+        "methods": {
+          "cash": "Cash",
+          "card": "Card",
+          "transfer": "Transfer"
+        },
+        "cashboxOut": "{amount} will leave the cashbox.",
+        "cashboxClosed": "No cashbox is open: the payment won't be recorded in the cashbox.",
+        "openCashbox": "Open cashbox",
+        "laterInfo": "No money leaves the cashbox. The purchase is saved as unpaid.",
+        "hasTax": "The invoice shows tax separately",
+        "tax": "Tax amount",
+        "notes": "Note",
+        "optional": "optional"
+      },
+      "review": {
+        "title": "Is everything right?",
+        "subtitle": "Check what will happen before registering the purchase.",
+        "warningsTitle": "{count, plural, =1 {One thing to check} other {# things to check}}",
+        "check": "Check",
+        "warnings": {
+          "loss": "{name}: the cost is higher than the sell price.",
+          "costJump": "{name}: the cost changed a lot ({last} → {now}). Is that right?",
+          "similarName": "“{name}” looks like “{existing}”, which already exists.",
+          "invoiceMissing": "{amount} missing to reach the invoice total.",
+          "invoiceOver": "The products add up to {amount} more than the invoice."
+        },
+        "supplierTitle": "Supplier",
+        "noSupplier": "No supplier",
+        "invoiceNo": "Invoice {number}",
+        "edit": "Edit",
+        "productsTitle": "Products ({count})",
+        "newTag": "NEW",
+        "tax": "Tax",
+        "total": "Total",
+        "invoiceTotal": "Invoice total",
+        "emptyTotal": "The total is 0: check the costs.",
+        "catalogTitle": "Changes to your catalog",
+        "newProducts": "{count, plural, =1 {1 new product will be created} other {# new products will be created}}",
+        "sellsAt": "will sell at {price}",
+        "priceChanges": "Sell prices that will be updated (uncheck to keep the old one)",
+        "stockChanges": "Stock that will be added",
+        "paymentTitle": "Payment",
+        "paidAll": "Paid in full by {method}",
+        "paidPartial": "Paid {amount} by {method}"
+      }
+    },
     "title": "Purchases",
     "subtitle": "Record supplier purchases and track stock costs.",
     "newPurchase": "New Purchase",
@@ -329,6 +556,15 @@
       "cancelled": "Cancelled"
     },
     "form": {
+      "creditIsUnpaid": "Supplier credit: nothing is paid now, so it's saved as unpaid.",
+      "paidAmount": "Amount paid now",
+      "paidAmountHint": "Still owed to the supplier: {remaining}",
+      "paidAmountInvalid": "Must be more than 0 and less than the total ({total}).",
+      "errors": {
+        "credit_purchase_must_be_unpaid": "A purchase on supplier credit can't be marked as paid.",
+        "partial_payment_requires_amount": "Enter the amount paid now for a partial payment.",
+        "partial_payment_must_be_less_than_total": "A partial payment must be less than the total; use \"Paid\" instead."
+      },
       "title": "New Purchase",
       "subtitle": "Register a supplier purchase. Stock will be updated automatically.",
       "supplierSection": "Supplier & Invoice",
@@ -1025,6 +1261,7 @@
       "cashier": "Cashier"
     },
     "changePassword": "Change password",
+    "calculator": "Calculator",
     "viewingAs": "You are viewing the app as {name} ({business})",
     "exitViewAs": "Exit",
     "setNewPasswordTitle": "Set your password",

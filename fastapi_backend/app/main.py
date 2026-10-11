@@ -19,6 +19,8 @@ from app.routes.assistant_tools import router as assistant_tools_router
 from app.routes.account import router as account_router
 from app.routes.business import router as business_router
 from app.routes.admin import router as admin_router
+from app.routes.pos import router as pos_router
+from app.routes.purchasing import router as purchasing_router
 from app.database import async_session_maker
 from app.superuser import sync_superuser
 from app.login_limits import login_rate_limit
@@ -83,6 +85,8 @@ app.include_router(ai_settings_router, prefix="/ai-settings")
 app.include_router(assistant_tools_router, prefix="/assistant")
 app.include_router(business_router, prefix="/business")
 app.include_router(admin_router, prefix="/admin")
+app.include_router(pos_router, prefix="/pos")
+app.include_router(purchasing_router, prefix="/purchasing")
 add_pagination(app)
 
 # Expose only the store operations the chat assistant needs (no auth/users/chat routes)

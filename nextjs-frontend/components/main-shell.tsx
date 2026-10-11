@@ -44,8 +44,12 @@ export function MainShell({
   const [isOpenCalulator, setIsOpenCalculator] = useState(false);
 
   useEffect(() => {
-    const openCalculatorShortcut = (e: { key: string }) => {
-      e.key === "+" && setIsOpenCalculator(true);
+    // F12 (not "+", which the POS uses for quantities)
+    const openCalculatorShortcut = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        setIsOpenCalculator(true);
+      }
     };
     window.addEventListener("keydown", openCalculatorShortcut);
     return () => window.removeEventListener("keydown", openCalculatorShortcut);
@@ -81,10 +85,15 @@ export function MainShell({
             </BreadcrumbList>
           </Breadcrumb>
           <div className="flex items-center gap-3">
-            <Calculator
-              className="h-5 w-5 cursor-pointer"
+            <button
+              type="button"
               onClick={() => setIsOpenCalculator(true)}
-            />
+              title={`${tAccount("calculator")} (F12)`}
+              aria-label={tAccount("calculator")}
+              className="rounded-md p-1 text-gray-600 hover:bg-gray-200/70"
+            >
+              <Calculator className="h-5 w-5" />
+            </button>
             <CalculatorModal
               isOpen={isOpenCalulator}
               onClose={() => setIsOpenCalculator(false)}

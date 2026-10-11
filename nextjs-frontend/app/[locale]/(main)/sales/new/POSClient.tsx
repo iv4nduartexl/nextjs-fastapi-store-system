@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createSale, SaleRead } from "@/components/actions/sales-action";
-import type { ItemRead } from "@/app/openapi-client";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
 import {
@@ -18,7 +17,6 @@ import {
   Banknote,
   CreditCard,
   RefreshCcw,
-  CheckCircle2,
   PackageX,
   ScanBarcode,
   Users,
@@ -27,13 +25,21 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import {
-  recordPayment,
-  type CustomerRead,
-} from "@/components/actions/customers-action";
+import { type CustomerRead } from "@/components/actions/customers-action";
 import autoAnimate from "@formkit/auto-animate";
 import ProductQuantityModal from "@/components/Modals/product-quantity-modal";
 import { PartialPaymentInput } from "@/components/Pages/sales/new/PosClient/partial-payment-input";
+import {
+  findBySku,
+  parseMultiplier,
+  searchCatalog,
+  type PosProduct,
+} from "@/lib/pos/catalog-search";
+import { useCatalog } from "@/lib/pos/use-catalog";
+import { suggestCashAmounts } from "@/lib/pos/cash";
+import { SaleDoneBanner } from "@/components/pos/sale-done-banner";
+import { StepBar } from "@/components/pos/step-bar";
+import { isTypingField, useBarcodeScanner } from "@/lib/pos/use-barcode-scanner";
 
 interface CartItem {
   itemId: string;
@@ -117,15 +123,18 @@ function ProductGrid({
   onAdd,
   t,
   tPos,
+  highlightedIndex = -1,
 }: {
-  products: ItemRead[];
-  onAdd: (p: ItemRead) => void;
+  products: PosProduct[];
+  onAdd: (p: PosProduct) => void;
   t: ReturnType<typeof import("next-intl").useTranslations>;
   tPos: ReturnType<typeof import("next-intl").useTranslations>;
+  /** Result selected with the arrow keys (Enter adds it) */
+  highlightedIndex?: number;
 }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      {products.map((product) => {
+      {products.map((product, index) => {
         const hasPrice = product.price != null;
         const stock = parseFloat((product.stock ?? "0") as unknown as string);
         const minStock =
@@ -137,13 +146,17 @@ function ProductGrid({
 
         return (
           <button
-            key={product.id as string}
+            key={product.id}
             onClick={() => onAdd(product)}
-            disabled={!hasPrice || isOut}
+            // Out of stock only warns: stock counts can be wrong and the sale must not be blocked
+            disabled={!hasPrice}
+            data-highlighted={index === highlightedIndex || undefined}
             className={`group relative flex flex-row items-stretch text-left rounded-xl border overflow-hidden transition-all duration-150 ${
-              !hasPrice || isOut
+              !hasPrice
                 ? "opacity-40 cursor-not-allowed border-gray-200 bg-white"
-                : "cursor-pointer border-gray-200 bg-white hover:border-green-400 hover:shadow-md hover:-translate-y-0.5 active:scale-95 active:shadow-none"
+                : index === highlightedIndex
+                  ? "cursor-pointer border-green-500 bg-green-50 ring-2 ring-green-400 shadow-md"
+                  : "cursor-pointer border-gray-200 bg-white hover:border-green-400 hover:shadow-md hover:-translate-y-0.5 active:scale-95 active:shadow-none"
             }`}
           >
             <div className="w-16 shrink-0 bg-gray-100 flex items-center justify-center self-stretch">
@@ -169,7 +182,7 @@ function ProductGrid({
               </span>
               <span className="mt-auto text-green-700 font-bold text-sm tabular-nums">
                 {hasPrice ? (
-                  formatCurrency(product.price as unknown as string)
+                  formatCurrency(product.price)
                 ) : (
                   <span className="text-gray-400 text-xs font-normal">
                     {tPos("noPrice")}
@@ -184,20 +197,28 @@ function ProductGrid({
   );
 }
 
+function newCheckoutId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export default function POSClient() {
   const t = useTranslations("sales.pos");
   const tSales = useTranslations("sales");
   const tDash = useTranslations("dashboard");
 
-  const [products, setProducts] = useState<ItemRead[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
+  // Whole catalog in memory: search is instant and works for the scanner
+  const catalog = useCatalog();
   const [search, setSearch] = useState("");
+  const [highlighted, setHighlighted] = useState(0);
+  const [scanNotice, setScanNotice] = useState<string | null>(null);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   // Cart line whose full name is shown (tap to expand, for touch screens without hover)
   const [expandedCartItemId, setExpandedCartItemId] = useState<string | null>(
     null,
   );
-  const [showPaymentSection, setShowPaymentSection] = useState(false);
   const paymentRef = useRef<HTMLDivElement>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [amountTendered, setAmountTendered] = useState("");
@@ -209,7 +230,7 @@ export default function POSClient() {
   );
   const [priceModalItemId, setPriceModalItemId] = useState<string | null>(null);
   const [selectedWeightQuantityProduct, setSelectedWeightQuantityProduct] =
-    useState<ItemRead | null>(null);
+    useState<PosProduct | null>(null);
   const [priceOverrideMode, setPriceOverrideMode] =
     useState<PriceOverrideMode>("line_total");
   const [overridePriceDraft, setOverridePriceDraft] = useState("");
@@ -225,12 +246,21 @@ export default function POSClient() {
     reason: string;
   } | null>(null);
 
-  // Category browse state
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  // Category browse state (derived from the catalog)
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [categoryProducts, setCategoryProducts] = useState<ItemRead[]>([]);
-  const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
+  const loadingCategories = catalog.loading;
+  const loadingCategoryProducts = catalog.loading;
+  const categories = useMemo(
+    () =>
+      [...new Set(catalog.products.map((p) => p.category).filter((c): c is string => !!c))].sort(
+        (a, b) => a.localeCompare(b),
+      ),
+    [catalog.products],
+  );
+  const categoryProducts = useMemo(
+    () => (activeCategory ? catalog.products.filter((p) => p.category === activeCategory) : []),
+    [catalog.products, activeCategory],
+  );
 
   // Credit customer state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -244,7 +274,20 @@ export default function POSClient() {
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
-  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const tenderedRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
+  // Identifies this checkout; the server returns the same sale if it's sent twice
+  const checkoutIdRef = useRef(newCheckoutId());
+  // "Enter on an empty search" first arms the charge, the second Enter charges
+  const [chargeArmed, setChargeArmed] = useState(false);
+  const customerSearchRef = useRef<HTMLInputElement>(null);
+
+  const multiplier = parseMultiplier(search);
+  const products = useMemo(
+    () => searchCatalog(catalog.products, multiplier.term),
+    [catalog.products, multiplier.term],
+  );
+  const loadingProducts = catalog.loading;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -277,20 +320,9 @@ export default function POSClient() {
     }
   }, [cart.length]);
 
-  // Autofocus search on mount + fetch categories
+  // Autofocus search on mount + discount rules (categories come from the catalog)
   useEffect(() => {
     searchRef.current?.focus();
-    (async () => {
-      try {
-        const res = await fetch("/api/categories", { cache: "no-store" });
-        if (res.ok) setCategories(await res.json());
-      } catch {
-        /* silent */
-      } finally {
-        setLoadingCategories(false);
-      }
-    })();
-
     (async () => {
       try {
         const res = await fetch("/api/discount-rules", { cache: "no-store" });
@@ -329,84 +361,23 @@ export default function POSClient() {
     return () => clearTimeout(timer);
   }, [customerSearch, paymentMethod]);
 
-  // Fetch products when a category is selected
+  // Changing the sale cancels a pending "Enter again to charge"
   useEffect(() => {
-    if (!activeCategory) {
-      setCategoryProducts([]);
-      return;
-    }
-    setLoadingCategoryProducts(true);
-    (async () => {
-      try {
-        const res = await fetch(
-          `/api/items?size=100&category=${encodeURIComponent(activeCategory)}`,
-          { cache: "no-store" },
-        );
-        if (res.ok) {
-          const d = await res.json();
-          setCategoryProducts(d.items ?? []);
-        }
-      } catch {
-        /* silent */
-      } finally {
-        setLoadingCategoryProducts(false);
-      }
-    })();
-  }, [activeCategory]);
+    setChargeArmed(false);
+  }, [cart, paymentMethod, search]);
+
+  // Arrow-key selection starts at the best match whenever the results change
+  useEffect(() => {
+    setHighlighted(0);
+  }, [multiplier.term]);
+  useEffect(() => {
+    document.querySelector('[data-highlighted="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [highlighted]);
 
   function handleTyping(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    setSearch(value); // Update state normally
-
-    // 1. Clear any pending search from the previous keystroke
-    if (searchTimerRef.current) {
-      clearTimeout(searchTimerRef.current);
-    }
-
-    if (!value.trim()) {
-      setProducts([]);
-      return;
-    }
-
-    // 2. Schedule the network request in 300ms
-    searchTimerRef.current = setTimeout(() => {
-      getProductsBySearch(value);
-    }, 300);
+    setSearch(e.target.value);
+    setScanNotice(null);
   }
-
-  // Debounced search: fetch from backend only when user has typed something
-  const getProductsBySearch = async (
-    currentSearchTerm: string,
-    triggeredByEnter = false,
-  ) => {
-    const q = currentSearchTerm.trim();
-    if (!q) {
-      setProducts([]);
-      setLoadingProducts(false);
-      return;
-    }
-
-    setLoadingProducts(true);
-    try {
-      const res = await fetch(`/api/items?size=50&q=${encodeURIComponent(q)}`, {
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const data = await res.json();
-
-        // Fixed: data.items[0] might be what you meant for addToCart, passed cleanly
-        if (triggeredByEnter && data.items && data.items.length === 1) {
-          addToCart(data.items[0]);
-        } else {
-          setProducts(data.items ?? []);
-        }
-      }
-    } catch {
-      // silent fail
-    } finally {
-      setLoadingProducts(false);
-    }
-  };
 
   function toSaleUnits(quantity: number, unitType: string) {
     return unitType === "gram" ? quantity / 1000 : quantity;
@@ -516,6 +487,8 @@ export default function POSClient() {
   );
   const finalTotal = appliedSubtotalOverride?.amount ?? cartTotal;
   const tenderedNum = parseFloat(amountTendered) || 0;
+  // An empty "received" field means the customer paid the exact amount
+  const effectiveTendered = amountTendered.trim() === "" ? finalTotal : tenderedNum;
   const change = tenderedNum - finalTotal;
 
   const hasInvalidOverride = cart.some(
@@ -525,46 +498,64 @@ export default function POSClient() {
 
   const canComplete =
     cart.length > 0 &&
-    (paymentMethod !== "cash" || tenderedNum >= finalTotal) &&
+    (paymentMethod !== "cash" || effectiveTendered >= finalTotal) &&
     (paymentMethod !== "credit" || selectedCustomer != null) &&
     !hasInvalidOverride;
 
-  function addToCart(product: ItemRead, weightQuantity: number | null = null) {
+  /**
+   * Add a product. `quantity` is a count for unit products, or grams for weighed ones
+   * (weighed products without a quantity open the weight panel).
+   */
+  function addToCart(product: PosProduct, quantity: number | null = null) {
     const isWeightBased = product.unit_type === "gram";
-    if (isWeightBased && weightQuantity == null) {
+    if (isWeightBased && quantity == null) {
       setSelectedWeightQuantityProduct(product);
       return;
     }
 
     if (!product.price) return;
-    const price = parseFloat(product.price as unknown as string);
-    const step = (product.unit_type ?? "unit") === "gram" ? 100 : 1;
+    const price = parseFloat(product.price);
+    const amount = quantity ?? 1;
     setCart((prev) => {
       const existing = prev.find((c) => c.itemId === product.id);
       if (existing) {
-        return prev.map((c) =>
-          c.itemId === product.id ? { ...c, quantity: c.quantity + step } : c,
-        );
+        // Most recent line goes last, so "+", "-" and Del act on it
+        return [
+          ...prev.filter((c) => c.itemId !== product.id),
+          { ...existing, quantity: existing.quantity + amount },
+        ];
       }
       return [
         ...prev,
         {
-          itemId: product.id as string,
+          itemId: product.id,
           name: product.name,
           unitType: product.unit_type ?? "unit",
           category: product.category ?? null,
           unitPrice: price,
-          quantity:
-            isWeightBased && weightQuantity != null ? weightQuantity : step,
+          quantity: amount,
         },
       ];
     });
-    // Only clear search + refocus when in search mode
-    if (search.trim()) {
-      setSearch("");
-      setTimeout(() => searchRef.current?.focus(), 0);
-    }
+    setLastAddedId(product.id);
+    setTimeout(() => setLastAddedId((id) => (id === product.id ? null : id)), 700);
+    setScanNotice(null);
+    // Ready for the next product
+    if (search.trim()) setSearch("");
+    setTimeout(() => searchRef.current?.focus(), 0);
   }
+
+  /** A scanned or typed code: exact SKU match adds immediately. Returns false when unknown. */
+  function addByCode(code: string, quantity: number | null): boolean {
+    const product = findBySku(catalog.products, code);
+    if (!product) return false;
+    addToCart(product, product.unit_type === "gram" ? null : quantity);
+    return true;
+  }
+
+  useBarcodeScanner((code) => {
+    if (!addByCode(code, null)) setScanNotice(code);
+  }, !selectedWeightQuantityProduct && !priceModalItemId && !subtotalModalOpen);
 
   function updateQty(itemId: string, qty: number) {
     if (qty === null) return;
@@ -582,26 +573,113 @@ export default function POSClient() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && search.trim()) {
-      // Cancel the pending typing timer so it doesn't fire twice
-      if (searchTimerRef.current) {
-        clearTimeout(searchTimerRef.current);
-      }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (products.length === 0) return;
+      e.preventDefault();
+      setHighlighted((i) =>
+        e.key === "ArrowDown" ? Math.min(i + 1, products.length - 1) : Math.max(i - 1, 0),
+      );
+      return;
+    }
+    if (e.key === "Escape") {
+      setSearch("");
+      setScanNotice(null);
+      setChargeArmed(false);
+      return;
+    }
+    if (e.key !== "Enter") return;
 
-      // Execute immediately with Enter logic enabled
-      getProductsBySearch(search, true);
+    const term = multiplier.term.trim();
+    if (!term) {
+      // Empty search + Enter: first press asks for confirmation, second press charges
+      if (cart.length > 0 && canComplete) {
+        e.preventDefault();
+        if (chargeArmed) handleCompleteSale();
+        else setChargeArmed(true);
+      }
+      return;
+    }
+    e.preventDefault();
+    // Barcode (scanned into the field) or exact SKU first, then the highlighted result
+    if (addByCode(term, multiplier.quantity)) return;
+    const product = products[highlighted] ?? products[0];
+    if (product) {
+      addToCart(product, product.unit_type === "gram" ? null : multiplier.quantity);
+    } else {
+      setScanNotice(term);
     }
   }
 
+  // ── Keyboard shortcuts (F1 search, F2/F3/F4 payment, F9 charge, +/−/Del last line) ──
+  const shortcutHandler = useRef<(e: KeyboardEvent) => void>(() => {});
+  shortcutHandler.current = (e: KeyboardEvent) => {
+    if (selectedWeightQuantityProduct || priceModalItemId || subtotalModalOpen) return;
+    const inSearch = e.target === searchRef.current;
+    const typingElsewhere = isTypingField(e.target) && !inSearch;
+    const last = cart[cart.length - 1];
+
+    switch (e.key) {
+      case "F1":
+        e.preventDefault();
+        searchRef.current?.focus();
+        return;
+      case "/":
+        if (isTypingField(e.target)) return;
+        e.preventDefault();
+        searchRef.current?.focus();
+        return;
+      case "F2":
+        e.preventDefault();
+        choosePaymentMethod("cash");
+        setTimeout(() => {
+          tenderedRef.current?.focus();
+          tenderedRef.current?.select();
+        }, 0);
+        return;
+      case "F3":
+        e.preventDefault();
+        choosePaymentMethod("card");
+        return;
+      case "F4":
+        e.preventDefault();
+        choosePaymentMethod("credit");
+        return;
+      case "F9":
+        e.preventDefault();
+        handleCompleteSale();
+        return;
+      case "+":
+      case "-":
+        // Only when not typing a value (an empty search box counts as free)
+        if (typingElsewhere || (inSearch && search.trim()) || !last) return;
+        e.preventDefault();
+        updateQty(last.itemId, last.quantity + (e.key === "+" ? 1 : -1) * (last.unitType === "gram" ? 100 : 1));
+        return;
+      case "Delete":
+        if (typingElsewhere || (inSearch && search.trim()) || !last) return;
+        e.preventDefault();
+        removeFromCart(last.itemId);
+        return;
+    }
+  };
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => shortcutHandler.current(e);
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
+
   async function handleCompleteSale() {
-    if (!canComplete) return;
+    // Shortcuts and Enter can fire twice before React re-renders: the ref blocks it instantly
+    if (!canComplete || submittingRef.current) return;
     if (customerPartialPayment && customerPartialPayment > finalTotal) {
       setErrorMsg(t("partialPaymentExceedsTotal"));
       return;
     }
+    submittingRef.current = true;
     setSubmitting(true);
     setErrorMsg("");
     const result = await createSale({
+      request_id: checkoutIdRef.current,
       items: cart.map((c) => ({
         item_id: c.itemId,
         quantity: c.quantity,
@@ -609,29 +687,24 @@ export default function POSClient() {
         manual_override_reason: c.manualOverrideReason,
       })),
       payment_method: paymentMethod,
-      amount_tendered: paymentMethod === "cash" ? tenderedNum : undefined,
+      amount_tendered: paymentMethod === "cash" ? effectiveTendered : undefined,
       customer_id:
         paymentMethod === "credit" ? selectedCustomer?.id : undefined,
       subtotal_override: appliedSubtotalOverride?.amount,
       subtotal_override_reason: appliedSubtotalOverride?.reason,
+      // Saved in the same transaction as the sale: all or nothing
+      partial_payment:
+        paymentMethod === "credit" && customerPartialPayment ? customerPartialPayment : undefined,
     });
-    let partialPaymentResult: { data?: unknown; error?: unknown } | null = null;
-    if (
-      paymentMethod === "credit" &&
-      selectedCustomer &&
-      customerPartialPayment != null
-    ) {
-      partialPaymentResult = await recordPayment(selectedCustomer.id, {
-        amount: customerPartialPayment,
-        payment_method: "cash",
-        notes: "Pago parcial por venta de productos a crédito",
-      });
-    }
 
+    submittingRef.current = false;
     setSubmitting(false);
-    if (result.error || partialPaymentResult?.error) {
+    if (result.error) {
+      // Retrying keeps the same checkout id, so a sale that did go through is never duplicated
       setErrorMsg(typeof result.error === "string" ? result.error : "Error");
     } else if (result.data) {
+      checkoutIdRef.current = newCheckoutId();
+      setChargeArmed(false);
       const finalReceipt = {
         ...result.data,
         customer_partial_payment:
@@ -641,11 +714,13 @@ export default function POSClient() {
       };
       setReceipt(finalReceipt);
       setCart([]);
+      setPaymentMethod("cash");
+      catalog.refresh();
+      setTimeout(() => searchRef.current?.focus(), 0);
       setAmountTendered("");
       setSelectedCustomer(null);
       setCustomerSearch("");
       setCustomerResults([]);
-      setShowPaymentSection(false);
       setAppliedSubtotalOverride(null);
       setSubtotalDraft("");
       setSubtotalReasonDraft("");
@@ -811,115 +886,20 @@ export default function POSClient() {
     setSubtotalModalError("");
   }
 
-  function startNewSale() {
-    setReceipt(null);
-    setTimeout(() => searchRef.current?.focus(), 0);
-  }
+  const dismissReceipt = useCallback(() => setReceipt(null), []);
 
-  function togglePaymentSection() {
-    setShowPaymentSection((prev) => !prev);
-  }
+  // Step bar: 1 products → 2 payment → 3 done
+  const currentStep = cart.length > 0 ? 1 : receipt ? 2 : 0;
 
-  // Receipt overlay
-  if (receipt) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="bg-green-600 px-6 py-5 text-center">
-            <CheckCircle2 className="mx-auto mb-2 text-white" size={40} />
-            <h2 className="text-xl font-bold text-white">
-              {t("receiptTitle")}
-            </h2>
-          </div>
-
-          {/* Summary */}
-          <div className="px-6 py-4 space-y-3 border-b">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">{t("receiptTotal")}</span>
-              <span className="text-2xl font-bold text-gray-900">
-                {formatCurrency(receipt.total)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                {t("receiptPayment")}
-              </span>
-              <span className="text-sm font-semibold text-gray-700 capitalize">
-                {tSales(`paymentMethod.${receipt.payment_method}`)}
-              </span>
-            </div>
-            {receipt.change_given != null &&
-              Number(receipt.change_given) > 0 && (
-                <div className="flex justify-between items-center bg-green-50 rounded-lg px-3 py-2">
-                  <span className="text-sm font-medium text-green-700">
-                    {t("receiptChange")}
-                  </span>
-                  <span className="text-sm font-bold text-green-700">
-                    {formatCurrency(receipt.change_given)}
-                  </span>
-                </div>
-              )}
-            {receipt.payment_method === "credit" && receipt.customer_name && (
-              <>
-                <div className="flex justify-between items-center bg-amber-50 rounded-lg px-3 py-2">
-                  <span className="text-sm font-medium text-amber-700">
-                    {tSales("pos.receiptCustomer")}
-                  </span>
-                  <span className="text-sm font-bold text-amber-700">
-                    {receipt.customer_name}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    {" "}
-                    {tSales("pos.receiptCustomerPartialPayment")}
-                  </span>
-                  <span className="text-xl font-bold text-green-600">
-                    {formatCurrency(receipt.customer_partial_payment)}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Items */}
-          <div className="px-6 py-4">
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-3">
-              {t("receiptItems")}
-            </p>
-            <div className="space-y-2">
-              {receipt.sale_items.map((si) => (
-                <div
-                  key={si.id}
-                  className="flex justify-between items-center text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                      ×{formatNumber(parseFloat(si.quantity))}
-                    </span>
-                    <span className="text-gray-700">{si.item_name}</span>
-                  </div>
-                  <span className="font-semibold text-gray-900 font-mono">
-                    {formatCurrency(si.subtotal)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Action */}
-          <div className="px-6 pb-6">
-            <Button
-              onClick={startNewSale}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-11 text-sm"
-            >
-              {t("newSale")}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+  function choosePaymentMethod(m: PaymentMethod) {
+    setPaymentMethod(m);
+    setErrorMsg("");
+    if (m !== "credit") {
+      setSelectedCustomer(null);
+      setCustomerSearch("");
+      setCustomerResults([]);
+    }
+    if (m === "credit") setTimeout(() => customerSearchRef.current?.focus(), 0);
   }
 
   return (
@@ -940,8 +920,14 @@ export default function POSClient() {
                 onChange={handleTyping}
                 onKeyDown={handleKeyDown}
                 placeholder={t("searchPlaceholder")}
-                className="pl-9 h-11 rounded-lg border-gray-200 bg-gray-50 focus:bg-white text-sm"
+                aria-keyshortcuts="F1"
+                className="pl-9 pr-16 h-11 rounded-lg border-gray-200 bg-gray-50 focus:bg-white text-sm"
               />
+              {multiplier.quantity != null && (
+                <span className="absolute right-9 top-1/2 -translate-y-1/2 rounded-md bg-gray-900 px-1.5 py-0.5 text-xs font-bold text-white tabular-nums">
+                  ×{formatNumber(multiplier.quantity, 3)}
+                </span>
+              )}
               {search && (
                 <button
                   onClick={() => setSearch("")}
@@ -951,6 +937,21 @@ export default function POSClient() {
                 </button>
               )}
             </div>
+
+            {scanNotice && (
+              <p role="alert" className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
+                <PackageX size={14} />
+                {t("codeNotFound", { code: scanNotice })}
+              </p>
+            )}
+            {chargeArmed && (
+              <p role="alert" className="mt-2 flex items-center gap-1.5 rounded-lg bg-green-600 px-2.5 py-2 text-sm font-semibold text-white">
+                {t("pressEnterToCharge", { total: formatCurrency(finalTotal) })}
+              </p>
+            )}
+            {!search.trim() && !scanNotice && !chargeArmed && (
+              <p className="mt-2 ml-1 hidden text-[11px] text-gray-400 md:block">{t("shortcutsHint")}</p>
+            )}
 
             {/* Search result count */}
             {search.trim() && products.length > 0 && (
@@ -1004,9 +1005,10 @@ export default function POSClient() {
               ) : (
                 <ProductGrid
                   products={products}
-                  onAdd={addToCart}
+                  onAdd={(p) => addToCart(p, p.unit_type === "gram" ? null : multiplier.quantity)}
                   t={tDash}
                   tPos={t}
+                  highlightedIndex={highlighted}
                 />
               )
             ) : /* ── CATEGORY PRODUCTS MODE ── */
@@ -1076,6 +1078,10 @@ export default function POSClient() {
 
         {/* ── RIGHT: Cart + Payment ── */}
         <div className="w-[26rem] flex flex-col bg-white overflow-hidden">
+          <div className="px-4 pt-3">
+            <StepBar steps={[t("stepProducts"), t("stepPayment"), t("stepDone")]} current={currentStep} />
+          </div>
+          {receipt && <SaleDoneBanner sale={receipt} onDismiss={dismissReceipt} />}
           {/* Cart header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b bg-white">
             <div className="flex items-center gap-2">
@@ -1119,7 +1125,11 @@ export default function POSClient() {
                 return (
                   <div
                     key={item.itemId}
-                    className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
+                    className={`rounded-lg border px-3 py-2.5 transition-colors duration-500 ${
+                      lastAddedId === item.itemId
+                        ? "border-green-300 bg-green-50"
+                        : "border-gray-100 bg-gray-50"
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       {/* Info */}
@@ -1256,15 +1266,9 @@ export default function POSClient() {
           </div>
 
           {/* ── Payment section ── */}
-          <div ref={paymentRef}>
-            {/* 1. Basic Toggle Button */}
-            <button
-              onClick={togglePaymentSection}
-              className="border border-emerald-600 px-6 py-3 font-semibold rounded-t-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm hover:-translate-y-0.5 transition-all duration-150 p-3.5 text-white leading-none select-none w-full"
-            >
-              {t("openPayment")}
-            </button>
-            {showPaymentSection && (
+          {/* Step 2 is always visible once there is something to charge */}
+          <div ref={paymentRef} className="border-t">
+            {cart.length > 0 && (
               <div className=" bg-white">
                 {/* Total */}
                 <div className="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
@@ -1309,26 +1313,21 @@ export default function POSClient() {
                       >
                         {(
                           [
-                            { method: "cash", Icon: Banknote },
-                            { method: "credit", Icon: Users },
-                            { method: "internal", Icon: Crown },
-                            { method: "card", Icon: CreditCard },
+                            { method: "cash", Icon: Banknote, key: "F2" },
+                            { method: "card", Icon: CreditCard, key: "F3" },
+                            { method: "credit", Icon: Users, key: "F4" },
                             { method: "other", Icon: RefreshCcw },
+                            { method: "internal", Icon: Crown },
                           ] as {
                             method: PaymentMethod;
                             Icon: React.ElementType;
+                            key?: string;
                           }[]
-                        ).map(({ method: m, Icon }) => (
+                        ).map(({ method: m, Icon, key }) => (
                           <button
                             key={m}
-                            onClick={() => {
-                              setPaymentMethod(m);
-                              if (m !== "credit") {
-                                setSelectedCustomer(null);
-                                setCustomerSearch("");
-                                setCustomerResults([]);
-                              }
-                            }}
+                            onClick={() => choosePaymentMethod(m)}
+                            title={key ? `${tSales(`paymentMethod.${m}`)} (${key})` : undefined}
                             className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold border-2 transition-all shrink-0 snap-start w-[calc((100%-18px)/4)] ${
                               paymentMethod === m
                                 ? "border-green-500 bg-green-50/50 text-green-700 shadow-sm"
@@ -1339,6 +1338,11 @@ export default function POSClient() {
                             <span className="overflow-hidden text-ellipsis w-full px-1 text-center">
                               {tSales(`paymentMethod.${m}`)}
                             </span>
+                            {key && (
+                              <kbd className="hidden md:inline rounded border border-current/20 px-1 font-mono text-[9px] font-medium leading-tight opacity-70">
+                                {key}
+                              </kbd>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1404,6 +1408,7 @@ export default function POSClient() {
                             size={13}
                           />
                           <input
+                            ref={customerSearchRef}
                             type="text"
                             value={customerSearch}
                             onChange={(e) => setCustomerSearch(e.target.value)}
@@ -1473,14 +1478,42 @@ export default function POSClient() {
                         {t("amountTendered")}
                       </label>
                       <Input
+                        ref={tenderedRef}
                         type="number"
+                        inputMode="numeric"
                         min={finalTotal ? finalTotal.toString() : "0"}
                         step="1"
                         value={amountTendered}
                         onChange={(e) => setAmountTendered(e.target.value)}
-                        placeholder="0"
-                        className="text-base font-mono h-10 border-gray-200"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCompleteSale();
+                          }
+                        }}
+                        placeholder={formatNumber(finalTotal)}
+                        className="text-lg font-mono h-11 border-gray-200"
                       />
+                      {/* One tap for the usual bills */}
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {suggestCashAmounts(finalTotal).map((amount, i) => (
+                          <button
+                            key={amount}
+                            type="button"
+                            onClick={() => {
+                              setAmountTendered(String(amount));
+                              tenderedRef.current?.focus();
+                            }}
+                            className={`h-9 rounded-lg border text-xs font-semibold tabular-nums transition-colors ${
+                              tenderedNum === amount
+                                ? "border-green-500 bg-green-50 text-green-700"
+                                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                          >
+                            {i === 0 ? t("exactAmount") : formatNumber(amount)}
+                          </button>
+                        ))}
+                      </div>
                       {tenderedNum > 0 && (
                         <div
                           className={`flex justify-between text-sm font-semibold rounded-lg px-3 py-2 ${
@@ -1530,9 +1563,12 @@ export default function POSClient() {
                       canComplete && !submitting
                         ? "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 active:scale-[0.98]"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
+                    } ${chargeArmed ? "ring-4 ring-green-300 animate-pulse" : ""}`}
                   >
                     {submitting ? t("processing") : t("completeSale")}
+                    <kbd className="ml-2 hidden md:inline rounded border border-current/30 px-1.5 font-mono text-[10px] font-medium opacity-80">
+                      F9
+                    </kbd>
                   </button>
                 </div>
               </div>

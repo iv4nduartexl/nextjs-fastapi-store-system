@@ -69,6 +69,11 @@ export async function createSale(input: {
   customer_id?: string;
   subtotal_override?: number;
   subtotal_override_reason?: string;
+  /** One per checkout: resending it returns the same sale instead of a duplicate */
+  request_id?: string;
+  /** Credit sales: down payment saved together with the sale */
+  partial_payment?: number;
+  partial_payment_method?: "cash" | "card" | "transfer";
 }): Promise<{ data?: SaleRead; error?: string }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };

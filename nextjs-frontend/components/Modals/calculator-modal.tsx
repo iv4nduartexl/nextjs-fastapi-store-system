@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { NUMBER_LOCALE } from "@/lib/format-number";
 import { Input } from "../ui/input";
 
 type Op = "+" | "-" | "*" | "/";
@@ -44,8 +45,8 @@ function formatDisplay(value: string) {
   if (!value) return "0";
   const [int, dec] = value.split(".");
   try {
-    const formattedInt = Number(int).toLocaleString();
-    return dec !== undefined ? `${formattedInt}.${dec}` : formattedInt;
+    const formattedInt = Number(int).toLocaleString(NUMBER_LOCALE);
+    return dec !== undefined ? `${formattedInt},${dec}` : formattedInt;
   } catch {
     return value;
   }

@@ -11,7 +11,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from app.database import get_async_session
-from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, Supplier, UnitType
+from app.models import Item, Purchase, PurchaseItem, PurchasePaymentMethod, PurchasePaymentStatus, PurchaseStatus, Supplier, UnitType
 from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import PurchaseCancelRequest, PurchaseCreate, PurchaseRead
 from app.accounts import audit
@@ -35,6 +35,12 @@ async def create_purchase(
 ):
     if not data.items:
         raise HTTPException(status_code=422, detail="Purchase must have at least one item")
+
+    # Supplier credit means nothing was paid now
+    if data.payment_method == PurchasePaymentMethod.credit and data.payment_status != PurchasePaymentStatus.unpaid:
+        raise HTTPException(status_code=422, detail="credit_purchase_must_be_unpaid")
+    if data.payment_status == PurchasePaymentStatus.partial and not (data.paid_amount and data.paid_amount > 0):
+        raise HTTPException(status_code=422, detail="partial_payment_requires_amount")
 
     # Resolve item references for items that link to existing catalog entries
     item_ids = [i.item_id for i in data.items if i.item_id is not None]
@@ -109,7 +115,15 @@ async def create_purchase(
         )
 
     total_cost = (subtotal + tax).quantize(Decimal("0.01"))
-    
+    if data.payment_status == PurchasePaymentStatus.paid:
+        paid_amount = total_cost
+    elif data.payment_status == PurchasePaymentStatus.partial:
+        paid_amount = data.paid_amount.quantize(Decimal("0.01"))
+        if paid_amount >= total_cost:
+            raise HTTPException(status_code=422, detail="partial_payment_must_be_less_than_total")
+    else:
+        paid_amount = Decimal("0")
+
     supplier = await upsert_supplier(data.supplier, tenant, db)
 
     purchase = Purchase(
@@ -123,6 +137,8 @@ async def create_purchase(
         subtotal=subtotal,
         tax=tax,
         total_cost=total_cost,
+        paid_amount=paid_amount,
+        invoice_total=data.invoice_total,
         notes=data.notes,
         purchase_items=line_objs,
     )
@@ -159,8 +175,8 @@ async def create_purchase(
     await db.commit()
 
     # Auto-record in cashbox (only for paid purchases, silent if no session open)
-    from app.models import PurchasePaymentStatus
-    if purchase.payment_status == PurchasePaymentStatus.paid:
+    # Only what was actually paid now leaves the cashbox (all of it, part of it, or nothing)
+    if paid_amount > 0:
         method_map = {"cash": "cash", "card": "card", "transfer": "transfer", "credit": "credit"}
         pmethod = method_map.get(purchase.payment_method.value, "cash")
         if pmethod != "credit":
@@ -169,7 +185,7 @@ async def create_purchase(
                 business_id=tenant.business_id, user_id=tenant.user_id,
                 tx_type=CashboxTransactionType.purchase,
                 direction=CashboxTransactionDirection.out,
-                amount=purchase.total_cost,
+                amount=paid_amount,
                 payment_method=pmethod,
                 reference_type="purchase",
                 reference_id=purchase.id,

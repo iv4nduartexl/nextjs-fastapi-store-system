@@ -5,7 +5,7 @@ from decimal import Decimal
 from fastapi_users import schemas
 from typing import Any, Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from uuid import UUID
 
 from app.models import (
@@ -96,6 +96,13 @@ class SaleCreate(BaseModel):
     customer_id: UUID | None = Field(None, description="Customer id from search_customers; required for credit sales")
     subtotal_override: Decimal | None = Field(None, description="Only when the user asks to charge a different total")
     subtotal_override_reason: str | None = Field(None, description="Required when subtotal_override is set")
+    request_id: str | None = Field(
+        None, max_length=64, description="Unique id per checkout; resending it returns the same sale instead of a duplicate"
+    )
+    partial_payment: Decimal | None = Field(
+        None, description="Credit sales only: amount the customer pays now towards this sale"
+    )
+    partial_payment_method: Literal["cash", "card", "transfer"] = "cash"
 
 
 class SaleItemRead(BaseModel):
@@ -302,14 +309,33 @@ class PurchaseItemCreate(BaseModel):
     )
     item_name: str = Field(description="Product name (always required)")
     unit_type: str = Field("unit", description="unit, gram, liter or pack")
-    quantity: Decimal = Field(description="Amount received (grams for gram products)")
-    total_cost_price: Decimal = Field(description="Total paid for this whole line, not the unit cost")
+    quantity: Decimal = Field(gt=0, description="Amount received (grams for gram products)")
+    total_cost_price: Decimal | None = Field(
+        None, ge=0, description="Total paid for this whole line. Give this or unit_cost"
+    )
+    unit_cost: Decimal | None = Field(
+        None, ge=0, description="Cost per unit (per kg for gram products). Give this or total_cost_price"
+    )
     sku: str | None = None
     category: str | None = None
     sell_price: Decimal | None = Field(None, description="New selling price (per kg for gram products), if the user gives one")
     overwrite_previous_value: bool = Field(
         False, description="True to replace the product's existing price/SKU/category with the values given here"
     )
+
+    @model_validator(mode="after")
+    def _resolve_line_total(self):
+        """Accept the unit cost or the line total (invoices show one or the other)."""
+        if self.unit_cost is None and self.total_cost_price is None:
+            raise ValueError("Give total_cost_price or unit_cost")
+        if self.unit_cost is not None:
+            per = Decimal("1000") if self.unit_type == "gram" else Decimal("1")
+            computed = (self.unit_cost * self.quantity / per).quantize(Decimal("0.01"))
+            if self.total_cost_price is None:
+                self.total_cost_price = computed
+            elif abs(self.total_cost_price - computed) > max(Decimal("1"), computed * Decimal("0.005")):
+                raise ValueError("unit_cost and total_cost_price don't match")
+        return self
 
 
 class PurchaseCreate(BaseModel):
@@ -324,6 +350,12 @@ class PurchaseCreate(BaseModel):
     )
     tax: Decimal = Decimal("0")
     notes: str | None = None
+    paid_amount: Decimal | None = Field(
+        None, description="Required when payment_status is 'partial': the amount paid now"
+    )
+    invoice_total: Decimal | None = Field(
+        None, ge=0, description="Total printed on the supplier's invoice, kept to check the lines against it"
+    )
     items: list[PurchaseItemCreate]
 
 
@@ -354,6 +386,8 @@ class PurchaseRead(BaseModel):
     notes: str | None
     cancelled_at: datetime | None = None
     cancel_reason: str | None = None
+    paid_amount: Decimal | None = None
+    invoice_total: Decimal | None = None
     user_id: UUID | None = None
     user_name: str | None = None
     cancelled_by_name: str | None = None

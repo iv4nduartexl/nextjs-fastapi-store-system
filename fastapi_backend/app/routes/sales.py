@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import apaginate
 from sqlalchemy import func, distinct as sql_distinct, extract, case
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -154,6 +155,12 @@ async def create_sale(
     if not sale_data.items:
         raise HTTPException(status_code=422, detail="Sale must have at least one item")
 
+    # Same checkout sent twice (double key press, slow network retry): return the first sale
+    if sale_data.request_id:
+        existing = await _sale_by_request(db, tenant, sale_data.request_id)
+        if existing is not None:
+            return await _sale_read(db, existing.id)
+
     item_ids = [si.item_id for si in sale_data.items]
     result = await db.execute(
         select(Item).filter(Item.id.in_(item_ids), Item.business_id == tenant.business_id, Item.is_deleted == False)
@@ -255,14 +262,18 @@ async def create_sale(
     change_given = None
 
     # Validate customer for credit sales
+    credit_customer = None
     if sale_data.payment_method == PaymentMethod.credit:
         if not sale_data.customer_id:
             raise HTTPException(status_code=422, detail="customer_id is required for credit sales")
         cust_result = await db.execute(
             select(Customer).filter(Customer.id == sale_data.customer_id, Customer.business_id == tenant.business_id)
         )
-        if not cust_result.scalars().first():
+        credit_customer = cust_result.scalars().first()
+        if not credit_customer:
             raise HTTPException(status_code=404, detail="Customer not found")
+    elif sale_data.partial_payment:
+        raise HTTPException(status_code=422, detail="partial_payment is only allowed for credit sales")
 
     final_total = total
     subtotal_override = sale_data.subtotal_override
@@ -272,6 +283,10 @@ async def create_sale(
         if not (sale_data.subtotal_override_reason or "").strip():
             raise HTTPException(status_code=422, detail="subtotal_override_reason is required when overriding subtotal")
         final_total = subtotal_override.quantize(Decimal("0.01"))
+
+    partial_payment = (sale_data.partial_payment or Decimal("0")).quantize(Decimal("0.01"))
+    if partial_payment < 0 or partial_payment > final_total:
+        raise HTTPException(status_code=422, detail="partial_payment must be between 0 and the sale total")
 
     if (
         sale_data.payment_method == PaymentMethod.cash
@@ -287,6 +302,7 @@ async def create_sale(
         change_given=change_given,
         notes=sale_data.notes,
         customer_id=sale_data.customer_id,
+        request_id=sale_data.request_id,
         sale_items=sale_item_objs,
     )
 
@@ -335,8 +351,6 @@ async def create_sale(
             )
         )
 
-    await db.commit()
-
     # Auto-record in cashbox (silent if no session open)
     if sale_data.payment_method != PaymentMethod.credit:
         method_map = {
@@ -374,12 +388,59 @@ async def create_sale(
             reference_id=sale.id,
             description=None,
         )
-    await db.commit()
 
+    # Down payment on a credit sale, saved together with the sale
+    if credit_customer is not None and partial_payment > 0:
+        db.add(
+            CustomerPayment(
+                customer_id=credit_customer.id,
+                business_id=tenant.business_id,
+                user_id=tenant.user_id,
+                amount=partial_payment,
+                payment_method=sale_data.partial_payment_method,
+                payment_date=datetime.now(timezone.utc),
+                notes=f"#{str(sale.id)[:8]}",
+            )
+        )
+        await record_auto_transaction(
+            db=db,
+            business_id=tenant.business_id, user_id=tenant.user_id,
+            tx_type=CashboxTransactionType.customer_payment,
+            direction=CashboxTransactionDirection.in_,
+            amount=partial_payment,
+            payment_method=sale_data.partial_payment_method,
+            reference_type="customer_payment",
+            reference_id=credit_customer.id,
+            description=f"Payment from {credit_customer.name}",
+        )
+
+    sale_id = sale.id
+    try:
+        await db.commit()
+    except IntegrityError:
+        # A concurrent request with the same request_id won the race; return its sale
+        await db.rollback()
+        existing = await _sale_by_request(db, tenant, sale_data.request_id) if sale_data.request_id else None
+        if existing is None:
+            raise
+        return await _sale_read(db, existing.id)
+
+    return await _sale_read(db, sale_id)
+
+
+async def _sale_by_request(db: AsyncSession, tenant: TenantContext, request_id: str) -> Sale | None:
+    result = await db.execute(
+        select(Sale).where(Sale.business_id == tenant.business_id, Sale.request_id == request_id)
+    )
+    return result.scalars().first()
+
+
+async def _sale_read(db: AsyncSession, sale_id: UUID) -> SaleRead:
     result = await db.execute(
         select(Sale)
-        .filter(Sale.id == sale.id)
+        .filter(Sale.id == sale_id)
         .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
+        .execution_options(populate_existing=True)
     )
     sale = result.scalars().first()
     sr = SaleRead.model_validate(sale)

@@ -163,6 +163,13 @@ export default async function PurchaseDetailPage({ params }: Props) {
               <Clock size={13} />
               {paymentStatus.label}
             </span>
+            {purchase.payment_status === "partial" && purchase.paid_amount != null && (
+              <span className="text-sm text-gray-600">
+                {t("form.paidAmountHint", {
+                  remaining: formatCurrency(parseFloat(purchase.total_cost) - parseFloat(purchase.paid_amount)),
+                })}
+              </span>
+            )}
             {purchase.status !== "cancelled" && (
               <CancelRecordButton kind="purchase" id={purchase.id} />
             )}

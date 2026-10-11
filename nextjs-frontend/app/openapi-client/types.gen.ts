@@ -277,6 +277,17 @@ export type CashboxTypeStatSchema = {
   count: number;
 };
 
+export type CatalogItem = {
+  id: string;
+  name: string;
+  sku: string | null;
+  category: string | null;
+  unit_type: string;
+  price: string | null;
+  stock: string;
+  min_stock: string | null;
+};
+
 export type CategoryPairSchema = {
   categoryA: string;
   categoryB: string;
@@ -760,6 +771,14 @@ export type PurchaseCreate = {
   payment_status?: PurchasePaymentStatus;
   tax?: number | string;
   notes?: string | null;
+  /**
+   * Required when payment_status is 'partial': the amount paid now
+   */
+  paid_amount?: number | string | null;
+  /**
+   * Total printed on the supplier's invoice, kept to check the lines against it
+   */
+  invoice_total?: number | string | null;
   items: Array<PurchaseItemCreate>;
 };
 
@@ -781,9 +800,13 @@ export type PurchaseItemCreate = {
    */
   quantity: number | string;
   /**
-   * Total paid for this whole line, not the unit cost
+   * Total paid for this whole line. Give this or unit_cost
    */
-  total_cost_price: number | string;
+  total_cost_price?: number | string | null;
+  /**
+   * Cost per unit (per kg for gram products). Give this or total_cost_price
+   */
+  unit_cost?: number | string | null;
   sku?: string | null;
   category?: string | null;
   /**
@@ -831,6 +854,8 @@ export type PurchaseRead = {
   notes: string | null;
   cancelled_at?: string | null;
   cancel_reason?: string | null;
+  paid_amount?: string | null;
+  invoice_total?: string | null;
   user_id?: string | null;
   user_name?: string | null;
   cancelled_by_name?: string | null;
@@ -838,6 +863,19 @@ export type PurchaseRead = {
 };
 
 export type PurchaseStatus = "received" | "partial" | "cancelled";
+
+export type PurchasingCatalogItem = {
+  id: string;
+  name: string;
+  sku: string | null;
+  category: string | null;
+  unit_type: string;
+  price: string | null;
+  stock: string;
+  min_stock: string | null;
+  last_unit_cost?: string | null;
+  last_purchased_at?: string | null;
+};
 
 export type QuantityDiscountRuleCreate = {
   name: string;
@@ -885,6 +923,12 @@ export type QuantityDiscountRuleUpdate = {
   free_qty?: number | string | null;
 };
 
+export type RecentSupplier = {
+  id: string;
+  name: string | null;
+  last_purchase_at: string;
+};
+
 export type RevenueTrendSchema = {
   data: Array<TrendPointSchema>;
 };
@@ -919,7 +963,18 @@ export type SaleCreate = {
    * Required when subtotal_override is set
    */
   subtotal_override_reason?: string | null;
+  /**
+   * Unique id per checkout; resending it returns the same sale instead of a duplicate
+   */
+  request_id?: string | null;
+  /**
+   * Credit sales only: amount the customer pays now towards this sale
+   */
+  partial_payment?: number | string | null;
+  partial_payment_method?: "cash" | "card" | "transfer";
 };
+
+export type partial_payment_method = "cash" | "card" | "transfer";
 
 export type SaleItemCreate = {
   /**
@@ -1078,6 +1133,15 @@ export type UserRead = {
   business_id?: string | null;
   role?: string | null;
   must_change_password?: boolean;
+};
+
+export type UsualProduct = {
+  item_id: string;
+  name: string;
+  unit_type: string;
+  times_bought: number;
+  last_quantity: string;
+  last_unit_cost: string;
 };
 
 export type ValidationError = {
@@ -2019,3 +2083,25 @@ export type ListAuditLogsData = {
 export type ListAuditLogsResponse = AuditLogPage;
 
 export type ListAuditLogsError = HTTPValidationError;
+
+export type PosCatalogResponse = Array<CatalogItem>;
+
+export type PosCatalogError = unknown;
+
+export type PurchasingCatalogResponse = Array<PurchasingCatalogItem>;
+
+export type PurchasingCatalogError = unknown;
+
+export type RecentSuppliersResponse = Array<RecentSupplier>;
+
+export type RecentSuppliersError = unknown;
+
+export type UsualProductsData = {
+  path: {
+    supplier_id: string;
+  };
+};
+
+export type UsualProductsResponse = Array<UsualProduct>;
+
+export type UsualProductsError = HTTPValidationError;

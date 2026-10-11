@@ -4,15 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { X } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
-import type { ItemRead } from "@/app/openapi-client";
+import type { PosProduct } from "@/lib/pos/catalog-search";
 import { formatNumber } from "@/lib/format-number";
 import { Button } from "../ui/button";
 
 interface ProductQuantityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (product: ItemRead, quantity: number) => void;
-  itemSelected: null | ItemRead;
+  onConfirm: (product: PosProduct, quantity: number) => void;
+  itemSelected: null | PosProduct;
 }
 
 const ProductQuantityModal: React.FC<ProductQuantityModalProps> = ({

@@ -5373,6 +5373,151 @@
           }
         }
       }
+    },
+    "/pos/catalog": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "summary": "Pos Catalog",
+        "description": "The business's active products with only the fields the POS needs, in one request.",
+        "operationId": "pos_catalog",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogItem"
+                  },
+                  "type": "array",
+                  "title": "Response Pos-Pos Catalog"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/purchasing/catalog": {
+      "get": {
+        "tags": [
+          "purchasing"
+        ],
+        "summary": "Purchasing Catalog",
+        "description": "Active products with their last purchase cost, for the in-memory product search.",
+        "operationId": "purchasing_catalog",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PurchasingCatalogItem"
+                  },
+                  "type": "array",
+                  "title": "Response Purchasing-Purchasing Catalog"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/purchasing/suppliers/recent": {
+      "get": {
+        "tags": [
+          "purchasing"
+        ],
+        "summary": "Recent Suppliers",
+        "operationId": "recent_suppliers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RecentSupplier"
+                  },
+                  "type": "array",
+                  "title": "Response Purchasing-Recent Suppliers"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/purchasing/suppliers/{supplier_id}/usual-products": {
+      "get": {
+        "tags": [
+          "purchasing"
+        ],
+        "summary": "Usual Products",
+        "description": "What this supplier usually brings, with the last quantity and cost, for one-tap lines.",
+        "operationId": "usual_products",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supplier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Supplier Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsualProduct"
+                  },
+                  "title": "Response Purchasing-Usual Products"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6888,6 +7033,86 @@
           "count"
         ],
         "title": "CashboxTypeStatSchema"
+      },
+      "CatalogItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "unit_type": {
+            "type": "string",
+            "title": "Unit Type"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stock"
+          },
+          "min_stock": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Stock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sku",
+          "category",
+          "unit_type",
+          "price",
+          "stock",
+          "min_stock"
+        ],
+        "title": "CatalogItem"
       },
       "CategoryPairSchema": {
         "properties": {
@@ -9544,6 +9769,39 @@
             ],
             "title": "Notes"
           },
+          "paid_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Amount",
+            "description": "Required when payment_status is 'partial': the amount paid now"
+          },
+          "invoice_total": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Total",
+            "description": "Total printed on the supplier's invoice, kept to check the lines against it"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/PurchaseItemCreate"
@@ -9587,7 +9845,8 @@
           "quantity": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "number",
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "string",
@@ -9600,15 +9859,36 @@
           "total_cost_price": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "number",
+                "minimum": 0.0
               },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
               }
             ],
             "title": "Total Cost Price",
-            "description": "Total paid for this whole line, not the unit cost"
+            "description": "Total paid for this whole line. Give this or unit_cost"
+          },
+          "unit_cost": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Cost",
+            "description": "Cost per unit (per kg for gram products). Give this or total_cost_price"
           },
           "sku": {
             "anyOf": [
@@ -9658,8 +9938,7 @@
         "type": "object",
         "required": [
           "item_name",
-          "quantity",
-          "total_cost_price"
+          "quantity"
         ],
         "title": "PurchaseItemCreate"
       },
@@ -9856,6 +10135,30 @@
             ],
             "title": "Cancel Reason"
           },
+          "paid_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Amount"
+          },
+          "invoice_total": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Total"
+          },
           "user_id": {
             "anyOf": [
               {
@@ -9924,6 +10227,110 @@
           "cancelled"
         ],
         "title": "PurchaseStatus"
+      },
+      "PurchasingCatalogItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "unit_type": {
+            "type": "string",
+            "title": "Unit Type"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stock"
+          },
+          "min_stock": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Stock"
+          },
+          "last_unit_cost": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Unit Cost"
+          },
+          "last_purchased_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Purchased At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sku",
+          "category",
+          "unit_type",
+          "price",
+          "stock",
+          "min_stock"
+        ],
+        "title": "PurchasingCatalogItem"
       },
       "QuantityDiscountRuleCreate": {
         "properties": {
@@ -10344,6 +10751,38 @@
         "type": "object",
         "title": "QuantityDiscountRuleUpdate"
       },
+      "RecentSupplier": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "last_purchase_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Purchase At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "last_purchase_at"
+        ],
+        "title": "RecentSupplier"
+      },
       "RevenueTrendSchema": {
         "properties": {
           "data": {
@@ -10459,6 +10898,45 @@
             ],
             "title": "Subtotal Override Reason",
             "description": "Required when subtotal_override is set"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id",
+            "description": "Unique id per checkout; resending it returns the same sale instead of a duplicate"
+          },
+          "partial_payment": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partial Payment",
+            "description": "Credit sales only: amount the customer pays now towards this sale"
+          },
+          "partial_payment_method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "card",
+              "transfer"
+            ],
+            "title": "Partial Payment Method",
+            "default": "cash"
           }
         },
         "type": "object",
@@ -11348,6 +11826,47 @@
           "email"
         ],
         "title": "UserRead"
+      },
+      "UsualProduct": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "unit_type": {
+            "type": "string",
+            "title": "Unit Type"
+          },
+          "times_bought": {
+            "type": "integer",
+            "title": "Times Bought"
+          },
+          "last_quantity": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Last Quantity"
+          },
+          "last_unit_cost": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Last Unit Cost"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "name",
+          "unit_type",
+          "times_bought",
+          "last_quantity",
+          "last_unit_cost"
+        ],
+        "title": "UsualProduct"
       },
       "ValidationError": {
         "properties": {

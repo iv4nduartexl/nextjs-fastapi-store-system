@@ -298,3 +298,17 @@ def test_every_business_route_requires_tenant():
         and not _depends_on(route.dependant, require_superuser)
     ]
     assert unprotected_admin == []
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_pos_catalog_is_scoped_and_open_to_cashiers(test_client, db_session, two_businesses):
+    a, b = two_businesses
+    db_session.add(Item(name="Deleted Cola", business_id=b["business"].id, user_id=b["user"].id, is_deleted=True))
+    await db_session.commit()
+
+    mine = (await test_client.get("/pos/catalog", headers=b["headers"])).json()
+    assert [p["name"] for p in mine] == ["Secret Cola"]
+    assert mine[0]["sku"] == "SKU-1" and mine[0]["unit_type"] == "unit"
+
+    # Another business sees none of it
+    assert (await test_client.get("/pos/catalog", headers=a["headers"])).json() == []

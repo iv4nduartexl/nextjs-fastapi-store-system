@@ -268,6 +268,15 @@ import type {
   ListAuditLogsData,
   ListAuditLogsError,
   ListAuditLogsResponse,
+  PosCatalogError,
+  PosCatalogResponse,
+  PurchasingCatalogError,
+  PurchasingCatalogResponse,
+  RecentSuppliersError,
+  RecentSuppliersResponse,
+  UsualProductsData,
+  UsualProductsError,
+  UsualProductsResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -1751,5 +1760,72 @@ export const listAuditLogs = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/admin/audit-logs",
+  });
+};
+
+/**
+ * Pos Catalog
+ * The business's active products with only the fields the POS needs, in one request.
+ */
+export const posCatalog = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PosCatalogResponse,
+    PosCatalogError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/pos/catalog",
+  });
+};
+
+/**
+ * Purchasing Catalog
+ * Active products with their last purchase cost, for the in-memory product search.
+ */
+export const purchasingCatalog = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PurchasingCatalogResponse,
+    PurchasingCatalogError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchasing/catalog",
+  });
+};
+
+/**
+ * Recent Suppliers
+ */
+export const recentSuppliers = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    RecentSuppliersResponse,
+    RecentSuppliersError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchasing/suppliers/recent",
+  });
+};
+
+/**
+ * Usual Products
+ * What this supplier usually brings, with the last quantity and cost, for one-tap lines.
+ */
+export const usualProducts = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsualProductsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    UsualProductsResponse,
+    UsualProductsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchasing/suppliers/{supplier_id}/usual-products",
   });
 };

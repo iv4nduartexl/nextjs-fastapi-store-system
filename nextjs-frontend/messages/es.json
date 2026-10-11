@@ -180,6 +180,19 @@
     "pos": {
       "title": "Nueva Venta",
       "searchPlaceholder": "Buscar producto o escanear código…",
+      "exactAmount": "Exacto",
+      "pressEnterToCharge": "Presiona Enter otra vez para cobrar {total} · Esc cancela",
+      "codeNotFound": "Código “{code}” no encontrado",
+      "shortcutsHint": "Escanea o escribe · ↑↓ Enter agrega · 3* = cantidad · +/− Supr última línea · F2 efectivo · F3 tarjeta · F4 crédito · F9 o Enter dos veces (búsqueda vacía) cobra",
+      "stepProducts": "Productos",
+      "stepPayment": "Cobro",
+      "stepDone": "Listo",
+      "ticket": "Ticket",
+      "ticketThanks": "¡Gracias por su compra!",
+      "saleDone": "Venta de {total} registrada",
+      "print": "Imprimir",
+      "viewSale": "Ver",
+      "dismiss": "Cerrar",
       "noProducts": "No se encontraron productos.",
       "noPrice": "Sin precio",
       "cart": "Carrito",
@@ -287,6 +300,220 @@
     "deleting": "Eliminando..."
   },
   "purchases": {
+    "wizard": {
+      "steps": {
+        "supplier": "Proveedor",
+        "products": "Productos",
+        "payment": "Pago",
+        "review": "Revisar"
+      },
+      "nav": {
+        "next": "Siguiente: {step}",
+        "back": "Atrás",
+        "exit": "Salir",
+        "submit": "Registrar compra",
+        "submitAnyway": "Registrar de todos modos",
+        "continueWithoutSupplier": "Continuar sin proveedor"
+      },
+      "blocked": {
+        "chooseSupplier": "Elige un proveedor o marca «Sin proveedor»",
+        "invalidDate": "Elige la fecha de la compra",
+        "addProducts": "Agrega al menos un producto",
+        "lineQuantity": "Falta la cantidad en algún producto",
+        "lineCost": "Falta el costo en algún producto",
+        "lineName": "Falta el nombre de un producto nuevo",
+        "newProductPrice": "Los productos nuevos necesitan precio de venta",
+        "choosePayment": "Elige cómo lo pagaste",
+        "partialAmount": "Indica cuánto pagaste (menos que el total)",
+        "taxAmount": "Indica el monto del impuesto"
+      },
+      "submitError": "No se pudo registrar la compra. Inténtalo de nuevo.",
+      "resume": {
+        "message": "Tienes una compra sin terminar de {supplier} ({count, plural, =1 {1 producto} other {# productos}})",
+        "continue": "Continuar",
+        "discard": "Descartar"
+      },
+      "totals": {
+        "lines": "{count, plural, =1 {1 producto} other {# productos}}",
+        "matches": "Cuadra con la factura",
+        "invoice": "Factura {total}",
+        "missing": "faltan {amount}",
+        "over": "sobran {amount}"
+      },
+      "done": {
+        "title": "Compra registrada",
+        "summary": "{count, plural, =1 {1 producto} other {# productos}} · {total}",
+        "newSameSupplier": "Nueva compra de {supplier}",
+        "newPurchase": "Nueva compra",
+        "view": "Ver compra",
+        "products": "Ir a productos"
+      },
+      "supplier": {
+        "title": "¿A quién le compraste?",
+        "subtitle": "Elige el proveedor de esta compra.",
+        "chosen": "Proveedor",
+        "noSupplier": "Sin proveedor",
+        "change": "Cambiar",
+        "recent": "Recientes",
+        "lastPurchase": "Última compra:",
+        "searchPlaceholder": "Buscar proveedor…",
+        "createNew": "Agregar «{name}» como proveedor nuevo",
+        "date": "Fecha de la compra",
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "invoiceNumber": "N° de factura",
+        "optional": "opcional",
+        "invoiceNumberHint": "Te ayuda a encontrarla después.",
+        "invoiceTotal": "Total de la factura",
+        "recommended": "recomendado",
+        "invoiceTotalHint": "Lo usamos para avisarte si algo no cuadra.",
+        "noSupplierHint": "¿La compra no tiene proveedor? Usa «Continuar sin proveedor» abajo."
+      },
+      "products": {
+        "title": "¿Qué llegó?",
+        "subtitle": "Agrega cada producto de la factura: cantidad y costo.",
+        "addPlaceholder": "Escribe o escanea un producto…",
+        "groupCatalog": "En tu catálogo · suma stock",
+        "groupCreate": "Crear producto nuevo",
+        "stockShort": "stock {stock}",
+        "lastCostShort": "último costo {cost}",
+        "tipsTitle": "Cómo cargar productos",
+        "tipLink": "Si ya vendes el producto, búscalo: la compra suma stock a ese producto.",
+        "tipCreate": "Si es nuevo, escribe su nombre y elige «Crear producto nuevo».",
+        "tipCheck": "Carga el total de la factura en el paso 1 y te avisamos si algo no cuadra.",
+        "tipsDismiss": "Entendido",
+        "usualTitle": "Sueles comprarle a {supplier}",
+        "linesTitle": "{count, plural, =1 {1 producto} other {# productos}} en esta compra",
+        "costModeLabel": "Cómo viene el costo en la factura",
+        "costMode": {
+          "unit": "Costo por unidad",
+          "line": "Total de la línea"
+        },
+        "empty": "Busca un producto que ya vendes para <b>sumar stock</b>, o escribe uno nuevo para <b>crearlo</b>."
+      },
+      "line": {
+        "badgeLinked": "🔗 Vinculado: suma stock",
+        "badgeNew": "✨ Nuevo: se creará",
+        "linkedStock": "🔗 Vinculado: +{added} (stock {before} → {after})",
+        "remove": "Quitar",
+        "unnamed": "Producto nuevo sin nombre",
+        "name": "Nombre del producto",
+        "didYouMean": "¿Es «{name}»? Ya existe en tu catálogo.",
+        "useExisting": "Usar ese producto",
+        "howSold": "¿Cómo se vende?",
+        "unitType": {
+          "unit": "Por unidad",
+          "gram": "Por peso",
+          "liter": "Por litro",
+          "pack": "Por paquete"
+        },
+        "unitHint": {
+          "unit": "Se vende de a 1",
+          "gram": "Se pesa, precio por kg",
+          "liter": "Precio por litro",
+          "pack": "Se vende el paquete"
+        },
+        "unitShort": {
+          "unit": "u.",
+          "gram": "kg",
+          "liter": "L",
+          "pack": "paq."
+        },
+        "stockNow": "Stock actual: {stock}",
+        "lastCost": "último costo {cost}",
+        "quantity": "Cantidad",
+        "lineTotal": "Total de la línea",
+        "lineTotalIs": "= {total} en total",
+        "unitCostIs": "= {cost} por {unit}",
+        "sellPrice": "Precio de venta",
+        "was": "antes {price}",
+        "editPrice": "Cambiar precio",
+        "loss": "El costo es mayor que el precio de venta: venderías a pérdida",
+        "margin": "Margen {percent}%",
+        "suggestNew": "Usar {price} (tu margen habitual)",
+        "suggestRaise": "¿Subir a {price} para mantener tu margen?",
+        "moreData": "Más datos (opcional)",
+        "category": "Categoría",
+        "optional": "opcional",
+        "barcode": "Código de barras",
+        "barcodeHint": "Escanéalo o escríbelo",
+        "done": "Listo",
+        "missingQuantity": "falta cantidad",
+        "missingCost": "falta costo",
+        "errors": {
+          "name": "Escribe el nombre del producto.",
+          "quantity": "Indica una cantidad mayor que 0.",
+          "cost": "Indica el costo.",
+          "price": "Indica el precio de venta para poder venderlo."
+        },
+        "in": "en {unit}",
+        "per": "por {unit}",
+        "cost": "Costo",
+        "enterHint": "Enter = Listo"
+      },
+      "payment": {
+        "title": "¿Cómo lo pagaste?",
+        "subtitle": "Total de la compra: {total}",
+        "kind": {
+          "paid": "Pagué todo",
+          "partial": "Pagué una parte",
+          "later": "Pago después (a crédito)"
+        },
+        "kindHint": {
+          "paid": "Se pagó la factura completa",
+          "partial": "Diste una entrega y queda saldo",
+          "later": "No se pagó nada ahora"
+        },
+        "paidAmount": "¿Cuánto pagaste ahora?",
+        "paidAmountInvalid": "Debe ser mayor que 0 y menor que el total ({total}).",
+        "stillOwed": "Queda debiendo {amount} al proveedor",
+        "method": "¿Con qué pagaste?",
+        "methods": {
+          "cash": "Efectivo",
+          "card": "Tarjeta",
+          "transfer": "Transferencia"
+        },
+        "cashboxOut": "Saldrán {amount} de la caja.",
+        "cashboxClosed": "No hay caja abierta: el pago no se registrará en la caja.",
+        "openCashbox": "Abrir caja",
+        "laterInfo": "No sale dinero de la caja. La compra queda como no pagada.",
+        "hasTax": "La factura trae impuestos aparte",
+        "tax": "Monto de impuestos",
+        "notes": "Nota",
+        "optional": "opcional"
+      },
+      "review": {
+        "title": "¿Está todo bien?",
+        "subtitle": "Revisa lo que va a pasar antes de registrar la compra.",
+        "warningsTitle": "{count, plural, =1 {Una cosa para revisar} other {# cosas para revisar}}",
+        "check": "Revisar",
+        "warnings": {
+          "loss": "{name}: el costo es mayor que el precio de venta.",
+          "costJump": "{name}: el costo cambió mucho ({last} → {now}). ¿Está bien?",
+          "similarName": "«{name}» se parece a «{existing}», que ya existe.",
+          "invoiceMissing": "Faltan {amount} para llegar al total de la factura.",
+          "invoiceOver": "Los productos suman {amount} más que la factura."
+        },
+        "supplierTitle": "Proveedor",
+        "noSupplier": "Sin proveedor",
+        "invoiceNo": "Factura {number}",
+        "edit": "Editar",
+        "productsTitle": "Productos ({count})",
+        "newTag": "NUEVO",
+        "tax": "Impuestos",
+        "total": "Total",
+        "invoiceTotal": "Total de la factura",
+        "emptyTotal": "El total es 0: revisa los costos.",
+        "catalogTitle": "Cambios en tu catálogo",
+        "newProducts": "{count, plural, =1 {Se creará 1 producto nuevo} other {Se crearán # productos nuevos}}",
+        "sellsAt": "se venderá a {price}",
+        "priceChanges": "Precios de venta que se actualizan (desmarca para no cambiar)",
+        "stockChanges": "Stock que se suma",
+        "paymentTitle": "Pago",
+        "paidAll": "Pagado todo con {method}",
+        "paidPartial": "Pagado {amount} con {method}"
+      }
+    },
     "title": "Compras",
     "subtitle": "Registra compras a proveedores y controla los costos del inventario.",
     "newPurchase": "Nueva Compra",
@@ -329,6 +556,15 @@
       "cancelled": "Cancelado"
     },
     "form": {
+      "creditIsUnpaid": "Crédito del proveedor: no se paga nada ahora, se guarda como no pagado.",
+      "paidAmount": "Monto pagado ahora",
+      "paidAmountHint": "Queda debiendo al proveedor: {remaining}",
+      "paidAmountInvalid": "Debe ser mayor que 0 y menor que el total ({total}).",
+      "errors": {
+        "credit_purchase_must_be_unpaid": "Una compra a crédito del proveedor no puede marcarse como pagada.",
+        "partial_payment_requires_amount": "Ingresa el monto pagado ahora para un pago parcial.",
+        "partial_payment_must_be_less_than_total": "Un pago parcial debe ser menor que el total; usa \"Pagado\"."
+      },
       "title": "Nueva Compra",
       "subtitle": "Registra una compra a proveedor. El stock se actualizará automáticamente.",
       "supplierSection": "Proveedor y Factura",
@@ -1025,6 +1261,7 @@
       "cashier": "Cajero"
     },
     "changePassword": "Cambiar contraseña",
+    "calculator": "Calculadora",
     "viewingAs": "Estás viendo la app como {name} ({business})",
     "exitViewAs": "Salir",
     "setNewPasswordTitle": "Crea tu contraseña",

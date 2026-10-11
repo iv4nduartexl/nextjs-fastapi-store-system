@@ -1,7 +1,8 @@
 "use server";
 
 import { resetForgotPassword, resetResetPassword } from "@/app/clientService";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/routing";
 import { passwordResetConfirmSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";
 
@@ -54,11 +55,12 @@ export async function passwordResetConfirm(
     if (error) {
       return { server_validation_error: getErrorMessage(error) };
     }
-    redirect(`/login`);
   } catch (err) {
     console.error("Password reset confirmation error:", err);
     return {
       server_error: "An unexpected error occurred. Please try again later.",
     };
   }
+  // redirect() throws, so it must stay outside the try/catch
+  redirect({ href: "/login", locale: await getLocale() });
 }

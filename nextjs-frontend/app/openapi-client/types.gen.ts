@@ -427,6 +427,11 @@ export type PurchaseAnalyticsSchema = {
   byPaymentStatus: Array<PurchasePaymentStatusSchema>;
 };
 
+export type PurchaseCancelRequest = {
+  reason?: string | null;
+  force?: boolean;
+};
+
 export type PurchaseCreate = {
   supplier?: SupplierCreate | null;
   reference_number?: string | null;
@@ -483,6 +488,8 @@ export type PurchaseRead = {
   tax: string;
   total_cost: string;
   notes: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
   purchase_items: Array<PurchaseItemRead>;
 };
 
@@ -538,6 +545,10 @@ export type RevenueTrendSchema = {
   data: Array<TrendPointSchema>;
 };
 
+export type SaleCancelRequest = {
+  reason?: string | null;
+};
+
 export type SaleCreate = {
   items: Array<SaleItemCreate>;
   payment_method?: PaymentMethod;
@@ -581,6 +592,8 @@ export type SaleRead = {
   notes: string | null;
   customer_id?: string | null;
   customer_name?: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
   sale_items: Array<SaleItemRead>;
 };
 
@@ -730,7 +743,9 @@ export type UsersPatchCurrentUserData = {
 export type UsersPatchCurrentUserResponse = UserRead;
 
 export type UsersPatchCurrentUserError =
-  ErrorModel | unknown | HTTPValidationError;
+  | ErrorModel
+  | unknown
+  | HTTPValidationError;
 
 export type UsersUserData = {
   path: {
@@ -899,6 +914,7 @@ export type GetSaleResponse = SaleRead;
 export type GetSaleError = HTTPValidationError;
 
 export type CancelSaleData = {
+  body?: SaleCancelRequest | null;
   path: {
     sale_id: string;
   };
@@ -1131,6 +1147,17 @@ export type GetPurchaseData = {
 export type GetPurchaseResponse = PurchaseRead;
 
 export type GetPurchaseError = HTTPValidationError;
+
+export type CancelPurchaseData = {
+  body?: PurchaseCancelRequest | null;
+  path: {
+    purchase_id: string;
+  };
+};
+
+export type CancelPurchaseResponse = PurchaseRead;
+
+export type CancelPurchaseError = HTTPValidationError;
 
 export type ListCustomersData = {
   query?: {

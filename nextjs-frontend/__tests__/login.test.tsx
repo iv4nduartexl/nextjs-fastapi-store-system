@@ -1,6 +1,7 @@
 import { login } from "@/components/actions/login-action";
 import { authJwtLogin } from "@/app/clientService";
 import { cookies } from "next/headers";
+import { redirect } from "@/i18n/routing";
 
 jest.mock("../app/clientService", () => ({
   authJwtLogin: jest.fn(),
@@ -11,8 +12,12 @@ jest.mock("next/headers", () => {
   return { cookies: jest.fn().mockResolvedValue({ set: mockSet }) };
 });
 
-jest.mock("next/navigation", () => ({
+jest.mock("@/i18n/routing", () => ({
   redirect: jest.fn(),
+}));
+
+jest.mock("next-intl/server", () => ({
+  getLocale: jest.fn().mockResolvedValue("es"),
 }));
 
 describe("login action", () => {
@@ -38,7 +43,12 @@ describe("login action", () => {
     });
 
     expect(cookies).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith("accessToken", "1245token");
+    expect(mockSet).toHaveBeenCalledWith(
+      "accessToken",
+      "1245token",
+      expect.objectContaining({ httpOnly: true }),
+    );
+    expect(redirect).toHaveBeenCalledWith({ href: "/dashboard", locale: "es" });
   });
 
   it("should should return an error if the server validation fails", async () => {

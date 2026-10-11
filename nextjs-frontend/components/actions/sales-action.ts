@@ -37,6 +37,8 @@ export interface SaleRead {
   customer_id: string | null;
   customer_name: string | null;
   customer_partial_payment: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
   sale_items: SaleItemRead[];
 }
 
@@ -82,8 +84,8 @@ export async function createSale(input: {
   }
 
   const data: SaleRead = await res.json();
-  revalidatePath("/products");
-  revalidatePath("/sales");
+  revalidatePath("/[locale]/products", "page");
+  revalidatePath("/[locale]/sales", "page");
   return { data };
 }
 
@@ -127,26 +129,35 @@ export async function fetchSale(
   return res.json();
 }
 
-export async function cancelCreditSale(
+export async function cancelSale(
   saleId: string,
-): Promise<{ data?: SaleRead; error?: string }> {
+  reason?: string,
+): Promise<{ data?: SaleRead; error?: string; code?: "already_cancelled" }> {
   const token = await getToken();
   if (!token) return { error: "Not authenticated" };
 
   const res = await fetch(`${API}/sales/${saleId}/cancel`, {
     method: "POST",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ reason: reason || null }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    return { error: err.detail ?? `Error ${res.status}` };
+    return {
+      error: typeof err.detail === "string" ? err.detail : `Error ${res.status}`,
+      code: res.status === 409 ? "already_cancelled" : undefined,
+    };
   }
 
   const data: SaleRead = await res.json();
-  revalidatePath("/sales");
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/products", "page");
+  revalidatePath("/[locale]/sales", "page");
+  revalidatePath("/[locale]/sales/[id]", "page");
+  revalidatePath("/[locale]/customers", "page");
+  revalidatePath("/[locale]/cashbox", "page");
   return { data };
 }

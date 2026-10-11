@@ -1,6 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/routing";
 
 import { registerRegister } from "@/app/clientService";
 
@@ -41,5 +42,5 @@ export async function register(prevState: unknown, formData: FormData) {
       server_error: "An unexpected error occurred. Please try again later.",
     };
   }
-  redirect(`/login`);
+  redirect({ href: "/login", locale: await getLocale() });
 }

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/routing";
 import {
   Wallet,
   TrendingUp,
@@ -28,6 +27,7 @@ import {
   Unlock,
   BarChart3,
   Crown,
+  Undo2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,8 @@ const TX_ICONS: Record<string, React.ElementType> = {
   customer_payment: Users,
   opening: Wallet,
   owner_withdrawal: Crown,
+  sale_cancel: Undo2,
+  purchase_cancel: Undo2,
 };
 
 const METHOD_ICONS: Record<string, React.ElementType> = {

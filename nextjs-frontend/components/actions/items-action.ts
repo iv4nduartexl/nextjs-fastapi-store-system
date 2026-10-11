@@ -88,7 +88,7 @@ export async function removeItem(id: string) {
   if (error) {
     return { message: error };
   }
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
 }
 
 export async function updateItem(id: string, data: ItemUpdate) {
@@ -116,7 +116,7 @@ export async function updateItem(id: string, data: ItemUpdate) {
     };
   }
 
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
   return { data: await res.json() };
 }
 
@@ -171,7 +171,7 @@ export async function createItemDiscountRule(
     return { error: err.detail ?? `Error ${res.status}` };
   }
 
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
   return { data: await res.json() };
 }
 
@@ -200,7 +200,7 @@ export async function updateDiscountRule(
     return { error: err.detail ?? `Error ${res.status}` };
   }
 
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
   return { data: await res.json() };
 }
 
@@ -226,7 +226,7 @@ export async function deleteDiscountRule(
     return { error: err.detail ?? `Error ${res.status}` };
   }
 
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
   return {};
 }
 

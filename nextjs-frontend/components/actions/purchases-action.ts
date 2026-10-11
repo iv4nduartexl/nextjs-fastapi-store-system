@@ -64,7 +64,23 @@ export interface PurchaseRead {
   tax: string;
   total_cost: string;
   notes: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
   purchase_items: PurchaseItemRead[];
+}
+
+export interface NegativeStockItem {
+  id: string;
+  name: string;
+  stock: number;
+  quantity: number;
+}
+
+export interface CancelPurchaseResult {
+  data?: PurchaseRead;
+  error?: string;
+  code?: "already_cancelled" | "negative_stock";
+  items?: NegativeStockItem[];
 }
 
 export interface PurchasesPage {
@@ -107,8 +123,8 @@ export async function createPurchase(
   }
 
   const data: PurchaseRead = await res.json();
-  revalidatePath("/products");
-  revalidatePath("/purchases");
+  revalidatePath("/[locale]/products", "page");
+  revalidatePath("/[locale]/purchases", "page");
   return { data };
 }
 
@@ -152,4 +168,40 @@ export async function fetchPurchase(
 
   if (!res.ok) return { message: `Error ${res.status}` };
   return res.json();
+}
+
+export async function cancelPurchase(
+  purchaseId: string,
+  reason?: string,
+  force: boolean = false,
+): Promise<CancelPurchaseResult> {
+  const token = await getToken();
+  if (!token) return { error: "Not authenticated" };
+
+  const res = await fetch(`${API}/purchases/${purchaseId}/cancel`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ reason: reason || null, force }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const detail = err.detail;
+    if (detail && typeof detail === "object") {
+      return { error: detail.message, code: detail.code, items: detail.items };
+    }
+    return {
+      error: typeof detail === "string" ? detail : `Error ${res.status}`,
+    };
+  }
+
+  const data: PurchaseRead = await res.json();
+  revalidatePath("/[locale]/products", "page");
+  revalidatePath("/[locale]/purchases", "page");
+  revalidatePath("/[locale]/purchases/[id]", "page");
+  revalidatePath("/[locale]/cashbox", "page");
+  return { data };
 }

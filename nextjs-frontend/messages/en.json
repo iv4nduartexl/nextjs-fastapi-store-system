@@ -429,7 +429,8 @@
     "required": "required",
     "logout": "Logout",
     "profile": "Profile",
-    "createOption": "Create \"{name}\""
+    "createOption": "Create \"{name}\"",
+    "itemsPerPage": "Items per page:"
   },
   "customers": {
     "title": "Customers",
@@ -803,7 +804,9 @@
       "opening": "Opening Balance",
       "opening_balance": "Opening Balance",
       "credit_sale": "Credit Sale",
-      "owner_withdrawal": "Owner Withdrawal"
+      "owner_withdrawal": "Owner Withdrawal",
+      "sale_cancel": "Sale cancelled",
+      "purchase_cancel": "Purchase cancelled"
     },
     "txDescription": {
       "paymentFrom": "Payment from {name}"
@@ -839,5 +842,25 @@
       "loading": "Loading\u2026",
       "backTo": "Cash Box"
     }
+  },
+  "cancelRecord": {
+    "saleButton": "Cancel sale",
+    "purchaseButton": "Cancel purchase",
+    "saleTitle": "Cancel this sale?",
+    "purchaseTitle": "Cancel this purchase?",
+    "saleDescription": "The products go back into stock and any cashbox entry is reversed in the currently open session.",
+    "purchaseDescription": "The products are removed from stock and any cashbox payment is reversed in the currently open session. Price, SKU or category changes made by this purchase are not undone.",
+    "reasonLabel": "Reason (optional)",
+    "reasonPlaceholder": "e.g. wrong product, duplicated entry…",
+    "confirm": "Confirm cancellation",
+    "keep": "Keep it",
+    "negativeStockTitle": "Some products would end up with negative stock",
+    "negativeStockDescription": "Part of this purchase has already been sold. If you continue, these products will have negative stock:",
+    "negativeStockLine": "current stock {stock}, purchased {quantity}",
+    "forceConfirm": "Cancel anyway",
+    "alreadyCancelled": "This record was already cancelled.",
+    "genericError": "Could not cancel. Please try again.",
+    "cancelledOn": "Cancelled on",
+    "reason": "Reason"
   }
 }

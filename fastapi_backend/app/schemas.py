@@ -112,9 +112,15 @@ class SaleRead(BaseModel):
     notes: str | None
     customer_id: UUID | None = None
     customer_name: str | None = None
+    cancelled_at: datetime | None = None
+    cancel_reason: str | None = None
     sale_items: list[SaleItemRead]
 
     model_config = {"from_attributes": True}
+
+
+class SaleCancelRequest(BaseModel):
+    reason: str | None = None
 
 
 class QuantityDiscountRuleRead(BaseModel):
@@ -319,9 +325,17 @@ class PurchaseRead(BaseModel):
     tax: Decimal
     total_cost: Decimal
     notes: str | None
+    cancelled_at: datetime | None = None
+    cancel_reason: str | None = None
     purchase_items: list[PurchaseItemRead]
 
     model_config = {"from_attributes": True}
+
+
+class PurchaseCancelRequest(BaseModel):
+    reason: str | None = None
+    # Allow the cancel even if it leaves some products with negative stock
+    force: bool = False
 
 
 class CashboxTransactionRead(BaseModel):

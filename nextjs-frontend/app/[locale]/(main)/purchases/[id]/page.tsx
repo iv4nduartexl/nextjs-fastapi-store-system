@@ -22,6 +22,7 @@ import {
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
 import LocalDateSpan from "@/lib/LocalDateSpan";
+import { CancelRecordButton } from "@/components/cancel-record-button";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -31,6 +32,7 @@ export default async function PurchaseDetailPage({ params }: Props) {
   const { id, locale } = await params;
   const t = await getTranslations("purchases");
   const tDash = await getTranslations("dashboard");
+  const tCancel = await getTranslations("cancelRecord");
 
   const result = await fetchPurchase(id);
   if ("message" in result) notFound();
@@ -156,8 +158,34 @@ export default async function PurchaseDetailPage({ params }: Props) {
               <Clock size={13} />
               {paymentStatus.label}
             </span>
+            {purchase.status !== "cancelled" && (
+              <CancelRecordButton kind="purchase" id={purchase.id} />
+            )}
           </div>
         </div>
+
+        {purchase.status === "cancelled" && purchase.cancelled_at && (
+          <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <span className="font-semibold">{tCancel("cancelledOn")}</span>{" "}
+            <LocalDateSpan
+              dateIso={purchase.cancelled_at}
+              locale={locale}
+              options={{
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }}
+            />
+            {purchase.cancel_reason && (
+              <p className="mt-1">
+                <span className="font-semibold">{tCancel("reason")}:</span>{" "}
+                {purchase.cancel_reason}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Supplier + payment info row */}

@@ -27,6 +27,8 @@ from app.users import current_active_user
 
 router = APIRouter(tags=["cashbox"])
 
+REVERSAL_TYPES = (CashboxTransactionType.sale_cancel, CashboxTransactionType.purchase_cancel)
+
 
 # ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +59,14 @@ def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
         method = tx.payment_method
         direction = tx.direction
         amount = tx.amount or Decimal("0")
+        if tx.type in REVERSAL_TYPES:
+            # A cancellation undoes the original entry: subtract from the bucket it was added to
+            direction = (
+                CashboxTransactionDirection.out
+                if direction == CashboxTransactionDirection.in_
+                else CashboxTransactionDirection.in_
+            )
+            amount = -amount
 
         if direction == CashboxTransactionDirection.in_:
             if method == "cash":
@@ -131,6 +141,44 @@ async def record_auto_transaction(
         description=description,
     )
     db.add(tx)
+
+
+async def reverse_auto_transactions(
+    db: AsyncSession,
+    user_id: UUID,
+    reference_type: str,
+    reference_id: UUID,
+    reversal_type: CashboxTransactionType,
+    description: str | None,
+) -> None:
+    """Record opposite-direction entries for every auto transaction of a cancelled sale/purchase.
+
+    The originals are kept for audit; reversals land in the currently open session (if any).
+    """
+    result = await db.execute(
+        select(CashboxTransaction).where(
+            CashboxTransaction.user_id == user_id,
+            CashboxTransaction.reference_type == reference_type,
+            CashboxTransaction.reference_id == reference_id,
+            CashboxTransaction.type.not_in(REVERSAL_TYPES),
+        )
+    )
+    for original in result.scalars().all():
+        await record_auto_transaction(
+            db=db,
+            user_id=user_id,
+            tx_type=reversal_type,
+            direction=(
+                CashboxTransactionDirection.out
+                if original.direction == CashboxTransactionDirection.in_
+                else CashboxTransactionDirection.in_
+            ),
+            amount=original.amount,
+            payment_method=original.payment_method,
+            reference_type=reference_type,
+            reference_id=reference_id,
+            description=description,
+        )
 
 
 # ─── Routes ──────────────────────────────────────────────────────────────────

@@ -1,9 +1,13 @@
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
 import { resetResetPassword } from "@/app/clientService";
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/routing";
 
-jest.mock("next/navigation", () => ({
+jest.mock("@/i18n/routing", () => ({
   redirect: jest.fn(),
+}));
+
+jest.mock("next-intl/server", () => ({
+  getLocale: jest.fn().mockResolvedValue("es"),
 }));
 
 jest.mock("../app/openapi-client/sdk.gen", () => ({
@@ -34,7 +38,7 @@ describe("passwordReset action", () => {
     expect(resetResetPassword).toHaveBeenCalledWith({
       body: { token: "token", password: "P12345678#" },
     });
-    expect(redirect).toHaveBeenCalled();
+    expect(redirect).toHaveBeenCalledWith({ href: "/login", locale: "es" });
   });
 
   it("should return an error message if password reset fails", async () => {

@@ -429,7 +429,8 @@
     "required": "requerido",
     "logout": "Cerrar Sesión",
     "profile": "Perfil",
-    "createOption": "Crear \"{name}\""
+    "createOption": "Crear \"{name}\"",
+    "itemsPerPage": "Elementos por página:"
   },
   "customers": {
     "title": "Clientes",
@@ -803,7 +804,9 @@
       "opening": "Saldo Inicial",
       "opening_balance": "Saldo Inicial",
       "credit_sale": "Venta a Crédito",
-      "owner_withdrawal": "Retiro del Dueño"
+      "owner_withdrawal": "Retiro del Dueño",
+      "sale_cancel": "Venta anulada",
+      "purchase_cancel": "Compra anulada"
     },
     "txDescription": {
       "paymentFrom": "Pago de {name}"
@@ -839,5 +842,25 @@
       "loading": "Cargando\u2026",
       "backTo": "Caja"
     }
+  },
+  "cancelRecord": {
+    "saleButton": "Anular venta",
+    "purchaseButton": "Anular compra",
+    "saleTitle": "¿Anular esta venta?",
+    "purchaseTitle": "¿Anular esta compra?",
+    "saleDescription": "Los productos vuelven al stock y cualquier movimiento de caja se revierte en la sesión abierta actual.",
+    "purchaseDescription": "Los productos se descuentan del stock y cualquier pago en caja se revierte en la sesión abierta actual. Los cambios de precio, SKU o categoría hechos por esta compra no se deshacen.",
+    "reasonLabel": "Motivo (opcional)",
+    "reasonPlaceholder": "ej. producto equivocado, carga duplicada…",
+    "confirm": "Confirmar anulación",
+    "keep": "No anular",
+    "negativeStockTitle": "Algunos productos quedarían con stock negativo",
+    "negativeStockDescription": "Parte de esta compra ya fue vendida. Si continúas, estos productos quedarán con stock negativo:",
+    "negativeStockLine": "stock actual {stock}, comprado {quantity}",
+    "forceConfirm": "Anular de todos modos",
+    "alreadyCancelled": "Este registro ya estaba anulado.",
+    "genericError": "No se pudo anular. Inténtalo de nuevo.",
+    "cancelledOn": "Anulado el",
+    "reason": "Motivo"
   }
 }

@@ -9,7 +9,7 @@ import { SubmitButton } from "@/components/ui/submitButton";
 import { unitTypes } from "@/lib/definitions";
 import { useTranslations } from "next-intl";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 
 const initialState = { success: false, message: "" };
 

@@ -13,9 +13,9 @@ from sqlalchemy.orm import selectinload
 from app.database import User, get_async_session
 from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, Supplier, UnitType
 from app.models import CashboxTransactionType, CashboxTransactionDirection
-from app.schemas import PurchaseCreate, PurchaseRead
+from app.schemas import PurchaseCancelRequest, PurchaseCreate, PurchaseRead
 from app.users import current_active_user
-from app.routes.cashbox import record_auto_transaction
+from app.routes.cashbox import record_auto_transaction, reverse_auto_transactions
 from app.routes.categories import upsert_category
 from app.routes.suppliers import upsert_supplier
 
@@ -230,3 +230,88 @@ async def get_purchase(
     if not purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
     return PurchaseRead.model_validate(purchase)
+
+
+@router.post("/{purchase_id}/cancel", response_model=PurchaseRead)
+async def cancel_purchase(
+    purchase_id: UUID,
+    data: PurchaseCancelRequest | None = None,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    data = data or PurchaseCancelRequest()
+    result = await db.execute(
+        select(Purchase)
+        .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
+        .filter(Purchase.id == purchase_id, Purchase.user_id == user.id)
+    )
+    purchase = result.scalars().first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+
+    if purchase.status == PurchaseStatus.cancelled:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "already_cancelled", "message": "Purchase already cancelled"},
+        )
+
+    # Total quantity to take back out of stock, per catalog item
+    qty_by_item: dict[UUID, Decimal] = {}
+    for line in purchase.purchase_items:
+        if line.item_id is not None:
+            qty_by_item[line.item_id] = qty_by_item.get(line.item_id, Decimal("0")) + line.quantity
+
+    items_map: dict[UUID, Item] = {}
+    if qty_by_item:
+        item_result = await db.execute(
+            select(Item).filter(Item.id.in_(qty_by_item.keys()), Item.user_id == user.id)
+        )
+        items_map = {item.id: item for item in item_result.scalars().all()}
+
+    short_items = [
+        {
+            "id": str(item.id),
+            "name": item.name,
+            "stock": float(item.stock),
+            "quantity": float(qty_by_item[item.id]),
+        }
+        for item in items_map.values()
+        if item.stock - qty_by_item[item.id] < 0
+    ]
+    if short_items and not data.force:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "negative_stock",
+                "message": "Cancelling this purchase would leave some products with negative stock",
+                "items": short_items,
+            },
+        )
+
+    for item_id, qty in qty_by_item.items():
+        if item_id in items_map:
+            items_map[item_id].stock = items_map[item_id].stock - qty
+
+    reason = (data.reason or "").strip() or None
+    purchase.status = PurchaseStatus.cancelled
+    purchase.cancelled_at = datetime.now(timezone.utc)
+    purchase.cancelled_by = user.id
+    purchase.cancel_reason = reason
+
+    await reverse_auto_transactions(
+        db=db,
+        user_id=user.id,
+        reference_type="purchase",
+        reference_id=purchase.id,
+        reversal_type=CashboxTransactionType.purchase_cancel,
+        description=reason,
+    )
+    await db.commit()
+
+    result = await db.execute(
+        select(Purchase)
+        .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
+        .filter(Purchase.id == purchase.id)
+        .execution_options(populate_existing=True)
+    )
+    return PurchaseRead.model_validate(result.scalars().first())

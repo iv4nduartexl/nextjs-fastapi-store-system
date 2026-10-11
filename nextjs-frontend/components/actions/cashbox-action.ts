@@ -82,7 +82,7 @@ export async function openSession(data: {
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? "Failed to open session" };
   }
-  revalidatePath("/cashbox");
+  revalidatePath("/[locale]/cashbox", "page");
   return { data: await res.json() };
 }
 
@@ -100,7 +100,7 @@ export async function closeSession(data: {
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? "Failed to close session" };
   }
-  revalidatePath("/cashbox");
+  revalidatePath("/[locale]/cashbox", "page");
   return { data: await res.json() };
 }
 
@@ -120,7 +120,7 @@ export async function addManualTransaction(data: {
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? "Failed to add transaction" };
   }
-  revalidatePath("/cashbox");
+  revalidatePath("/[locale]/cashbox", "page");
   return { data: await res.json() };
 }
 

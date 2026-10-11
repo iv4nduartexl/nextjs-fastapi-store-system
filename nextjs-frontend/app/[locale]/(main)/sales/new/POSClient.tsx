@@ -102,7 +102,10 @@ function CategoryTile({
         {name[0].toUpperCase()}
       </span>
       {/* Category name */}
-      <span className="relative text-white font-bold text-sm leading-tight drop-shadow-sm line-clamp-2">
+      <span
+        title={name}
+        className="relative text-white font-bold text-sm leading-tight drop-shadow-sm line-clamp-2"
+      >
         {name}
       </span>
     </button>
@@ -158,7 +161,10 @@ function ProductGrid({
                   ⚠ {tPos("lowStock")}
                 </span>
               ) : null}
-              <span className="font-semibold text-xs leading-snug text-gray-800 line-clamp-2">
+              <span
+                title={product.name}
+                className="font-semibold text-xs leading-snug text-gray-800 line-clamp-2"
+              >
                 {product.name}
               </span>
               <span className="mt-auto text-green-700 font-bold text-sm tabular-nums">
@@ -187,6 +193,10 @@ export default function POSClient() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
+  // Cart line whose full name is shown (tap to expand, for touch screens without hover)
+  const [expandedCartItemId, setExpandedCartItemId] = useState<string | null>(
+    null,
+  );
   const [showPaymentSection, setShowPaymentSection] = useState(false);
   const paymentRef = useRef<HTMLDivElement>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -963,7 +973,10 @@ export default function POSClient() {
                   {t("allCategories")}
                 </button>
                 <span className="text-gray-300">/</span>
-                <span className="text-xs font-semibold text-gray-700 truncate">
+                <span
+                  title={activeCategory}
+                  className="text-xs font-semibold text-gray-700 truncate"
+                >
                   {activeCategory}
                 </span>
               </div>
@@ -1111,7 +1124,19 @@ export default function POSClient() {
                     <div className="flex items-center gap-2">
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate leading-tight">
+                        <p
+                          title={item.name}
+                          onClick={() =>
+                            setExpandedCartItemId((prev) =>
+                              prev === item.itemId ? null : item.itemId,
+                            )
+                          }
+                          className={`text-sm font-medium text-gray-800 leading-tight break-words cursor-pointer ${
+                            expandedCartItemId === item.itemId
+                              ? ""
+                              : "line-clamp-2"
+                          }`}
+                        >
                           {item.name}
                         </p>
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">

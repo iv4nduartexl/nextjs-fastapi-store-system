@@ -74,8 +74,8 @@ class PurchasePaymentMethod(str, enum.Enum):
 class User(SQLAlchemyBaseUserTableUUID, Base):
     username = Column(String, unique=True, nullable=True, index=True)
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
-    sales = relationship("Sale", back_populates="user")
-    purchases = relationship("Purchase", back_populates="user")
+    sales = relationship("Sale", back_populates="user", foreign_keys="Sale.user_id")
+    purchases = relationship("Purchase", back_populates="user", foreign_keys="Purchase.user_id")
     customers = relationship("Customer", back_populates="user")
 
 
@@ -124,9 +124,12 @@ class Sale(Base):
     change_given = Column(Numeric(10, 2), nullable=True)
     notes = Column(String, nullable=True)
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_by = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
+    cancel_reason = Column(String, nullable=True)
 
     sale_items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
-    user = relationship("User", back_populates="sales")
+    user = relationship("User", back_populates="sales", foreign_keys=[user_id])
     customer = relationship("Customer", back_populates="sales")
 
 
@@ -214,9 +217,12 @@ class Purchase(Base):
     tax = Column(Numeric(12, 2), nullable=False, default=0)
     total_cost = Column(Numeric(12, 2), nullable=False, default=0)
     notes = Column(String, nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_by = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
+    cancel_reason = Column(String, nullable=True)
 
     purchase_items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
-    user = relationship("User", back_populates="purchases")
+    user = relationship("User", back_populates="purchases", foreign_keys=[user_id])
     supplier = relationship("Supplier", back_populates="purchases")
 
 class PurchaseItem(Base):
@@ -300,6 +306,9 @@ class CashboxTransactionType(str, enum.Enum):
     customer_payment = "customer_payment"
     opening = "opening"
     owner_withdrawal = "owner_withdrawal"
+    # Reversal entries written when a sale or purchase is cancelled
+    sale_cancel = "sale_cancel"
+    purchase_cancel = "purchase_cancel"
 
 
 class CashboxTransactionDirection(str, enum.Enum):

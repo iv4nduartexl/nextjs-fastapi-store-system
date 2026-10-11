@@ -102,7 +102,7 @@ export async function createCustomer(
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? `Error ${res.status}` };
   }
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/customers", "page");
   return { data: await res.json() };
 }
 
@@ -164,8 +164,8 @@ export async function updateCustomer(
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? `Error ${res.status}` };
   }
-  revalidatePath(`/customers/${id}`);
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/customers/[id]", "page");
+  revalidatePath("/[locale]/customers", "page");
   return { data: await res.json() };
 }
 
@@ -189,8 +189,8 @@ export async function recordPayment(
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? `Error ${res.status}` };
   }
-  revalidatePath(`/customers/${customerId}`);
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/customers/[id]", "page");
+  revalidatePath("/[locale]/customers", "page");
   return { data: await res.json() };
 }
 
@@ -214,8 +214,8 @@ export async function recordOutcome(
     const err = await res.json().catch(() => ({}));
     return { error: err.detail ?? `Error ${res.status}` };
   }
-  revalidatePath(`/customers/${customerId}`);
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/customers/[id]", "page");
+  revalidatePath("/[locale]/customers", "page");
   return { data: await res.json() };
 }
 
@@ -238,8 +238,8 @@ export async function deletePayment(
     return { error: err.detail ?? `Error ${res.status}` };
   }
 
-  revalidatePath(`/customers/${customerId}`);
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/customers/[id]", "page");
+  revalidatePath("/[locale]/customers", "page");
   return { ok: true };
 }
 
@@ -262,7 +262,7 @@ export async function deleteOutcome(
     return { error: err.detail ?? `Error ${res.status}` };
   }
 
-  revalidatePath(`/customers/${customerId}`);
-  revalidatePath("/customers");
+  revalidatePath("/[locale]/customers/[id]", "page");
+  revalidatePath("/[locale]/customers", "page");
   return { ok: true };
 }

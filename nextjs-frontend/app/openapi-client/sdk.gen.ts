@@ -133,6 +133,9 @@ import type {
   GetPurchaseData,
   GetPurchaseError,
   GetPurchaseResponse,
+  CancelPurchaseData,
+  CancelPurchaseError,
+  CancelPurchaseResponse,
   ListCustomersData,
   ListCustomersError,
   ListCustomersResponse,
@@ -885,6 +888,22 @@ export const getPurchase = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/purchases/{purchase_id}",
+  });
+};
+
+/**
+ * Cancel Purchase
+ */
+export const cancelPurchase = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CancelPurchaseData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CancelPurchaseResponse,
+    CancelPurchaseError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/{purchase_id}/cancel",
   });
 };
 

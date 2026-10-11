@@ -25,6 +25,7 @@ from app.models import (
     PricingSource,
     Purchase,
     PurchaseItem,
+    PurchaseStatus,
     QuantityDiscountRule,
     Sale,
     SaleItem,
@@ -53,11 +54,12 @@ from app.schemas import (
     QuantityDiscountRuleCreate,
     QuantityDiscountRuleRead,
     QuantityDiscountRuleUpdate,
+    SaleCancelRequest,
     SaleCreate,
     SaleRead,
 )
 from app.users import current_active_user
-from app.routes.cashbox import record_auto_transaction
+from app.routes.cashbox import record_auto_transaction, reverse_auto_transactions
 
 router = APIRouter(tags=["sales"])
 
@@ -531,6 +533,7 @@ async def get_sale(
 @router.post("/{sale_id}/cancel", response_model=SaleRead)
 async def cancel_sale(
     sale_id: UUID,
+    data: SaleCancelRequest | None = None,
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
@@ -546,12 +549,6 @@ async def cancel_sale(
     if sale.status == SaleStatus.cancelled:
         raise HTTPException(status_code=409, detail="Sale already cancelled")
 
-    if sale.payment_method != PaymentMethod.credit:
-        raise HTTPException(
-            status_code=422,
-            detail="Only credit sales can be cancelled from customer audit.",
-        )
-
     item_ids = [si.item_id for si in sale.sale_items if si.item_id is not None]
     if item_ids:
         item_result = await db.execute(
@@ -565,7 +562,20 @@ async def cancel_sale(
                     items_map[sale_item.item_id].stock + sale_item.quantity
                 )
 
+    reason = ((data.reason if data else None) or "").strip() or None
     sale.status = SaleStatus.cancelled
+    sale.cancelled_at = datetime.now(timezone.utc)
+    sale.cancelled_by = user.id
+    sale.cancel_reason = reason
+
+    await reverse_auto_transactions(
+        db=db,
+        user_id=user.id,
+        reference_type="sale",
+        reference_id=sale.id,
+        reversal_type=CashboxTransactionType.sale_cancel,
+        description=reason,
+    )
     await db.commit()
 
     refreshed = await db.execute(
@@ -1070,7 +1080,7 @@ async def analytics_purchases(
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
-    base_query = select(Purchase).filter(Purchase.user_id == user.id)
+    base_query = select(Purchase).filter(Purchase.user_id == user.id, Purchase.status != PurchaseStatus.cancelled)
     base_query = _apply_period_filter(base_query, Purchase, period, start_date, end_date)
 
     result = await db.execute(base_query)
@@ -1089,7 +1099,7 @@ async def analytics_purchases(
         )
         .select_from(Purchase)
         .outerjoin(Supplier, Supplier.id == Purchase.supplier_id)
-        .filter(Purchase.user_id == user.id)
+        .filter(Purchase.user_id == user.id, Purchase.status != PurchaseStatus.cancelled)
     )
     supplier_query = _apply_period_filter(supplier_query, Purchase, period, start_date, end_date)
     supplier_query = supplier_query.group_by(Purchase.supplier_id, Supplier.name).order_by(func.sum(Purchase.total_cost).desc())
@@ -1113,7 +1123,7 @@ async def analytics_purchases(
             func.count().label("count"),
             func.sum(Purchase.total_cost).label("total"),
         )
-        .filter(Purchase.user_id == user.id)
+        .filter(Purchase.user_id == user.id, Purchase.status != PurchaseStatus.cancelled)
     )
     status_query = _apply_period_filter(status_query, Purchase, period, start_date, end_date)
     status_query = status_query.group_by(Purchase.payment_status)

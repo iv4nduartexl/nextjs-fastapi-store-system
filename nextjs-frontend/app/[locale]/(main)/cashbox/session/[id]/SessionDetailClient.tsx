@@ -22,6 +22,7 @@ import {
   FileText,
   ExternalLink,
   Crown,
+  Undo2,
 } from "lucide-react";
 import {
   CashboxSessionRead,
@@ -40,6 +41,8 @@ const TX_ICONS: Record<string, React.ElementType> = {
   customer_payment: Users,
   opening: Wallet,
   owner_withdrawal: Crown,
+  sale_cancel: Undo2,
+  purchase_cancel: Undo2,
 };
 
 const METHOD_ICONS: Record<string, React.ElementType> = {

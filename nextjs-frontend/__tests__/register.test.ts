@@ -1,9 +1,13 @@
 import { register } from "@/components/actions/register-action";
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/routing";
 import { registerRegister } from "@/app/clientService";
 
-jest.mock("next/navigation", () => ({
+jest.mock("@/i18n/routing", () => ({
   redirect: jest.fn(),
+}));
+
+jest.mock("next-intl/server", () => ({
+  getLocale: jest.fn().mockResolvedValue("es"),
 }));
 
 jest.mock("../app/clientService", () => ({
@@ -28,7 +32,7 @@ describe("register action", () => {
       },
     });
 
-    expect(redirect).toHaveBeenCalled();
+    expect(redirect).toHaveBeenCalledWith({ href: "/login", locale: "es" });
   });
   it("should should return an error if the server call fails", async () => {
     const formData = new FormData();

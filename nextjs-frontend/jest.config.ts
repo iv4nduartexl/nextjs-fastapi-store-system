@@ -203,4 +203,17 @@ const config: Config = {
   // watchman: true,
 };
 
-export default createJestConfig(config);
+// next-intl's navigation entry is ESM-only, so swap @/i18n/routing for a Jest stand-in.
+// Matches both "@/i18n/routing" and the relative path SWC rewrites it to; must precede next/jest's mappers.
+const jestConfig = async (): Promise<Config> => {
+  const resolved = await createJestConfig(config)();
+  return {
+    ...resolved,
+    moduleNameMapper: {
+      "^(@|\\.{1,2})/(.*/)?i18n/routing$": "<rootDir>/__mocks__/i18n-routing.tsx",
+      ...resolved.moduleNameMapper,
+    },
+  };
+};
+
+export default jestConfig;

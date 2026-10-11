@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers";
 import { authJwtLogout } from "@/app/clientService";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/routing";
 
 export async function logout() {
   const cookieStore = await cookies();
@@ -23,5 +24,5 @@ export async function logout() {
   }
 
   cookieStore.delete("accessToken");
-  redirect(`/login`);
+  redirect({ href: "/login", locale: await getLocale() });
 }

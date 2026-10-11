@@ -25,7 +25,7 @@ import {
   recordPayment,
   recordOutcome,
 } from "@/components/actions/customers-action";
-import { cancelCreditSale } from "@/components/actions/sales-action";
+import { cancelSale } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
 import LocalDateSpan from "@/lib/LocalDateSpan";
@@ -351,7 +351,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
 
     setRowActionPendingId(`sale-${saleId}`);
     setRowActionError("");
-    const result = await cancelCreditSale(saleId);
+    const result = await cancelSale(saleId);
     setRowActionPendingId(null);
 
     if (result.error) {

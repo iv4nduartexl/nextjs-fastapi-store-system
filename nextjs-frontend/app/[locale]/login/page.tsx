@@ -16,11 +16,16 @@ import { SubmitButton } from "@/components/ui/submitButton";
 import { FieldError, FormError } from "@/components/ui/FormError";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { Link } from "@/i18n/routing";
 
 export default function Page() {
-  const [state, dispatch] = useActionState(login, undefined);
+  const [rawState, dispatch] = useActionState(login, undefined);
   const t = useTranslations("login");
+  // The API answers with error codes; show them translated
+  const code = rawState?.server_validation_error;
+  const state =
+    code && t.has(`errors.${code}`)
+      ? { ...rawState, server_validation_error: t(`errors.${code}`) }
+      : rawState;
   return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="absolute top-4 right-4">
@@ -69,12 +74,10 @@ export default function Page() {
                 className="border-gray-300 dark:border-gray-600"
               />
               <FieldError state={state} field="password" />
-              <Link
-                href="/password-recovery"
-                className="ml-auto inline-block text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500"
-              >
-                {t("forgotPassword")}
-              </Link>
+              {/* Password-reset emails aren't available: owners and the administrator reset passwords */}
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t("forgotPasswordHint")}
+              </p>
             </div>
             <SubmitButton text={t("signIn")} />
             <FormError state={state} />

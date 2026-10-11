@@ -1,17 +1,22 @@
-"""Create (or repair) the platform superuser defined by SUPERUSER_EMAIL.
+"""Create (or repair) the platform superuser from SUPERUSER_EMAIL / SUPERUSER_PASSWORD.
 
-Usage, from fastapi_backend/:
-    uv run python -m commands.create_superuser            # create it, asking for a password
-    uv run python -m commands.create_superuser --reset    # set a new password if it already exists
+Both values come from fastapi_backend/.env locally, or from the environment (GitHub secrets on deploy).
+
+Usage, from fastapi_backend/ (or `make create-superuser` / `make reset-superuser-password`):
+    uv run python -m commands.create_superuser               # create it if missing; asks for a password
+                                                             # only when SUPERUSER_PASSWORD is empty
+    uv run python -m commands.create_superuser --reset       # set the password (SUPERUSER_PASSWORD or prompt)
+    uv run python -m commands.create_superuser --if-missing  # deploy: never prompts, never fails the deploy
 """
 import argparse
 import asyncio
 import getpass
 import sys
 
-from fastapi_users import InvalidPasswordException, exceptions
+from fastapi_users import InvalidPasswordException
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.config import settings
@@ -20,6 +25,18 @@ from app.models import User
 from app.schemas import UserCreate
 from app.superuser import sync_superuser
 from app.users import UserManager
+
+PASSWORD_RULES = "8+ characters, one uppercase letter, one special character"
+
+MESSAGES = {
+    "skipped": "SUPERUSER_EMAIL not set, skipping superuser setup.",
+    "exists": "Superuser {email} already exists; superuser rights verified.",
+    "created": "Superuser {email} created.",
+    "reset": "Password for superuser {email} updated; its existing sessions were signed out.",
+    "not_found": "Superuser {email} doesn't exist yet; run `make create-superuser` first.",
+    "missing_password": "WARNING: superuser {email} doesn't exist and SUPERUSER_PASSWORD is not set; not created.",
+    "invalid_password": f"WARNING: the password doesn't meet the rules ({PASSWORD_RULES}); superuser {{email}} not changed.",
+}
 
 
 def _ask_password() -> str:
@@ -31,49 +48,101 @@ def _ask_password() -> str:
         return password
 
 
-async def main(reset: bool) -> int:
-    email = (settings.SUPERUSER_EMAIL or "").strip()
+def _manager(session: AsyncSession) -> UserManager:
+    return UserManager(SQLAlchemyUserDatabase(session, User))
+
+
+async def _find(session: AsyncSession, email: str) -> User | None:
+    result = await session.execute(select(User).where(func.lower(User.email) == email.lower()))
+    return result.scalars().first()
+
+
+async def _valid(manager: UserManager, email: str, password: str) -> bool:
+    try:
+        await manager.validate_password(password, UserCreate(email=email, password=password))
+        return True
+    except InvalidPasswordException:
+        return False
+
+
+async def ensure_superuser(session: AsyncSession, email: str | None, password: str | None) -> str:
+    """Create the superuser only if missing. Never changes an existing password.
+
+    Returns "skipped", "exists", "created", "missing_password" or "invalid_password".
+    """
+    email = (email or "").strip()
     if not email:
-        print("SUPERUSER_EMAIL is not set in the environment / .env")
-        return 1
+        return "skipped"
+    manager = _manager(session)
+    status = "exists"
+    if await _find(session, email) is None:
+        if not password:
+            return "missing_password"
+        if not await _valid(manager, email, password):
+            return "invalid_password"
+        user = await manager.create(UserCreate(email=email, password=password), safe=True)
+        # The platform administrator belongs to no business
+        await manager.user_db.update(user, {"business_id": None, "is_verified": True})
+        status = "created"
+    await sync_superuser(session)
+    return status
+
+
+async def reset_superuser_password(session: AsyncSession, email: str | None, password: str) -> str:
+    """Set a new password for the existing superuser. Returns "skipped", "not_found", "invalid_password" or "reset"."""
+    email = (email or "").strip()
+    if not email:
+        return "skipped"
+    user = await _find(session, email)
+    if user is None:
+        return "not_found"
+    manager = _manager(session)
+    if not await _valid(manager, email, password):
+        return "invalid_password"
+    await manager.sign_out_everywhere(
+        user, {"hashed_password": manager.password_helper.hash(password), "must_change_password": False}
+    )
+    await sync_superuser(session)
+    return "reset"
+
+
+async def run(mode: str) -> int:
+    email = (settings.SUPERUSER_EMAIL or "").strip()
+    password = settings.SUPERUSER_PASSWORD or None
 
     async with async_session_maker() as session:
-        manager = UserManager(SQLAlchemyUserDatabase(session, User))
-        existing = (
-            await session.execute(select(User).where(func.lower(User.email) == email.lower()))
-        ).scalars().first()
+        if mode == "if-missing":
+            # Deploy: never prompt and never fail the pipeline
+            status = await ensure_superuser(session, email, password)
+            print(MESSAGES[status].format(email=email))
+            return 0
 
-        if existing and not reset:
-            print(f"{email} already exists; making sure it is the superuser. Use --reset to set a new password.")
+        if not email:
+            print("SUPERUSER_EMAIL is not set in fastapi_backend/.env (or the environment).")
+            return 1
+
+        if mode == "reset":
+            status = await reset_superuser_password(session, email, password or _ask_password())
         else:
-            print(f"{'Reset password for' if existing else 'Creating'} superuser {email}")
-            while True:
+            # Local create: use SUPERUSER_PASSWORD, or ask only when the account is missing and it's empty
+            if not password and await _find(session, email) is None:
+                print(f"SUPERUSER_PASSWORD is empty; enter a password for {email} ({PASSWORD_RULES}).")
                 password = _ask_password()
-                try:
-                    await manager.validate_password(password, existing or UserCreate(email=email, password=password))
-                    break
-                except InvalidPasswordException as exc:
-                    print("Invalid password:", exc.reason)
-            if existing:
-                await manager.user_db.update(
-                    existing,
-                    {"hashed_password": manager.password_helper.hash(password), "must_change_password": False},
-                )
-            else:
-                try:
-                    user = await manager.create(UserCreate(email=email, password=password), safe=True)
-                except exceptions.UserAlreadyExists:  # pragma: no cover - checked above
-                    print("User already exists")
-                    return 1
-                # The platform administrator belongs to no business
-                await manager.user_db.update(user, {"business_id": None, "is_verified": True})
+            status = await ensure_superuser(session, email, password)
 
-        await sync_superuser(session)
-    print("Done. Log in with this email to open the admin panel.")
-    return 0
+    print(MESSAGES[status].format(email=email))
+    return 0 if status in ("created", "exists", "reset") else 1
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--reset", action="store_true", help="set a new password for an existing superuser")
-    sys.exit(asyncio.run(main(parser.parse_args().reset)))
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--reset", action="store_true", help="set the superuser's password (SUPERUSER_PASSWORD or prompt)")
+    mode.add_argument(
+        "--if-missing",
+        action="store_true",
+        help="non-interactive (deploy): create the superuser only if it doesn't exist; never fails",
+    )
+    args = parser.parse_args()
+    selected = "reset" if args.reset else "if-missing" if args.if_missing else "create"
+    sys.exit(asyncio.run(run(selected)))

@@ -36,7 +36,12 @@
     "signIn": "Iniciar Sesión",
     "noAccount": "¿No tienes cuenta?",
     "signUp": "Regístrate",
-    "askForAccount": "¿Necesitas una cuenta? Pídesela al dueño de tu negocio o al administrador del sistema."
+    "askForAccount": "¿Necesitas una cuenta? Pídesela al dueño de tu negocio o al administrador del sistema.",
+    "forgotPasswordHint": "¿Olvidaste tu contraseña? Pídele al dueño de tu negocio o al administrador que la restablezca.",
+    "errors": {
+      "LOGIN_BAD_CREDENTIALS": "Email/usuario o contraseña incorrectos.",
+      "LOGIN_TOO_MANY_ATTEMPTS": "Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo, o pide al dueño de tu negocio que restablezca tu contraseña."
+    }
   },
   "register": {
     "title": "Crear Cuenta",

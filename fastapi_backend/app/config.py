@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # Platform administrator: the only account with superuser rights (see commands/create_superuser.py)
     SUPERUSER_EMAIL: str | None = None
+    # Only used to create that account (and by `make reset-superuser-password`); never printed
+    SUPERUSER_PASSWORD: str | None = None
     # Lifetime of "view as" tokens issued to the superuser
     IMPERSONATION_TOKEN_EXPIRE_SECONDS: int = 3600
 

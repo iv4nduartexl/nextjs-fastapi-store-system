@@ -297,6 +297,11 @@ export type ChangePasswordRequest = {
   new_password: string;
 };
 
+export type ChangePasswordResponse = {
+  access_token: string;
+  token_type?: string;
+};
+
 export type ChatConversationDetail = {
   id: string;
   title: string;
@@ -1141,7 +1146,7 @@ export type ChangePasswordData = {
   body: ChangePasswordRequest;
 };
 
-export type ChangePasswordResponse = void;
+export type ChangePasswordResponse2 = ChangePasswordResponse;
 
 export type ChangePasswordError = HTTPValidationError;
 

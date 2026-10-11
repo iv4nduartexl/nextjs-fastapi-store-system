@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button"; // adjust path if needed
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Input } from "../ui/input";
 
 type Op = "+" | "-" | "*" | "/";
 
 const BUTTONS: Array<
-  Array<{ label: string; value?: string; variant?: any; size?: any }>
+  Array<{ label: string; value?: string; variant?: ButtonProps["variant"]; size?: ButtonProps["size"] }>
 > = [
   [
     { label: "⌫", value: "clear", variant: "outline", size: "sm" },

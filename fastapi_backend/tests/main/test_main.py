@@ -45,7 +45,8 @@ class TestPasswordValidation:
             json={"current_password": authenticated_user["user_data"]["password"], "new_password": "Sppecialchar1#"},
             headers=authenticated_user["headers"],
         )
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["access_token"]
 
         login = await test_client.post(
             "/auth/jwt/login", data={"username": "test@example.com", "password": "Sppecialchar1#"}

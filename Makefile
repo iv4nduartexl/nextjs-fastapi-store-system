@@ -20,13 +20,19 @@ help:
 	@awk '/^[a-zA-Z_-]+:/{split($$1, target, ":"); print "  " target[1] "\t" substr($$0, index($$0,$$2))}' $(MAKEFILE_LIST)
 
 # Backend commands
-.PHONY: start-backend test-backend
+.PHONY: start-backend test-backend create-superuser reset-superuser-password
 
 start-backend: ## Start the backend server with FastAPI and hot reload
 	cd $(BACKEND_DIR) && ./start.sh
 
 test-backend: ## Run backend tests using pytest
 	cd $(BACKEND_DIR) && uv run pytest
+
+create-superuser: ## Create the superuser from SUPERUSER_EMAIL/SUPERUSER_PASSWORD in fastapi_backend/.env
+	cd $(BACKEND_DIR) && uv run python -m commands.create_superuser
+
+reset-superuser-password: ## Set the superuser password from SUPERUSER_PASSWORD (asks if empty)
+	cd $(BACKEND_DIR) && uv run python -m commands.create_superuser --reset
 
 
 # Frontend commands

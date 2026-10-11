@@ -2,7 +2,7 @@ import enum
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import BigInteger, Column, String, ForeignKey, Enum, Identity, Index, Numeric, DateTime, Boolean, Text, UniqueConstraint, text
+from sqlalchemy import BigInteger, Column, Integer, String, ForeignKey, Enum, Identity, Index, Numeric, DateTime, Boolean, Text, UniqueConstraint, text
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import declared_attr, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -117,6 +117,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     role = Column(Enum(UserRole), nullable=False, default=UserRole.owner, server_default="owner")
     must_change_password = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     last_login_at = Column(DateTime(timezone=True), nullable=True)
+    # Bumped to sign out every existing session (password reset/change, deactivation, role change)
+    token_version = Column(Integer, nullable=False, default=0, server_default=text("0"))
     business = relationship("Business", back_populates="users")
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
     sales = relationship("Sale", back_populates="user", foreign_keys="Sale.user_id")
@@ -513,4 +515,15 @@ class AuditLog(Base):
     target_type = Column(String, nullable=True)
     target_id = Column(String, nullable=True)
     details = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+
+class LoginAttempt(Base):
+    """Failed sign-in attempts, used to throttle password guessing (see app/login_limits.py)."""
+
+    __tablename__ = "login_attempts"
+
+    id = Column(BigInteger, Identity(), primary_key=True)
+    email = Column(String, nullable=False, index=True)
+    ip = Column(String, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)

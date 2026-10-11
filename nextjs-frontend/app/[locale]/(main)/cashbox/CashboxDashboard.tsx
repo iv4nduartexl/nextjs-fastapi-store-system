@@ -177,7 +177,7 @@ export default function CashboxDashboard({
   const transferIn = session ? parseFloat(session.transfer_in) : 0;
   const creditSales = session ? parseFloat(session.credit_sales) : 0;
   const ownerWithdrawals = session
-    ? parseFloat((session as any).owner_withdrawals || 0)
+    ? parseFloat(session.owner_withdrawals || "0")
     : 0;
   const openingAmount = session ? parseFloat(session.opening_amount) : 0;
 
@@ -670,7 +670,7 @@ export default function CashboxDashboard({
                               </span>
                               <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
                                 <MethodIcon size={9} />
-                                {t(`method.${tx.payment_method}` as any)}
+                                {t(`method.${tx.payment_method}` as Parameters<typeof t>[0])}
                               </span>
                               {tx.user_name && (
                                 <span className="max-w-[8rem] truncate text-[10px] text-gray-400" title={tx.user_name}>

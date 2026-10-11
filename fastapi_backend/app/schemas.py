@@ -787,6 +787,12 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
+class ChangePasswordResponse(BaseModel):
+    # New session token: the old ones stop working after a password change
+    access_token: str
+    token_type: str = "bearer"
+
+
 class BusinessRead(BaseModel):
     id: UUID
     name: str

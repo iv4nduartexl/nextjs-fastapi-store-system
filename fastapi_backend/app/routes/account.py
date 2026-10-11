@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.accounts import audit
 from app.database import get_async_session
 from app.models import Business, User
-from app.schemas import ChangePasswordRequest, MeRead, MeUpdate
-from app.users import UserManager, current_active_user, get_user_manager, request_impersonator_id
+from app.schemas import ChangePasswordRequest, ChangePasswordResponse, MeRead, MeUpdate
+from app.users import UserManager, current_active_user, get_jwt_strategy, get_user_manager, request_impersonator_id
 
 router = APIRouter(tags=["account"])
 
@@ -52,7 +52,7 @@ async def update_me(
     return await _me(db, user, request)
 
 
-@router.post("/auth/change-password", status_code=204)
+@router.post("/auth/change-password", response_model=ChangePasswordResponse)
 async def change_password(
     data: ChangePasswordRequest,
     request: Request,
@@ -76,9 +76,11 @@ async def change_password(
         reason = exc.reason if isinstance(exc.reason, list) else [exc.reason]
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"code": "invalid_password", "reasons": reason})
 
-    await user_manager.user_db.update(
+    # Other devices are signed out; this one gets a fresh token
+    user = await user_manager.sign_out_everywhere(
         user,
         {"hashed_password": user_manager.password_helper.hash(data.new_password), "must_change_password": False},
     )
     audit(db, actor_id=user.id, action="password_changed", business_id=user.business_id, target_type="user", target_id=user.id)
     await db.commit()
+    return ChangePasswordResponse(access_token=await get_jwt_strategy().write_token(user))

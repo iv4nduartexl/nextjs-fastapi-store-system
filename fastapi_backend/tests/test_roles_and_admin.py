@@ -137,7 +137,7 @@ async def test_owner_creates_cashier_who_must_change_password(test_client, store
     ok = await test_client.post(
         "/auth/change-password", json={"current_password": temp, "new_password": "NewPassword1#"}, headers=headers
     )
-    assert ok.status_code == status.HTTP_204_NO_CONTENT
+    assert ok.status_code == status.HTTP_200_OK
     headers = await _login(test_client, "new@store.com", "NewPassword1#")
     assert (await test_client.get("/users/me", headers=headers)).json()["must_change_password"] is False
 
@@ -278,3 +278,60 @@ async def test_superuser_role_follows_superuser_email(db_session, store, monkeyp
         for u in (await db_session.execute(select(User).execution_options(populate_existing=True))).scalars().all()
     }
     assert users == {"owner@store.com": True, "cashier@store.com": False, "admin@platform.com": False}
+
+
+# ─── Sessions and sign-in throttling ─────────────────────────────────────────
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_reset_deactivate_and_password_change_end_sessions(test_client, store):
+    oh, cashier = store["owner_h"], store["cashier"]
+    old_session = await _login(test_client, "cashier@store.com", PASSWORD)
+    assert (await test_client.get("/users/me", headers=old_session)).status_code == 200
+
+    # Owner resets the password: the cashier's open sessions stop working at once
+    temp = (await test_client.post(f"/business/users/{cashier.id}/reset-password", headers=oh)).json()["temporary_password"]
+    assert (await test_client.get("/users/me", headers=old_session)).status_code == status.HTTP_401_UNAUTHORIZED
+
+    # Changing the password signs out other devices but returns a fresh token for this one
+    device_a = await _login(test_client, "cashier@store.com", temp)
+    device_b = await _login(test_client, "cashier@store.com", temp)
+    changed = await test_client.post(
+        "/auth/change-password", json={"current_password": temp, "new_password": "BrandNew1#"}, headers=device_a
+    )
+    fresh = {"Authorization": f"Bearer {changed.json()['access_token']}"}
+    assert (await test_client.get("/users/me", headers=device_b)).status_code == status.HTTP_401_UNAUTHORIZED
+    assert (await test_client.get("/users/me", headers=fresh)).status_code == 200
+
+    # Role changes and deactivation also end sessions
+    await test_client.patch(f"/business/users/{cashier.id}", json={"role": "owner"}, headers=oh)
+    assert (await test_client.get("/users/me", headers=fresh)).status_code == status.HTTP_401_UNAUTHORIZED
+
+    # Renaming doesn't
+    session = await _login(test_client, "cashier@store.com", "BrandNew1#")
+    await test_client.patch(f"/business/users/{cashier.id}", json={"full_name": "Carla"}, headers=oh)
+    assert (await test_client.get("/users/me", headers=session)).status_code == 200
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_too_many_failed_logins_are_blocked(test_client, store):
+    for _ in range(10):
+        response = await test_client.post(
+            "/auth/jwt/login", data={"username": "owner@store.com", "password": "wrong"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+    blocked = await test_client.post("/auth/jwt/login", data={"username": "owner@store.com", "password": PASSWORD})
+    assert blocked.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+    assert blocked.json()["detail"] == "LOGIN_TOO_MANY_ATTEMPTS"
+
+    # Other accounts are unaffected
+    await _login(test_client, "cashier@store.com", PASSWORD)
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_successful_login_clears_failures(test_client, store):
+    for _ in range(9):
+        await test_client.post("/auth/jwt/login", data={"username": "owner@store.com", "password": "wrong"})
+    await _login(test_client, "owner@store.com", PASSWORD)
+    for _ in range(9):
+        await test_client.post("/auth/jwt/login", data={"username": "owner@store.com", "password": "wrong"})
+    await _login(test_client, "owner@store.com", PASSWORD)

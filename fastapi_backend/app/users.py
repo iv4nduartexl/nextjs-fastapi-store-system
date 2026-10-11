@@ -27,6 +27,7 @@ from sqlalchemy.future import select
 from .config import settings
 from .database import get_user_db
 from .email import send_reset_password_email
+from .login_limits import clear_login_failures, record_login_failure
 from .models import User
 from .schemas import UserCreate
 
@@ -74,6 +75,17 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def authenticate(
         self, credentials: OAuth2PasswordRequestForm
     ) -> Optional[User]:
+        user = await self._check_credentials(credentials)
+        session = self.user_db.session
+        if user is None or not user.is_active:
+            await record_login_failure(session, credentials.username)
+        else:
+            await clear_login_failures(session, credentials.username)
+        return user
+
+    async def _check_credentials(
+        self, credentials: OAuth2PasswordRequestForm
+    ) -> Optional[User]:
         user: Optional[User] = None
 
         # Try email first
@@ -105,6 +117,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         return user
 
+    async def sign_out_everywhere(self, user: User, extra: dict | None = None) -> User:
+        """Invalidate all existing tokens of this user (optionally applying other changes too)."""
+        return await self.user_db.update(user, {**(extra or {}), "token_version": (user.token_version or 0) + 1})
+
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
@@ -114,6 +130,16 @@ bearer_transport = BearerTransport(tokenUrl=f"{AUTH_URL_PATH}/jwt/login")
 
 
 IMPERSONATION_CLAIM = "imp"
+TOKEN_VERSION_CLAIM = "ver"
+
+
+def _token_claims(token: str | None) -> dict:
+    if not token:
+        return {}
+    try:
+        return decode_jwt(token, settings.ACCESS_SECRET_KEY, ["fastapi-users:auth"], algorithms=[settings.ALGORITHM])
+    except jwt.PyJWTError:
+        return {}
 
 
 class AppJWTStrategy(JWTStrategy):
@@ -127,6 +153,10 @@ class AppJWTStrategy(JWTStrategy):
         user = await super().read_token(token, user_manager)
         if user is None:
             return None
+        # Tokens issued before the user's last password reset / deactivation are no longer valid.
+        # Tokens without the claim (issued before this feature) count as version 0.
+        if _token_claims(token).get(TOKEN_VERSION_CLAIM, 0) != (user.token_version or 0):
+            return None
         impersonator_id = read_impersonator_id(token)
         if impersonator_id is not None:
             try:
@@ -137,8 +167,17 @@ class AppJWTStrategy(JWTStrategy):
                 return None
         return user
 
+    async def write_token(self, user: User) -> str:
+        data = {"sub": str(user.id), "aud": self.token_audience, TOKEN_VERSION_CLAIM: user.token_version or 0}
+        return generate_jwt(data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm)
+
     def write_impersonation_token(self, user: User, superuser_id: uuid.UUID) -> str:
-        data = {"sub": str(user.id), "aud": self.token_audience, IMPERSONATION_CLAIM: str(superuser_id)}
+        data = {
+            "sub": str(user.id),
+            "aud": self.token_audience,
+            TOKEN_VERSION_CLAIM: user.token_version or 0,
+            IMPERSONATION_CLAIM: str(superuser_id),
+        }
         return generate_jwt(
             data,
             self.encode_key,
@@ -156,18 +195,10 @@ def get_jwt_strategy() -> AppJWTStrategy:
 
 def read_impersonator_id(token: str | None) -> uuid.UUID | None:
     """The superuser id inside a "view as" token, or None for normal tokens."""
-    if not token:
-        return None
+    value = _token_claims(token).get(IMPERSONATION_CLAIM)
     try:
-        data = decode_jwt(
-            token,
-            settings.ACCESS_SECRET_KEY,
-            ["fastapi-users:auth"],
-            algorithms=[settings.ALGORITHM],
-        )
-        value = data.get(IMPERSONATION_CLAIM)
         return uuid.UUID(value) if value else None
-    except (jwt.PyJWTError, ValueError):
+    except ValueError:
         return None
 
 

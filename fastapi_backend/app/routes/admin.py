@@ -7,7 +7,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.accounts import audit, create_account, display_name, reset_to_temporary_password
+from app.accounts import SESSION_ENDING_FIELDS, audit, create_account, display_name, reset_to_temporary_password
 from app.config import settings
 from app.database import get_async_session
 from app.models import AuditLog, Business, Sale, User, UserRole
@@ -247,7 +247,10 @@ async def update_user(
         changes["business_id"] = data.business_id
     if changes:
         previous_business = user.business_id
-        user = await user_manager.user_db.update(user, changes)
+        if SESSION_ENDING_FIELDS & changes.keys():
+            user = await user_manager.sign_out_everywhere(user, changes)
+        else:
+            user = await user_manager.user_db.update(user, changes)
         audit(db, actor_id=admin.id, action="user_updated", business_id=previous_business,
               target_type="user", target_id=user.id,
               details={k: (v.value if isinstance(v, UserRole) else str(v) if isinstance(v, UUID) else v)

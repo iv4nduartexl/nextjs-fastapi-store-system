@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.accounts import (
+    SESSION_ENDING_FIELDS,
     active_owner_count,
     audit,
     create_account,
@@ -123,7 +124,10 @@ async def update_team_member(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="cannot_deactivate_yourself")
 
     if changes:
-        member = await user_manager.user_db.update(member, changes)
+        if SESSION_ENDING_FIELDS & changes.keys():
+            member = await user_manager.sign_out_everywhere(member, changes)
+        else:
+            member = await user_manager.user_db.update(member, changes)
         audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="user_updated",
               business_id=tenant.business_id, target_type="user", target_id=member.id,
               details={k: (v.value if isinstance(v, UserRole) else v) for k, v in changes.items()})

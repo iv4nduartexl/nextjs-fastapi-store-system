@@ -37,3 +37,6 @@ yarn-error.log*
 next-env.d.ts
 
 !/lib/
+
+# openapi-ts failure logs
+openapi-ts-error-*.log

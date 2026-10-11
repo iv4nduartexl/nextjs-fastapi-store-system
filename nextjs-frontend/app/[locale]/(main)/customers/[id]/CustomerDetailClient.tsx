@@ -71,7 +71,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
   const balance = parseFloat(localCustomer.balance);
   const totalCredit = parseFloat(localCustomer.total_credit);
   const totalOutcomes = parseFloat(
-    (localCustomer as any).total_outcomes ?? "0",
+    localCustomer.total_outcomes ?? "0",
   );
   const totalPaid = parseFloat(localCustomer.total_paid);
   const limit = localCustomer.credit_limit
@@ -304,7 +304,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
         0,
       );
       const prevTotalCredit = parseFloat(prev.total_credit);
-      const prevTotalOutcomes = parseFloat((prev as any).total_outcomes ?? "0");
+      const prevTotalOutcomes = parseFloat(prev.total_outcomes ?? "0");
       const nextBalance = prevTotalCredit + prevTotalOutcomes - nextTotalPaid;
 
       return {
@@ -367,7 +367,7 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
         (sum, s) => sum + parseFloat(s.total),
         0,
       );
-      const prevTotalOutcomes = parseFloat((prev as any).total_outcomes ?? "0");
+      const prevTotalOutcomes = parseFloat(prev.total_outcomes ?? "0");
       const prevTotalPaid = parseFloat(prev.total_paid);
       const nextBalance = nextTotalCredit + prevTotalOutcomes - prevTotalPaid;
 

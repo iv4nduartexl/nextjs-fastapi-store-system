@@ -31,7 +31,7 @@ import type {
   UpdateMeResponse,
   ChangePasswordData,
   ChangePasswordError,
-  ChangePasswordResponse,
+  ChangePasswordResponse2,
   ReadItemData,
   ReadItemError,
   ReadItemResponse,
@@ -412,7 +412,7 @@ export const changePassword = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<ChangePasswordData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    ChangePasswordResponse,
+    ChangePasswordResponse2,
     ChangePasswordError,
     ThrowOnError
   >({

@@ -103,8 +103,9 @@ async def create_account(
 
 
 async def reset_to_temporary_password(user_manager: UserManager, user: User) -> str:
+    """New temporary password; every session the user had open is signed out."""
     password = generate_temporary_password()
-    await user_manager.user_db.update(
+    await user_manager.sign_out_everywhere(
         user,
         {
             "hashed_password": user_manager.password_helper.hash(password),
@@ -112,6 +113,10 @@ async def reset_to_temporary_password(user_manager: UserManager, user: User) -> 
         },
     )
     return password
+
+
+# Changes that must end the user's current sessions so they take effect immediately
+SESSION_ENDING_FIELDS = {"role", "is_active", "business_id"}
 
 
 async def active_owner_count(db: AsyncSession, business_id: UUID) -> int:

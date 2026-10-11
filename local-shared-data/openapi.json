@@ -398,8 +398,15 @@
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePasswordResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -6960,6 +6967,24 @@
           "new_password"
         ],
         "title": "ChangePasswordRequest"
+      },
+      "ChangePasswordResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "ChangePasswordResponse"
       },
       "ChatConversationDetail": {
         "properties": {

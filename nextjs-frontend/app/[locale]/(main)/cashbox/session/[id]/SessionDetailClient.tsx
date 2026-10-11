@@ -138,7 +138,7 @@ export default function SessionDetailClient({
   const cardIn = parseFloat(session.card_in) || 0;
   const transferIn = parseFloat(session.transfer_in) || 0;
   const creditSales = parseFloat(session.credit_sales) || 0;
-  const ownerWithdrawals = parseFloat((session as any).owner_withdrawals || 0);
+  const ownerWithdrawals = parseFloat(session.owner_withdrawals || "0");
   const counted = session.closing_amount_counted
     ? parseFloat(session.closing_amount_counted)
     : null;
@@ -294,7 +294,7 @@ export default function SessionDetailClient({
           {session.notes && (
             <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
               <FileText size={13} className="text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-700 italic">"{session.notes}"</p>
+              <p className="text-xs text-amber-700 italic">&ldquo;{session.notes}&rdquo;</p>
             </div>
           )}
         </div>
@@ -524,7 +524,7 @@ export default function SessionDetailClient({
                           </span>
                           <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
                             <MethodIcon size={9} />
-                            {t(`method.${tx.payment_method}` as any)}
+                            {t(`method.${tx.payment_method}` as Parameters<typeof t>[0])}
                           </span>
                           {tx.user_name && (
                             <span className="max-w-[8rem] truncate text-[10px] text-gray-400" title={tx.user_name}>

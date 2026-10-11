@@ -65,6 +65,14 @@ jobs:
         run: |
           cd ${{ github.workspace }}/${{ env.BACKEND_DIR }} && uv run alembic upgrade head
 
+      # Creates the platform superuser (SUPERUSER_EMAIL) on the first deploy; later deploys only
+      # verify it. Skipped when SUPERUSER_EMAIL is empty. The password is used only for creation.
+      - name: Ensure superuser account
+        env:
+          SUPERUSER_PASSWORD: ${{ secrets.SUPERUSER_PASSWORD }}
+        run: |
+          cd ${{ github.workspace }}/${{ env.BACKEND_DIR }} && uv run python -m commands.create_superuser --if-missing
+
       - name: Setup backend dependencies
         run: |
           cd ${{ github.workspace }}/${{ env.BACKEND_DIR }} && uv sync --frozen

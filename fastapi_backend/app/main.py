@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi_pagination import add_pagination
 from .schemas import UserRead
 from .users import auth_backend, fastapi_users, AUTH_URL_PATH
@@ -21,6 +21,7 @@ from app.routes.business import router as business_router
 from app.routes.admin import router as admin_router
 from app.database import async_session_maker
 from app.superuser import sync_superuser
+from app.login_limits import login_rate_limit
 from app.mcp_tools import ALLOWED_OPERATIONS, apply_tool_descriptions
 from app.config import settings
 from fastapi_mcp import FastApiMCP
@@ -52,6 +53,8 @@ app.include_router(
     fastapi_users.get_auth_router(auth_backend),
     prefix=f"/{AUTH_URL_PATH}/jwt",
     tags=["auth"],
+    # Throttles repeated failed sign-ins (no-op for logout)
+    dependencies=[Depends(login_rate_limit)],
 )
 # No public registration: the superuser creates businesses and owners create their team
 app.include_router(

@@ -99,11 +99,16 @@ class TestItems:
         )
         assert delete_response.status_code == status.HTTP_200_OK
 
-        # Verify item is deleted from database
+        # Products are soft-deleted: kept for sales history, hidden from the catalog
         db_check = (
-            await db_session.execute(select(Item).where(Item.id == db_item.id))
+            await db_session.execute(
+                select(Item).where(Item.id == db_item.id).execution_options(populate_existing=True)
+            )
         ).scalar()
-        assert db_check is None
+        assert db_check.is_deleted is True
+
+        listed = await test_client.get("/items/", headers=authenticated_user["headers"])
+        assert db_item.id not in {i["id"] for i in listed.json()["items"]}
 
     @pytest.mark.asyncio(loop_scope="function")
     async def test_delete_nonexistent_item(self, test_client, authenticated_user):

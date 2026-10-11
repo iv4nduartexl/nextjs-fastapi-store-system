@@ -44,6 +44,7 @@ export interface CashboxSessionRead {
   card_in: string;
   transfer_in: string;
   credit_sales: string;
+  owner_withdrawals?: string;
   expected_cash_balance: string;
   difference: string | null;
   transaction_count: number;

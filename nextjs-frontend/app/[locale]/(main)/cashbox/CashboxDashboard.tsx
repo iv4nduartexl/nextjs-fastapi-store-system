@@ -672,6 +672,11 @@ export default function CashboxDashboard({
                                 <MethodIcon size={9} />
                                 {t(`method.${tx.payment_method}` as any)}
                               </span>
+                              {tx.user_name && (
+                                <span className="max-w-[8rem] truncate text-[10px] text-gray-400" title={tx.user_name}>
+                                  · {tx.user_name}
+                                </span>
+                              )}
                             </div>
                           </div>
 

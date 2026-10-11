@@ -12,9 +12,6 @@ import type {
   AuthJwtLoginResponse,
   AuthJwtLogoutError,
   AuthJwtLogoutResponse,
-  RegisterRegisterData,
-  RegisterRegisterError,
-  RegisterRegisterResponse,
   ResetForgotPasswordData,
   ResetForgotPasswordError,
   ResetForgotPasswordResponse,
@@ -27,20 +24,14 @@ import type {
   VerifyVerifyData,
   VerifyVerifyError,
   VerifyVerifyResponse,
-  UsersCurrentUserError,
-  UsersCurrentUserResponse,
-  UsersPatchCurrentUserData,
-  UsersPatchCurrentUserError,
-  UsersPatchCurrentUserResponse,
-  UsersUserData,
-  UsersUserError,
-  UsersUserResponse,
-  UsersPatchUserData,
-  UsersPatchUserError,
-  UsersPatchUserResponse,
-  UsersDeleteUserData,
-  UsersDeleteUserError,
-  UsersDeleteUserResponse,
+  ReadMeError,
+  ReadMeResponse,
+  UpdateMeData,
+  UpdateMeError,
+  UpdateMeResponse,
+  ChangePasswordData,
+  ChangePasswordError,
+  ChangePasswordResponse,
   ReadItemData,
   ReadItemError,
   ReadItemResponse,
@@ -228,6 +219,55 @@ import type {
   StoreSnapshotData,
   StoreSnapshotError,
   StoreSnapshotResponse,
+  GetBusinessError,
+  GetBusinessResponse,
+  UpdateBusinessData,
+  UpdateBusinessError,
+  UpdateBusinessResponse,
+  ListTeamError,
+  ListTeamResponse,
+  CreateTeamMemberData,
+  CreateTeamMemberError,
+  CreateTeamMemberResponse,
+  UpdateTeamMemberData,
+  UpdateTeamMemberError,
+  UpdateTeamMemberResponse,
+  ResetTeamMemberPasswordData,
+  ResetTeamMemberPasswordError,
+  ResetTeamMemberPasswordResponse,
+  ListBusinessesData,
+  ListBusinessesError,
+  ListBusinessesResponse,
+  CreateBusinessData,
+  CreateBusinessError,
+  CreateBusinessResponse,
+  GetBusiness1Data,
+  GetBusiness1Error,
+  GetBusiness1Response,
+  UpdateBusiness1Data,
+  UpdateBusiness1Error,
+  UpdateBusiness1Response,
+  ListUsersData,
+  ListUsersError,
+  ListUsersResponse,
+  CreateUserData,
+  CreateUserError,
+  CreateUserResponse,
+  UpdateUserData,
+  UpdateUserError,
+  UpdateUserResponse,
+  ResetUserPasswordData,
+  ResetUserPasswordError,
+  ResetUserPasswordResponse,
+  ImpersonateData,
+  ImpersonateError,
+  ImpersonateResponse,
+  StopImpersonationData,
+  StopImpersonationError,
+  StopImpersonationResponse,
+  ListAuditLogsData,
+  ListAuditLogsError,
+  ListAuditLogsResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -266,22 +306,6 @@ export const authJwtLogout = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/auth/jwt/logout",
-  });
-};
-
-/**
- * Register:Register
- */
-export const registerRegister = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<RegisterRegisterData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).post<
-    RegisterRegisterResponse,
-    RegisterRegisterError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/auth/register",
   });
 };
 
@@ -350,14 +374,14 @@ export const verifyVerify = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Users:Current User
+ * Read Me
  */
-export const usersCurrentUser = <ThrowOnError extends boolean = false>(
+export const readMe = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    UsersCurrentUserResponse,
-    UsersCurrentUserError,
+    ReadMeResponse,
+    ReadMeError,
     ThrowOnError
   >({
     ...options,
@@ -366,14 +390,14 @@ export const usersCurrentUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Users:Patch Current User
+ * Update Me
  */
-export const usersPatchCurrentUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UsersPatchCurrentUserData, ThrowOnError>,
+export const updateMe = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateMeData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).patch<
-    UsersPatchCurrentUserResponse,
-    UsersPatchCurrentUserError,
+    UpdateMeResponse,
+    UpdateMeError,
     ThrowOnError
   >({
     ...options,
@@ -382,50 +406,18 @@ export const usersPatchCurrentUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Users:User
+ * Change Password
  */
-export const usersUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UsersUserData, ThrowOnError>,
+export const changePassword = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ChangePasswordData, ThrowOnError>,
 ) => {
-  return (options?.client ?? client).get<
-    UsersUserResponse,
-    UsersUserError,
+  return (options?.client ?? client).post<
+    ChangePasswordResponse,
+    ChangePasswordError,
     ThrowOnError
   >({
     ...options,
-    url: "/users/{id}",
-  });
-};
-
-/**
- * Users:Patch User
- */
-export const usersPatchUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UsersPatchUserData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).patch<
-    UsersPatchUserResponse,
-    UsersPatchUserError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/users/{id}",
-  });
-};
-
-/**
- * Users:Delete User
- */
-export const usersDeleteUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UsersDeleteUserData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).delete<
-    UsersDeleteUserResponse,
-    UsersDeleteUserError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/users/{id}",
+    url: "/auth/change-password",
   });
 };
 
@@ -1487,5 +1479,277 @@ export const storeSnapshot = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/assistant/snapshot",
+  });
+};
+
+/**
+ * Get Business
+ */
+export const getBusiness = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetBusinessResponse,
+    GetBusinessError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/business",
+  });
+};
+
+/**
+ * Update Business
+ */
+export const updateBusiness = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateBusinessData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateBusinessResponse,
+    UpdateBusinessError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/business",
+  });
+};
+
+/**
+ * List Team
+ */
+export const listTeam = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListTeamResponse,
+    ListTeamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/business/users",
+  });
+};
+
+/**
+ * Create Team Member
+ */
+export const createTeamMember = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreateTeamMemberData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateTeamMemberResponse,
+    CreateTeamMemberError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/business/users",
+  });
+};
+
+/**
+ * Update Team Member
+ */
+export const updateTeamMember = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateTeamMemberData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateTeamMemberResponse,
+    UpdateTeamMemberError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/business/users/{user_id}",
+  });
+};
+
+/**
+ * Reset Team Member Password
+ */
+export const resetTeamMemberPassword = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ResetTeamMemberPasswordData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ResetTeamMemberPasswordResponse,
+    ResetTeamMemberPasswordError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/business/users/{user_id}/reset-password",
+  });
+};
+
+/**
+ * List Businesses
+ */
+export const listBusinesses = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListBusinessesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListBusinessesResponse,
+    ListBusinessesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/businesses",
+  });
+};
+
+/**
+ * Create Business
+ */
+export const createBusiness = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreateBusinessData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateBusinessResponse,
+    CreateBusinessError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/businesses",
+  });
+};
+
+/**
+ * Get Business
+ */
+export const getBusiness1 = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetBusiness1Data, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetBusiness1Response,
+    GetBusiness1Error,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/businesses/{business_id}",
+  });
+};
+
+/**
+ * Update Business
+ */
+export const updateBusiness1 = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateBusiness1Data, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateBusiness1Response,
+    UpdateBusiness1Error,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/businesses/{business_id}",
+  });
+};
+
+/**
+ * List Users
+ */
+export const listUsers = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListUsersData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListUsersResponse,
+    ListUsersError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/users",
+  });
+};
+
+/**
+ * Create User
+ */
+export const createUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<CreateUserData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateUserResponse,
+    CreateUserError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/users",
+  });
+};
+
+/**
+ * Update User
+ */
+export const updateUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateUserData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UpdateUserResponse,
+    UpdateUserError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/users/{user_id}",
+  });
+};
+
+/**
+ * Reset User Password
+ */
+export const resetUserPassword = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ResetUserPasswordData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ResetUserPasswordResponse,
+    ResetUserPasswordError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/users/{user_id}/reset-password",
+  });
+};
+
+/**
+ * Impersonate
+ */
+export const impersonate = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ImpersonateData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ImpersonateResponse,
+    ImpersonateError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/impersonate/{user_id}",
+  });
+};
+
+/**
+ * Stop Impersonation
+ */
+export const stopImpersonation = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<StopImpersonationData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    StopImpersonationResponse,
+    StopImpersonationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/impersonate/{user_id}/stop",
+  });
+};
+
+/**
+ * List Audit Logs
+ */
+export const listAuditLogs = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ListAuditLogsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListAuditLogsResponse,
+    ListAuditLogsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/admin/audit-logs",
   });
 };

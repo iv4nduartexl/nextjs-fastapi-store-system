@@ -10,6 +10,7 @@ import {
   cancelPurchase,
   NegativeStockItem,
 } from "@/components/actions/purchases-action";
+import { useIsOwner } from "@/components/me-provider";
 import { useRouter } from "@/i18n/routing";
 import { formatNumber } from "@/lib/format-number";
 
@@ -19,6 +20,7 @@ interface CancelRecordButtonProps {
 }
 
 export function CancelRecordButton({ kind, id }: CancelRecordButtonProps) {
+  const isOwner = useIsOwner();
   const t = useTranslations("cancelRecord");
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +71,9 @@ export function CancelRecordButton({ kind, id }: CancelRecordButtonProps) {
     setIsOpen(false);
     router.refresh();
   }
+
+  // Cancellations are owner-only (the API enforces it too)
+  if (!isOwner) return null;
 
   return (
     <>

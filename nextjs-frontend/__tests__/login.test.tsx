@@ -9,7 +9,17 @@ jest.mock("../app/clientService", () => ({
 
 jest.mock("next/headers", () => {
   const mockSet = jest.fn();
-  return { cookies: jest.fn().mockResolvedValue({ set: mockSet }) };
+  const mockDelete = jest.fn();
+  return { cookies: jest.fn().mockResolvedValue({ set: mockSet, delete: mockDelete }) };
+});
+
+// /users/me lookup used to pick the landing page after login
+function mockMe(me: Record<string, unknown>) {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => me }) as jest.Mock;
+}
+
+beforeEach(() => {
+  mockMe({ is_superuser: false, business_id: "b1", must_change_password: false });
 });
 
 jest.mock("@/i18n/routing", () => ({
@@ -21,6 +31,30 @@ jest.mock("next-intl/server", () => ({
 }));
 
 describe("login action", () => {
+  it("sends the superuser to the admin panel", async () => {
+    mockMe({ is_superuser: true, business_id: null, must_change_password: false });
+    (authJwtLogin as jest.Mock).mockResolvedValue({ data: { access_token: "admin-token" } });
+    const formData = new FormData();
+    formData.set("username", "admin@platform.com");
+    formData.set("password", "Q12341414#");
+
+    await login({}, formData);
+
+    expect(redirect).toHaveBeenCalledWith({ href: "/admin", locale: "es" });
+  });
+
+  it("sends users with a temporary password to change it", async () => {
+    mockMe({ is_superuser: false, business_id: "b1", must_change_password: true });
+    (authJwtLogin as jest.Mock).mockResolvedValue({ data: { access_token: "t" } });
+    const formData = new FormData();
+    formData.set("username", "new@store.com");
+    formData.set("password", "Q12341414#");
+
+    await login({}, formData);
+
+    expect(redirect).toHaveBeenCalledWith({ href: "/change-password", locale: "es" });
+  });
+
   it("should call login service action with the correct input", async () => {
     const formData = new FormData();
     formData.set("username", "a@a.com");

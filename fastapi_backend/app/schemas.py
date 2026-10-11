@@ -5,7 +5,7 @@ from decimal import Decimal
 from fastapi_users import schemas
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 
 from app.models import (
@@ -128,6 +128,10 @@ class SaleRead(BaseModel):
     customer_name: str | None = None
     cancelled_at: datetime | None = None
     cancel_reason: str | None = None
+    user_id: UUID | None = None
+    # Who made / cancelled it (display names)
+    user_name: str | None = None
+    cancelled_by_name: str | None = None
     sale_items: list[SaleItemRead]
 
     model_config = {"from_attributes": True}
@@ -250,6 +254,7 @@ class CustomerPaymentRead(BaseModel):
     payment_date: datetime
     notes: str | None
     created_at: datetime
+    user_name: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -349,6 +354,9 @@ class PurchaseRead(BaseModel):
     notes: str | None
     cancelled_at: datetime | None = None
     cancel_reason: str | None = None
+    user_id: UUID | None = None
+    user_name: str | None = None
+    cancelled_by_name: str | None = None
     purchase_items: list[PurchaseItemRead]
 
     model_config = {"from_attributes": True}
@@ -371,6 +379,8 @@ class CashboxTransactionRead(BaseModel):
     reference_id: UUID | None
     description: str | None
     created_at: datetime
+    user_id: UUID | None = None
+    user_name: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -748,3 +758,144 @@ class ChatResponse(BaseModel):
         "too_many_steps",
     ] | None = None
     error_detail: str | None = None
+
+
+# --- Account, team and admin ---
+
+
+class MeRead(BaseModel):
+    id: UUID
+    email: str
+    username: str | None
+    full_name: str | None
+    role: str
+    is_superuser: bool
+    must_change_password: bool
+    business_id: UUID | None
+    business_name: str | None
+    # Set while the superuser is viewing the app as this user
+    impersonated_by: UUID | None = None
+    impersonator_email: str | None = None
+
+
+class MeUpdate(BaseModel):
+    full_name: str | None = Field(None, max_length=120)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class BusinessRead(BaseModel):
+    id: UUID
+    name: str
+    is_active: bool
+    currency_symbol: str | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class BusinessUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
+class TeamUserRead(BaseModel):
+    id: UUID
+    email: str
+    username: str | None
+    full_name: str | None
+    role: str
+    is_active: bool
+    must_change_password: bool
+    last_login_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class TeamUserCreate(BaseModel):
+    email: EmailStr
+    username: str | None = Field(None, max_length=60)
+    full_name: str | None = Field(None, max_length=120)
+    role: Literal["owner", "cashier"] = "cashier"
+
+
+class TeamUserUpdate(BaseModel):
+    role: Literal["owner", "cashier"] | None = None
+    is_active: bool | None = None
+    full_name: str | None = Field(None, max_length=120)
+
+
+class TemporaryPasswordResponse(BaseModel):
+    user_id: UUID
+    email: str
+    # Shown once; the user must change it on first login
+    temporary_password: str
+
+
+class AdminBusinessRead(BusinessRead):
+    user_count: int = 0
+    sales_count: int = 0
+    last_activity_at: datetime | None = None
+
+
+class AdminBusinessCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    owner_email: EmailStr
+    owner_username: str | None = Field(None, max_length=60)
+    owner_full_name: str | None = Field(None, max_length=120)
+
+
+class AdminBusinessUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=120)
+    is_active: bool | None = None
+
+
+class AdminBusinessCreated(BaseModel):
+    business: AdminBusinessRead
+    owner: TemporaryPasswordResponse
+
+
+class AdminUserRead(TeamUserRead):
+    is_superuser: bool
+    business_id: UUID | None
+    business_name: str | None = None
+
+
+class AdminUserCreate(TeamUserCreate):
+    business_id: UUID
+
+
+class AdminUserUpdate(TeamUserUpdate):
+    business_id: UUID | None = None
+
+
+class ImpersonationResponse(BaseModel):
+    access_token: str
+    expires_in: int
+    user: AdminUserRead
+
+
+class AuditLogRead(BaseModel):
+    id: UUID
+    action: str
+    actor_user_id: UUID | None
+    actor_name: str | None = None
+    impersonated_by: UUID | None
+    impersonator_name: str | None = None
+    business_id: UUID | None
+    business_name: str | None = None
+    target_type: str | None
+    target_id: str | None
+    details: dict[str, Any] | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AuditLogPage(BaseModel):
+    items: list[AuditLogRead]
+    total: int
+    page: int
+    size: int

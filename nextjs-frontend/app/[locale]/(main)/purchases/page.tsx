@@ -155,6 +155,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead>{t("table.date")}</TableHead>
+              <TableHead>{t("table.user")}</TableHead>
               <TableHead>{t("table.supplier")}</TableHead>
               <TableHead>{t("table.reference")}</TableHead>
               <TableHead className="text-center">{t("table.items")}</TableHead>
@@ -175,7 +176,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
             {!data?.items?.length ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={10}
                   className="text-center py-16 text-gray-400"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -189,6 +190,9 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                 <TableRow key={purchase.id} className="hover:bg-gray-50">
                   <TableCell className="text-gray-600 text-xs">
                     {new Date(purchase.purchase_date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-gray-600 text-xs max-w-[10rem] truncate" title={purchase.user_name ?? ""}>
+                    {purchase.user_name ?? "—"}
                   </TableCell>
                   <TableCell className="font-medium text-gray-800">
                     {purchase?.supplier?.name ?? (

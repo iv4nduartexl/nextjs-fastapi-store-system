@@ -24,7 +24,7 @@ from app.schemas import (
     CustomerUpdate,
     SaleRead,
 )
-from app.tenancy import TenantContext, current_tenant
+from app.tenancy import TenantContext, current_tenant, require_owner
 
 router = APIRouter(tags=["customers"])
 
@@ -351,7 +351,7 @@ async def delete_payment(
     customer_id: UUID,
     payment_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     customer_result = await db.execute(
         select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
@@ -381,7 +381,7 @@ async def delete_outcome(
     customer_id: UUID,
     outcome_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     customer_result = await db.execute(
         select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)

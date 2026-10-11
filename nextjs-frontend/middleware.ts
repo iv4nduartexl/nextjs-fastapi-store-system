@@ -10,10 +10,10 @@ export async function middleware(request: NextRequest) {
 
   // Check if path is a protected route (with or without locale prefix)
   const isProtected =
-    /^\/(en|es)?\/(dashboard|products|sales|purchases|customers|cashbox|statistics|chat)(\/.*)?$/.test(
+    /^\/(en|es)?\/(dashboard|products|sales|purchases|customers|cashbox|statistics|chat|team|admin|change-password)(\/.*)?$/.test(
       pathname,
     ) ||
-    /^\/(dashboard|products|sales|purchases|customers|cashbox|statistics|chat)(\/.*)?$/.test(
+    /^\/(dashboard|products|sales|purchases|customers|cashbox|statistics|chat|team|admin|change-password)(\/.*)?$/.test(
       pathname,
     );
 

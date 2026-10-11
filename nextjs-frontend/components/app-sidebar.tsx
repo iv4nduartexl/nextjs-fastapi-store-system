@@ -9,23 +9,26 @@ import {
   ShoppingCart,
   TrendingUp,
   Truck,
+  UserCog,
   Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 
+import { useIsOwner } from "@/components/me-provider";
 import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS: { href: string; key: string; icon: LucideIcon }[] = [
+const NAV_ITEMS: { href: string; key: string; icon: LucideIcon; ownerOnly?: boolean }[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/products", key: "products", icon: ShoppingBag },
   { href: "/sales", key: "sales", icon: ShoppingCart },
   { href: "/purchases", key: "purchases", icon: Truck },
   { href: "/customers", key: "customers", icon: Users },
-  { href: "/statistics", key: "statistics", icon: TrendingUp },
+  { href: "/statistics", key: "statistics", icon: TrendingUp, ownerOnly: true },
   { href: "/cashbox", key: "cashbox", icon: Wallet },
   { href: "/chat", key: "chat", icon: MessageSquare },
+  { href: "/team", key: "team", icon: UserCog, ownerOnly: true },
 ];
 
 // Labels fade in only while the sidebar is expanded (mouse hover or keyboard focus)
@@ -38,6 +41,7 @@ export function AppSidebar() {
   const t = useTranslations("nav");
   // Path without the locale prefix, e.g. "/sales/123"
   const pathname = usePathname();
+  const isOwner = useIsOwner();
 
   return (
     <aside
@@ -68,7 +72,7 @@ export function AppSidebar() {
       </Link>
 
       <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
+        {NAV_ITEMS.filter((item) => isOwner || !item.ownerOnly).map(({ href, key, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link

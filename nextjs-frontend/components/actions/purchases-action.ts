@@ -66,6 +66,10 @@ export interface PurchaseRead {
   notes: string | null;
   cancelled_at?: string | null;
   cancel_reason?: string | null;
+  user_id?: string | null;
+  /** Who registered / cancelled the purchase */
+  user_name?: string | null;
+  cancelled_by_name?: string | null;
   purchase_items: PurchaseItemRead[];
 }
 

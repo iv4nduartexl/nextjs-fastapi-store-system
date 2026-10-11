@@ -118,6 +118,13 @@ WRITE_OPERATIONS: set[str] = {
     "item-update_item",
 }
 
+# Owner-only endpoints (require_owner); not offered to cashiers in the chat
+OWNER_ONLY_OPERATIONS: set[str] = {
+    "sales-cancel_sale",
+    "purchases-cancel_purchase",
+    *(op for op in TOOL_DESCRIPTIONS if op.startswith("sales-analytics_")),
+}
+
 ALLOWED_OPERATIONS: list[str] = list(TOOL_DESCRIPTIONS)
 
 

@@ -23,12 +23,15 @@ import {
 import { AISettingsDialog } from "@/components/chat/ai-settings-dialog";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { ToolApprovalCard } from "@/components/chat/tool-approval-card";
+import { useIsOwner } from "@/components/me-provider";
 import { useRouter } from "@/i18n/routing";
 import { currencySymbol } from "@/lib/currency";
 
 type ChatError = { code: ChatErrorCode; detail?: string | null } | null;
 
 export function ChatClient() {
+  // AI provider settings are owner-only
+  const isOwner = useIsOwner();
   const t = useTranslations("chat");
   const locale = useLocale();
   const router = useRouter();
@@ -198,15 +201,17 @@ export function ChatClient() {
           <h1 className="font-semibold text-gray-800 truncate">
             {conversations.find((c) => c.id === activeId)?.title || t("title")}
           </h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSettingsOpen(true)}
-            title={t("settings")}
-            aria-label={t("settings")}
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
+          {isOwner && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              title={t("settings")}
+              aria-label={t("settings")}
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          )}
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -278,7 +283,7 @@ export function ChatClient() {
                 {error?.detail && error.code !== "generic" && (
                   <p className="mt-0.5 text-xs text-red-500 break-words">{error.detail}</p>
                 )}
-                {(error?.code === "no_api_key" ||
+                {isOwner && (error?.code === "no_api_key" ||
                   error?.code === "invalid_api_key" ||
                   error?.code === "model_not_found" ||
                   error?.code === "bad_request") && (

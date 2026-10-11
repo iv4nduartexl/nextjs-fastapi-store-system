@@ -35,7 +35,8 @@
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "signIn": "Iniciar Sesión",
     "noAccount": "¿No tienes cuenta?",
-    "signUp": "Regístrate"
+    "signUp": "Regístrate",
+    "askForAccount": "¿Necesitas una cuenta? Pídesela al dueño de tu negocio o al administrador del sistema."
   },
   "register": {
     "title": "Crear Cuenta",
@@ -130,6 +131,7 @@
     },
     "table": {
       "date": "Fecha",
+      "user": "Usuario",
       "items": "Artículos",
       "total": "Total",
       "payment": "Pago",
@@ -292,6 +294,7 @@
     },
     "table": {
       "date": "Fecha",
+      "user": "Usuario",
       "supplier": "Proveedor",
       "reference": "Referencia",
       "items": "Artículos",
@@ -861,7 +864,9 @@
     "alreadyCancelled": "Este registro ya estaba anulado.",
     "genericError": "No se pudo anular. Inténtalo de nuevo.",
     "cancelledOn": "Anulado el",
-    "reason": "Motivo"
+    "reason": "Motivo",
+    "madeBy": "Registrado por {name}",
+    "by": "por {name}"
   },
   "chat": {
     "title": "Asistente",
@@ -1006,6 +1011,174 @@
     "customers": "Clientes",
     "statistics": "Estadísticas",
     "cashbox": "Caja",
-    "chat": "Asistente"
+    "chat": "Asistente",
+    "team": "Equipo"
+  },
+  "account": {
+    "roles": {
+      "owner": "Dueño",
+      "cashier": "Cajero"
+    },
+    "changePassword": "Cambiar contraseña",
+    "viewingAs": "Estás viendo la app como {name} ({business})",
+    "exitViewAs": "Salir",
+    "setNewPasswordTitle": "Crea tu contraseña",
+    "forcedDescription": "Ingresaste con una contraseña temporal. Elige la tuya para continuar.",
+    "changeDescription": "Elige una nueva contraseña para tu cuenta.",
+    "temporaryPassword": "Contraseña temporal",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Repite la nueva contraseña",
+    "passwordRules": "Al menos 8 caracteres, una mayúscula y un carácter especial.",
+    "passwordsDontMatch": "Las contraseñas nuevas no coinciden.",
+    "passwordChanged": "Contraseña actualizada.",
+    "savePassword": "Guardar contraseña",
+    "signOut": "Cerrar sesión",
+    "back": "Volver",
+    "errors": {
+      "current_password_incorrect": "La contraseña actual es incorrecta.",
+      "password_unchanged": "La nueva contraseña debe ser distinta.",
+      "invalid_password": "La contraseña no cumple los requisitos.",
+      "generic": "No se pudo cambiar la contraseña. Inténtalo de nuevo."
+    }
+  },
+  "team": {
+    "business": "Negocio",
+    "subtitle": "Personas que pueden ingresar a esta tienda. Cada venta y movimiento registra quién lo hizo.",
+    "addUser": "Agregar usuario",
+    "create": "Crear usuario",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "rename": "Renombrar",
+    "user": "Usuario",
+    "role": "Rol",
+    "status": "Estado",
+    "lastLogin": "Último ingreso",
+    "actions": "Acciones",
+    "you": "tú",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "pendingPassword": "Debe crear contraseña",
+    "never": "Nunca",
+    "resetPassword": "Restablecer contraseña",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "confirmReset": "¿Generar una nueva contraseña temporal para {email}? Su contraseña actual dejará de funcionar.",
+    "email": "Email",
+    "fullName": "Nombre completo",
+    "username": "Usuario (opcional)",
+    "roleHint": {
+      "cashier": "Ventas, compras, clientes y caja",
+      "owner": "Todo, incluidas estadísticas y equipo"
+    },
+    "tempPasswordExplain": "Se genera una contraseña temporal; el usuario crea la suya al ingresar por primera vez.",
+    "tempPasswordTitle": "Contraseña temporal",
+    "tempPasswordHint": "Entrega estos datos al usuario.",
+    "tempPasswordOnce": "Esta contraseña se muestra una sola vez. Se le pedirá cambiarla al ingresar.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "done": "Listo",
+    "errors": {
+      "last_owner": "El negocio necesita al menos un dueño activo.",
+      "cannot_demote_yourself": "No puedes quitarte tu propio rol de dueño.",
+      "cannot_deactivate_yourself": "No puedes desactivar tu propia cuenta.",
+      "email_taken": "Ese email ya está en uso.",
+      "username_taken": "Ese usuario ya está en uso.",
+      "generic": "Algo salió mal. Inténtalo de nuevo."
+    }
+  },
+  "admin": {
+    "title": "Administración",
+    "nav": {
+      "businesses": "Negocios",
+      "users": "Usuarios",
+      "audit": "Auditoría"
+    },
+    "logout": "Cerrar sesión",
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "rename": "Renombrar",
+    "errors": {
+      "generic": "Algo salió mal. Inténtalo de nuevo."
+    },
+    "businesses": {
+      "title": "Negocios",
+      "subtitle": "{count, plural, =1 {1 negocio} other {# negocios}} usando el sistema",
+      "create": "Nuevo negocio",
+      "createSubmit": "Crear negocio",
+      "search": "Buscar negocios",
+      "empty": "No se encontraron negocios",
+      "name": "Nombre del negocio",
+      "users": "Usuarios",
+      "sales": "Ventas",
+      "lastActivity": "Última actividad",
+      "nameRequired": "Ingresa el nombre del negocio.",
+      "firstOwner": "Primer dueño"
+    },
+    "business": {
+      "back": "Todos los negocios",
+      "stats": "{users} usuarios · {sales} ventas",
+      "created": "Creado",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "confirmDeactivate": "¿Desactivar {name}? Sus usuarios no podrán usar el sistema hasta que lo actives de nuevo.",
+      "inactiveHint": "Este negocio está inactivo: sus usuarios pueden ingresar pero no acceden a ningún dato.",
+      "users": "Usuarios"
+    },
+    "users": {
+      "title": "Usuarios",
+      "subtitle": "Busca usuarios en todos los negocios.",
+      "search": "Buscar por email, usuario o nombre",
+      "empty": "Sin usuarios",
+      "user": "Usuario",
+      "business": "Negocio",
+      "role": "Rol",
+      "lastLogin": "Último ingreso",
+      "actions": "Acciones",
+      "superuser": "Superusuario",
+      "moveTo": "Mover a…",
+      "pendingPassword": "Debe crear contraseña",
+      "never": "Nunca",
+      "viewAs": "Ver como",
+      "resetPassword": "Restablecer contraseña",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "confirmReset": "¿Generar una nueva contraseña temporal para {email}? Su contraseña actual dejará de funcionar.",
+      "add": "Agregar usuario",
+      "addTo": "Agregar usuario a {name}",
+      "create": "Crear usuario"
+    },
+    "audit": {
+      "title": "Auditoría",
+      "subtitle": "Acciones administrativas, restablecimientos de contraseña, \"ver como\" y anulaciones.",
+      "business": "Negocio",
+      "action": "Acción",
+      "all": "Todas",
+      "filter": "Filtrar",
+      "empty": "Sin registros",
+      "when": "Cuándo",
+      "who": "Quién",
+      "details": "Detalles",
+      "via": "vía {name} (ver como)",
+      "pageOf": "Página {page} de {pages}",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "actions": {
+        "business_created": "Negocio creado",
+        "business_updated": "Negocio actualizado",
+        "user_created": "Usuario creado",
+        "user_updated": "Usuario actualizado",
+        "password_reset": "Contraseña restablecida",
+        "password_changed": "Contraseña cambiada",
+        "impersonation_started": "Inicio de \"ver como\"",
+        "impersonation_stopped": "Fin de \"ver como\"",
+        "impersonated_write": "Cambio durante \"ver como\"",
+        "sale_cancelled": "Venta anulada",
+        "purchase_cancelled": "Compra anulada"
+      }
+    }
   }
 }

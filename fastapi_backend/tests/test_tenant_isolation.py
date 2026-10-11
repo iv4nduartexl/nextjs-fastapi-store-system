@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from app.main import app
 from app.models import Business, ChatConversation, Item, Supplier, User
-from app.tenancy import SESSION_BUSINESS_KEY, TenantIsolationError, current_tenant
+from app.tenancy import SESSION_BUSINESS_KEY, TenantIsolationError, current_tenant, require_superuser
 from app.users import get_jwt_strategy
 
 
@@ -279,8 +279,8 @@ def _depends_on(dependant, target) -> bool:
 
 
 def test_every_business_route_requires_tenant():
-    """New routes can't forget isolation: everything outside auth/users must depend on current_tenant."""
-    public_prefixes = ("/auth", "/users", "/mcp", "/docs", "/redoc", "/openapi")
+    """New routes can't forget isolation: store routes need current_tenant, /admin needs require_superuser."""
+    public_prefixes = ("/auth", "/users", "/mcp", "/docs", "/redoc", "/openapi", "/admin")
     missing = [
         f"{','.join(route.methods)} {route.path}"
         for route in app.routes
@@ -289,3 +289,12 @@ def test_every_business_route_requires_tenant():
         and not _depends_on(route.dependant, current_tenant)
     ]
     assert missing == []
+
+    unprotected_admin = [
+        route.path
+        for route in app.routes
+        if isinstance(route, APIRoute)
+        and route.path.startswith("/admin")
+        and not _depends_on(route.dependant, require_superuser)
+    ]
+    assert unprotected_admin == []

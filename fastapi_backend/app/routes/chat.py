@@ -29,7 +29,7 @@ from app.ai_provider import (
     temperature_kwargs,
 )
 from app.database import get_async_session
-from app.mcp_tools import ALLOWED_OPERATIONS, WRITE_OPERATIONS
+from app.mcp_tools import ALLOWED_OPERATIONS, OWNER_ONLY_OPERATIONS, WRITE_OPERATIONS
 from app.models import ChatConversation, ChatMessage, Customer, Item, Supplier
 from app.schemas import (
     ChatConversationDetail,
@@ -97,11 +97,13 @@ def _safe_tool_name(name: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_-]", "_", name)[:64]
 
 
-def _tool_specs(mcp) -> tuple[list[dict], dict[str, str]]:
+def _tool_specs(mcp, is_owner: bool = True) -> tuple[list[dict], dict[str, str]]:
     """OpenAI tool specs plus a map from the (sanitized) name sent to the model to the MCP name."""
     specs = []
     name_map = {}
     allowed = set(ALLOWED_OPERATIONS)
+    if not is_owner:
+        allowed -= OWNER_ONLY_OPERATIONS
     for tool in mcp.tools:
         if tool.name not in allowed:
             continue
@@ -366,7 +368,7 @@ async def _run_model(ctx: ChatContext) -> None:
     if not config.is_usable:
         raise ChatError("no_api_key")
     client = build_client(config)
-    tools, name_map = _tool_specs(ctx.mcp)
+    tools, name_map = _tool_specs(ctx.mcp, ctx.tenant.is_owner)
 
     for _ in range(MAX_MODEL_ROUNDS):
         try:
@@ -422,7 +424,7 @@ async def _resolve_action(ctx: ChatContext, action: ChatMessage, approved: bool)
         # New dict (not an in-place edit) so SQLAlchemy sees the JSONB change
         action.pending_action = {**pending, "result_ok": ok}
         _add_message(ctx, role="tool", tool_call_id=first["id"], content=result)
-        _, name_map = _tool_specs(ctx.mcp)
+        _, name_map = _tool_specs(ctx.mcp, ctx.tenant.is_owner)
         return await _process_tool_queue(ctx, rest, name_map)
 
     _add_message(

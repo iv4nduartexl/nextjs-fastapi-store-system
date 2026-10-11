@@ -24,5 +24,6 @@ export async function logout() {
   }
 
   cookieStore.delete("accessToken");
+  cookieStore.delete("adminToken");
   redirect({ href: "/login", locale: await getLocale() });
 }

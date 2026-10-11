@@ -25,6 +25,8 @@ export interface CashboxTransactionRead {
   reference_id: string | null;
   description: string | null;
   created_at: string;
+  /** Who made the movement */
+  user_name?: string | null;
 }
 
 export interface CashboxSessionRead {

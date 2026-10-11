@@ -1,120 +1,18 @@
-"use client";
+import { getLocale } from "next-intl/server";
 
-import { Link } from "@/i18n/routing";
-import {
-  Home,
-  LayoutDashboard,
-  Calculator,
-} from "lucide-react";
+import { MainShell } from "@/components/main-shell";
+import { redirect } from "@/i18n/routing";
+import { getMe } from "@/lib/session";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { logout } from "@/components/actions/logout-action";
-import { useTranslations, useLocale } from "next-intl";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { useEffect, useState } from "react";
-import CalculatorModal from "@/components/Modals/calculator-modal";
-import { AppSidebar } from "@/components/app-sidebar";
+export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  const me = await getMe();
+  const locale = await getLocale();
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const t = useTranslations("dashboard");
-  const tCommon = useTranslations("common");
-  const locale = useLocale();
+  if (!me) redirect({ href: "/login", locale });
+  // Temporary passwords must be replaced before using the app (not while the superuser views as them)
+  if (me!.must_change_password && !me!.impersonated_by) redirect({ href: "/change-password", locale });
+  // The platform administrator has no store of their own
+  if (!me!.business_id) redirect({ href: me!.is_superuser ? "/admin" : "/login", locale });
 
-  const [isOpenCalulator, setIsOpenCalculator] = useState(false);
-
-  useEffect(() => {
-    const openCalculatorShortcut = (e: { key: string }) => {
-      e.key === "+" && setIsOpenCalculator(true);
-    };
-    window.addEventListener("keydown", openCalculatorShortcut);
-    return () => window.removeEventListener("keydown", openCalculatorShortcut);
-  }, []);
-
-  return (
-    <div className="flex min-h-screen">
-      <AppSidebar />
-
-      <main className="ml-16 w-full p-8 bg-muted/40">
-        <header className="flex justify-between items-center mb-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-               <Link href="/" className="flex items-center gap-2">
-                 <Home className="h-4 w-4" />
-                 <span>{t("home")}</span>
-               </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator>/</BreadcrumbSeparator>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-               <Link href="/dashboard" className="flex items-center gap-2">
-                 <LayoutDashboard className="h-4 w-4" />
-                 <span>{t("dashboardTitle")}</span>
-               </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div className="flex items-center gap-3">
-            <Calculator
-              className="h-5 w-5 cursor-pointer"
-              onClick={() => setIsOpenCalculator(true)}
-            />
-            <CalculatorModal
-              isOpen={isOpenCalulator}
-              onClose={() => setIsOpenCalculator(false)}
-            />
-            <LanguageSwitcher />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 hover:bg-gray-400">
-                  <Avatar>
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="bottom">
-                <DropdownMenuItem>
-                 <Link
-                      href="/support"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                     Support
-                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <button
-                    onClick={logout}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    {tCommon("logout")}
-                  </button>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-        <section className="grid gap-6">{children}</section>
-      </main>
-    </div>
-  );
+  return <MainShell me={me!}>{children}</MainShell>;
 }

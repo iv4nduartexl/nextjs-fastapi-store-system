@@ -92,6 +92,7 @@ export default async function SalesHistoryPage({
           <TableHeader>
             <TableRow>
               <TableHead>{t("table.date")}</TableHead>
+              <TableHead>{t("table.user")}</TableHead>
               <TableHead className="text-center">{t("table.items")}</TableHead>
               <TableHead className="text-right">{t("table.total")}</TableHead>
               <TableHead className="text-center">
@@ -107,7 +108,7 @@ export default async function SalesHistoryPage({
             {!sales?.items?.length ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-12 text-gray-400"
                 >
                   {t("noResults")}
@@ -118,6 +119,9 @@ export default async function SalesHistoryPage({
                 <TableRow key={sale.id} className="hover:bg-gray-50">
                   <TableCell className="text-gray-600">
                     <LocalDateSpan dateIso={sale.created_at} />
+                  </TableCell>
+                  <TableCell className="text-gray-600 max-w-[10rem] truncate" title={sale.user_name ?? ""}>
+                    {sale.user_name ?? "—"}
                   </TableCell>
                   <TableCell className="text-center font-mono">
                     {sale.sale_items.length}

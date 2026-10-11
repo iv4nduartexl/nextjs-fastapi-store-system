@@ -25,6 +25,7 @@ import {
   recordPayment,
   recordOutcome,
 } from "@/components/actions/customers-action";
+import { useIsOwner } from "@/components/me-provider";
 import { cancelSale } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export default function CustomerDetailClient({ customer, locale }: Props) {
+  const isOwner = useIsOwner();
   const t = useTranslations("customers");
 
   const [paymentModal, setPaymentModal] = useState(false);
@@ -930,7 +932,8 @@ export default function CustomerDetailClient({ customer, locale }: Props) {
                         {formatCurrency(Math.abs(row.amount))}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        {row.type === "sale" ? (
+                        {/* Undo and deletions are owner-only */}
+                        {!isOwner ? null : row.type === "sale" ? (
                           <button
                             type="button"
                             onClick={() =>

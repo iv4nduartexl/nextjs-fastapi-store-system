@@ -118,6 +118,11 @@ export default async function SaleDetailPage({ params }: Props) {
                   />
                 </span>
               </div>
+              {sale.user_name && (
+                <p className="mt-0.5 text-sm text-gray-500">
+                  {tCancel("madeBy", { name: sale.user_name })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -149,6 +154,9 @@ export default async function SaleDetailPage({ params }: Props) {
                 minute: "2-digit",
               }}
             />
+            {sale.cancelled_by_name && (
+              <> {tCancel("by", { name: sale.cancelled_by_name })}</>
+            )}
             {sale.cancel_reason && (
               <p className="mt-1">
                 <span className="font-semibold">{tCancel("reason")}:</span>{" "}

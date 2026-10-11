@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # Platform administrator: the only account with superuser rights (see commands/create_superuser.py)
+    SUPERUSER_EMAIL: str | None = None
+    # Lifetime of "view as" tokens issued to the superuser
+    IMPERSONATION_TOKEN_EXPIRE_SECONDS: int = 3600
+
     # CORS
     CORS_ORIGINS: Set[str]
 

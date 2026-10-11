@@ -14,7 +14,8 @@ from app.database import get_async_session
 from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, Supplier, UnitType
 from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import PurchaseCancelRequest, PurchaseCreate, PurchaseRead
-from app.tenancy import TenantContext, current_tenant
+from app.accounts import audit
+from app.tenancy import TenantContext, current_tenant, require_owner
 from app.routes.cashbox import record_auto_transaction, reverse_auto_transactions
 from app.routes.categories import upsert_category
 from app.routes.suppliers import upsert_supplier
@@ -193,6 +194,7 @@ async def list_purchases(
     q: str | None = Query(None),
     payment_status: str | None = Query(None),
     status: str | None = Query(None),
+    user_id: UUID | None = Query(None, description="Only records made by this user"),
 ):
     params = Params(page=page, size=size)
     query = (
@@ -212,6 +214,8 @@ async def list_purchases(
         query = query.filter(Purchase.payment_status == payment_status)
     if status:
         query = query.filter(Purchase.status == status)
+    if user_id:
+        query = query.filter(Purchase.user_id == user_id)
     return await apaginate(db, query, params, transformer=transform_purchases)
 
 
@@ -237,7 +241,7 @@ async def cancel_purchase(
     purchase_id: UUID,
     data: PurchaseCancelRequest | None = None,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     data = data or PurchaseCancelRequest()
     result = await db.execute(
@@ -306,6 +310,8 @@ async def cancel_purchase(
         reversal_type=CashboxTransactionType.purchase_cancel,
         description=reason,
     )
+    audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="purchase_cancelled",
+          business_id=tenant.business_id, target_type="purchase", target_id=purchase.id, details={"reason": reason})
     await db.commit()
 
     result = await db.execute(

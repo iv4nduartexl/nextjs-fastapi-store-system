@@ -10,15 +10,15 @@ from dataclasses import dataclass
 from typing import AsyncGenerator
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import ORMExecuteState, Session, with_loader_criteria
 
 from app.database import get_async_session
-from app.models import Business, TenantMixin, User, UserRole
-from app.users import current_active_user
+from app.models import AuditLog, Business, TenantMixin, User, UserRole
+from app.users import current_active_user, current_superuser, request_impersonator_id
 
 SESSION_BUSINESS_KEY = "business_id"
 
@@ -32,6 +32,8 @@ class TenantContext:
     user: User
     business_id: UUID
     role: UserRole
+    # Superuser id when this request uses a "view as" token
+    impersonated_by: UUID | None = None
 
     @property
     def user_id(self) -> UUID:
@@ -43,6 +45,7 @@ class TenantContext:
 
 
 async def current_tenant(
+    request: Request,
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_async_session),
 ) -> AsyncGenerator[TenantContext, None]:
@@ -53,16 +56,44 @@ async def current_tenant(
     if business is None or not business.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business is inactive")
 
+    impersonated_by = request_impersonator_id(request)
+    if impersonated_by and request.method not in ("GET", "HEAD", "OPTIONS"):
+        # Every change made while "viewing as" a user is attributed to the superuser too
+        db.add(
+            AuditLog(
+                actor_user_id=user.id,
+                impersonated_by=impersonated_by,
+                business_id=user.business_id,
+                action="impersonated_write",
+                target_type="request",
+                target_id=f"{request.method} {request.url.path}",
+            )
+        )
+
     previous = db.info.get(SESSION_BUSINESS_KEY)
     db.info[SESSION_BUSINESS_KEY] = user.business_id
     try:
-        yield TenantContext(user=user, business_id=user.business_id, role=user.role)
+        yield TenantContext(
+            user=user, business_id=user.business_id, role=user.role, impersonated_by=impersonated_by
+        )
     finally:
         # Restore instead of clearing: the chat runs tools as nested requests on the same session in tests
         if previous is None:
             db.info.pop(SESSION_BUSINESS_KEY, None)
         else:
             db.info[SESSION_BUSINESS_KEY] = previous
+
+
+async def require_owner(tenant: TenantContext = Depends(current_tenant)) -> TenantContext:
+    """Owner-only operations (cancellations, statistics, team, settings)."""
+    if not tenant.is_owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners can do this")
+    return tenant
+
+
+async def require_superuser(user: User = Depends(current_superuser)) -> User:
+    """Platform administrator. Impersonation tokens never grant this (they belong to the target user)."""
+    return user
 
 
 # ─── ORM safety net ──────────────────────────────────────────────────────────

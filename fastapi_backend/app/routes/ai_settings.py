@@ -27,7 +27,7 @@ from app.schemas import (
     AISettingsTestResult,
     AISettingsUpdate,
 )
-from app.tenancy import TenantContext, current_tenant
+from app.tenancy import TenantContext, require_owner
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _read(config: LLMConfig, is_custom: bool) -> AISettingsRead:
 @router.get("", response_model=AISettingsRead)
 async def get_ai_settings(
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     row = await get_business_ai_settings(db, tenant.business_id)
     config = await get_llm_config(db, tenant.business_id)
@@ -61,7 +61,7 @@ async def get_ai_settings(
 async def update_ai_settings(
     data: AISettingsUpdate,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     if data.provider not in PRESETS_BY_ID:
         raise HTTPException(status_code=422, detail="Unknown provider")
@@ -94,7 +94,7 @@ async def update_ai_settings(
 @router.delete("", status_code=204)
 async def reset_ai_settings(
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     """Forget the business's settings and go back to the server defaults."""
     row = await get_business_ai_settings(db, tenant.business_id)
@@ -128,7 +128,7 @@ async def _config_for_test(data: AISettingsTestRequest, db: AsyncSession, tenant
 async def test_ai_settings(
     data: AISettingsTestRequest,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     config = await _config_for_test(data, db, tenant)
     if not config.is_usable:
@@ -151,7 +151,7 @@ async def test_ai_settings(
 async def list_ai_models(
     data: AISettingsTestRequest,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     """Model ids offered by the provider's /models endpoint (empty if it doesn't support it)."""
     config = await _config_for_test(data, db, tenant)

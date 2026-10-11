@@ -35,6 +35,7 @@ jobs:
           VERIFICATION_SECRET_KEY=${{ secrets.VERIFICATION_SECRET_KEY }}
           FRONTEND_URL=${{ secrets.FRONTEND_URL }}
           OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          SUPERUSER_EMAIL=${{ secrets.SUPERUSER_EMAIL }}
           CORS_ORIGINS=["${{ secrets.FRONTEND_URL }}"]
           MAIL_USERNAME=test
           MAIL_PASSWORD=test

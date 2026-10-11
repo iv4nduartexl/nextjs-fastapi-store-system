@@ -78,15 +78,9 @@ export default function Page() {
             </div>
             <SubmitButton text={t("signIn")} />
             <FormError state={state} />
-            <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-              {t("noAccount")}{" "}
-              <Link
-                href="/register"
-                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500"
-              >
-                {t("signUp")}
-              </Link>
-            </div>
+            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+              {t("askForAccount")}
+            </p>
           </CardContent>
         </Card>
       </form>

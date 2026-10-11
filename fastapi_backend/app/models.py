@@ -3,10 +3,21 @@ import enum
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import BigInteger, Column, String, ForeignKey, Enum, Identity, Index, Numeric, DateTime, Boolean, Text, UniqueConstraint, text
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import declared_attr, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql import func
 from uuid import uuid4
+
+
+def _loaded_user_name(obj, attribute: str) -> str | None:
+    """Display name of a related user, without triggering a lazy load (unsafe in async code)."""
+    if attribute in sa_inspect(obj).unloaded:
+        return None
+    user = getattr(obj, attribute)
+    if user is None:
+        return None
+    return user.full_name or user.username or user.email
 
 
 class Base(DeclarativeBase):
@@ -105,6 +116,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=True, index=True)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.owner, server_default="owner")
     must_change_password = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     business = relationship("Business", back_populates="users")
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
     sales = relationship("Sale", back_populates="user", foreign_keys="Sale.user_id")
@@ -164,7 +176,17 @@ class Sale(TenantMixin, Base):
     cancel_reason = Column(String, nullable=True)
 
     sale_items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
-    user = relationship("User", back_populates="sales", foreign_keys=[user_id])
+    # Eager (joined) so "who did it" names are always available without extra queries
+    user = relationship("User", back_populates="sales", foreign_keys=[user_id], lazy="joined")
+    cancelled_by_user = relationship("User", foreign_keys=[cancelled_by], lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return _loaded_user_name(self, "user")
+
+    @property
+    def cancelled_by_name(self) -> str | None:
+        return _loaded_user_name(self, "cancelled_by_user")
     customer = relationship("Customer", back_populates="sales")
 
 
@@ -259,7 +281,16 @@ class Purchase(TenantMixin, Base):
     cancel_reason = Column(String, nullable=True)
 
     purchase_items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
-    user = relationship("User", back_populates="purchases", foreign_keys=[user_id])
+    user = relationship("User", back_populates="purchases", foreign_keys=[user_id], lazy="joined")
+    cancelled_by_user = relationship("User", foreign_keys=[cancelled_by], lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return _loaded_user_name(self, "user")
+
+    @property
+    def cancelled_by_name(self) -> str | None:
+        return _loaded_user_name(self, "cancelled_by_user")
     supplier = relationship("Supplier", back_populates="purchases")
 
 class PurchaseItem(Base):
@@ -312,7 +343,11 @@ class CustomerPayment(TenantMixin, Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     customer = relationship("Customer", back_populates="credit_payments")
-    user = relationship("User")
+    user = relationship("User", lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return _loaded_user_name(self, "user")
 
 
 class CustomerOutcome(TenantMixin, Base):
@@ -396,7 +431,11 @@ class CashboxTransaction(TenantMixin, Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     session = relationship("CashboxSession", back_populates="transactions")
-    user = relationship("User")
+    user = relationship("User", lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return _loaded_user_name(self, "user")
 
 
 class AISettings(TenantMixin, Base):

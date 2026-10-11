@@ -39,6 +39,10 @@ export interface SaleRead {
   customer_partial_payment: string | null;
   cancelled_at?: string | null;
   cancel_reason?: string | null;
+  user_id?: string | null;
+  /** Who made / cancelled the sale */
+  user_name?: string | null;
+  cancelled_by_name?: string | null;
   sale_items: SaleItemRead[];
 }
 

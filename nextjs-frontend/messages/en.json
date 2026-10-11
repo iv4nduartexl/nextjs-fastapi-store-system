@@ -35,7 +35,8 @@
     "forgotPassword": "Forgot your password?",
     "signIn": "Sign In",
     "noAccount": "Don't have an account?",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "askForAccount": "Need an account? Ask your store owner or the system administrator."
   },
   "register": {
     "title": "Sign Up",
@@ -130,6 +131,7 @@
     },
     "table": {
       "date": "Date",
+      "user": "User",
       "items": "Items",
       "total": "Total",
       "payment": "Payment",
@@ -292,6 +294,7 @@
     },
     "table": {
       "date": "Date",
+      "user": "User",
       "supplier": "Supplier",
       "reference": "Reference",
       "items": "Items",
@@ -861,7 +864,9 @@
     "alreadyCancelled": "This record was already cancelled.",
     "genericError": "Could not cancel. Please try again.",
     "cancelledOn": "Cancelled on",
-    "reason": "Reason"
+    "reason": "Reason",
+    "madeBy": "Registered by {name}",
+    "by": "by {name}"
   },
   "chat": {
     "title": "Assistant",
@@ -1006,6 +1011,174 @@
     "customers": "Customers",
     "statistics": "Statistics",
     "cashbox": "Cash box",
-    "chat": "Assistant"
+    "chat": "Assistant",
+    "team": "Team"
+  },
+  "account": {
+    "roles": {
+      "owner": "Owner",
+      "cashier": "Cashier"
+    },
+    "changePassword": "Change password",
+    "viewingAs": "You are viewing the app as {name} ({business})",
+    "exitViewAs": "Exit",
+    "setNewPasswordTitle": "Set your password",
+    "forcedDescription": "You signed in with a temporary password. Choose your own to continue.",
+    "changeDescription": "Choose a new password for your account.",
+    "temporaryPassword": "Temporary password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Repeat new password",
+    "passwordRules": "At least 8 characters, one uppercase letter and one special character.",
+    "passwordsDontMatch": "The new passwords don't match.",
+    "passwordChanged": "Password updated.",
+    "savePassword": "Save password",
+    "signOut": "Sign out",
+    "back": "Back",
+    "errors": {
+      "current_password_incorrect": "The current password is incorrect.",
+      "password_unchanged": "The new password must be different.",
+      "invalid_password": "That password doesn't meet the requirements.",
+      "generic": "Could not change the password. Please try again."
+    }
+  },
+  "team": {
+    "business": "Business",
+    "subtitle": "People who can sign in to this store. Every sale and movement records who made it.",
+    "addUser": "Add user",
+    "create": "Create user",
+    "save": "Save",
+    "cancel": "Cancel",
+    "rename": "Rename",
+    "user": "User",
+    "role": "Role",
+    "status": "Status",
+    "lastLogin": "Last sign-in",
+    "actions": "Actions",
+    "you": "you",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pendingPassword": "Must set password",
+    "never": "Never",
+    "resetPassword": "Reset password",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "confirmReset": "Generate a new temporary password for {email}? Their current password will stop working.",
+    "email": "Email",
+    "fullName": "Full name",
+    "username": "Username (optional)",
+    "roleHint": {
+      "cashier": "Sales, purchases, customers and cashbox",
+      "owner": "Everything, including statistics and team"
+    },
+    "tempPasswordExplain": "A temporary password is generated; the user sets their own on first sign-in.",
+    "tempPasswordTitle": "Temporary password",
+    "tempPasswordHint": "Give these credentials to the user.",
+    "tempPasswordOnce": "This password is shown only once. They will be asked to change it when they sign in.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "done": "Done",
+    "errors": {
+      "last_owner": "A business needs at least one active owner.",
+      "cannot_demote_yourself": "You can't remove your own owner role.",
+      "cannot_deactivate_yourself": "You can't deactivate your own account.",
+      "email_taken": "That email is already in use.",
+      "username_taken": "That username is already in use.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "nav": {
+      "businesses": "Businesses",
+      "users": "Users",
+      "audit": "Audit log"
+    },
+    "logout": "Sign out",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "save": "Save",
+    "cancel": "Cancel",
+    "rename": "Rename",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    },
+    "businesses": {
+      "title": "Businesses",
+      "subtitle": "{count, plural, =1 {1 business} other {# businesses}} using the system",
+      "create": "New business",
+      "createSubmit": "Create business",
+      "search": "Search businesses",
+      "empty": "No businesses found",
+      "name": "Business name",
+      "users": "Users",
+      "sales": "Sales",
+      "lastActivity": "Last activity",
+      "nameRequired": "Enter the business name.",
+      "firstOwner": "First owner"
+    },
+    "business": {
+      "back": "All businesses",
+      "stats": "{users} users · {sales} sales",
+      "created": "Created",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "confirmDeactivate": "Deactivate {name}? Its users won't be able to use the system until you activate it again.",
+      "inactiveHint": "This business is inactive: its users can sign in but can't access any data.",
+      "users": "Users"
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Search users across all businesses.",
+      "search": "Search by email, username or name",
+      "empty": "No users",
+      "user": "User",
+      "business": "Business",
+      "role": "Role",
+      "lastLogin": "Last sign-in",
+      "actions": "Actions",
+      "superuser": "Superuser",
+      "moveTo": "Move to…",
+      "pendingPassword": "Must set password",
+      "never": "Never",
+      "viewAs": "View as",
+      "resetPassword": "Reset password",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "confirmReset": "Generate a new temporary password for {email}? Their current password will stop working.",
+      "add": "Add user",
+      "addTo": "Add user to {name}",
+      "create": "Create user"
+    },
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "Administrative actions, password resets, impersonation and cancellations.",
+      "business": "Business",
+      "action": "Action",
+      "all": "All",
+      "filter": "Filter",
+      "empty": "No entries",
+      "when": "When",
+      "who": "Who",
+      "details": "Details",
+      "via": "via {name} (view as)",
+      "pageOf": "Page {page} of {pages}",
+      "previous": "Previous",
+      "next": "Next",
+      "actions": {
+        "business_created": "Business created",
+        "business_updated": "Business updated",
+        "user_created": "User created",
+        "user_updated": "User updated",
+        "password_reset": "Password reset",
+        "password_changed": "Password changed",
+        "impersonation_started": "View as started",
+        "impersonation_stopped": "View as ended",
+        "impersonated_write": "Change while viewing as",
+        "sale_cancelled": "Sale cancelled",
+        "purchase_cancelled": "Purchase cancelled"
+      }
+    }
   }
 }

@@ -11,7 +11,7 @@ from sqlalchemy.future import select
 from app.database import get_async_session
 from app.models import Item
 from app.schemas import ItemRead, ItemCreate, ItemUpdate
-from app.tenancy import TenantContext, current_tenant
+from app.tenancy import TenantContext, current_tenant, require_owner
 from app.routes.categories import upsert_category
 
 router = APIRouter(tags=["item"])
@@ -104,7 +104,7 @@ async def update_item(
 async def delete_item(
     item_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    tenant: TenantContext = Depends(current_tenant),
+    tenant: TenantContext = Depends(require_owner),
 ):
     result = await db.execute(
         select(Item).filter(Item.id == item_id, Item.business_id == tenant.business_id)

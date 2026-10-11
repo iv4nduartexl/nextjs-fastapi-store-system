@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useIsOwner } from "@/components/me-provider";
 import { useRouter } from "next/navigation";
 import { ItemRead } from "@/app/openapi-client";
 import {
@@ -79,6 +80,7 @@ function toDiscountForm(rule: QuantityDiscountRuleRead): DiscountRuleFormState {
 }
 
 export function ProductsTable({ items }: Props) {
+  const isOwner = useIsOwner();
   const t = useTranslations("products");
   const tTable = useTranslations("dashboard");
   const router = useRouter();
@@ -309,13 +311,15 @@ export function ProductsTable({ items }: Props) {
                       >
                         <Pencil size={14} />
                       </button>
-                      <button
-                        onClick={() => setDeleteTarget(item)}
-                        className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                        title={tTable("table.delete")}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {isOwner && (
+                        <button
+                          onClick={() => setDeleteTarget(item)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title={tTable("table.delete")}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -505,6 +509,8 @@ export function ProductsTable({ items }: Props) {
                 />
               </div>
 
+              {/* Discount rules are owner-only */}
+              {isOwner && (
               <div className="space-y-3 border-t border-gray-100 pt-4">
                 <div className="flex items-center justify-between gap-2">
                   <div>
@@ -784,6 +790,7 @@ export function ProductsTable({ items }: Props) {
                   </div>
                 </div>
               </div>
+              )}
 
               {(editError || discountError) && (
                 <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">

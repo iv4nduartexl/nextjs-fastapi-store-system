@@ -38,8 +38,12 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: Set[str]
 
-    # Chatbot
-    OPENROUTER_API_KEY: str
+    # Chatbot (defaults used when a user hasn't configured their own AI provider)
+    OPENROUTER_API_KEY: str | None = None
+    AI_DEFAULT_BASE_URL: str = "https://openrouter.ai/api/v1"
+    AI_DEFAULT_MODEL: str = "~deepseek/deepseek-v4-flash-latest"
+    # Key used to encrypt users' AI API keys at rest (falls back to ACCESS_SECRET_KEY)
+    AI_SETTINGS_SECRET_KEY: str | None = None
 
 
     model_config = SettingsConfigDict(

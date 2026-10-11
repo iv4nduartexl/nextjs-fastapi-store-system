@@ -186,12 +186,48 @@ import type {
   SearchSuppliersData,
   SearchSuppliersError,
   SearchSuppliersResponse,
+  ListConversationsError,
+  ListConversationsResponse,
+  GetConversationData,
+  GetConversationError,
+  GetConversationResponse,
+  RenameConversationData,
+  RenameConversationError,
+  RenameConversationResponse,
+  DeleteConversationData,
+  DeleteConversationError,
+  DeleteConversationResponse,
   ChatWithMcpData,
   ChatWithMcpError,
   ChatWithMcpResponse,
   ExecuteToolData,
   ExecuteToolError,
   ExecuteToolResponse,
+  GetAiSettingsError,
+  GetAiSettingsResponse,
+  UpdateAiSettingsData,
+  UpdateAiSettingsError,
+  UpdateAiSettingsResponse,
+  ResetAiSettingsError,
+  ResetAiSettingsResponse,
+  TestAiSettingsData,
+  TestAiSettingsError,
+  TestAiSettingsResponse,
+  ListAiModelsData,
+  ListAiModelsError,
+  ListAiModelsResponse,
+  SearchProductsData,
+  SearchProductsError,
+  SearchProductsResponse,
+  SearchCustomersData,
+  SearchCustomersError,
+  SearchCustomersResponse,
+  ProductDetailsData,
+  ProductDetailsError,
+  ProductDetailsResponse,
+  StoreSnapshotData,
+  StoreSnapshotError,
+  StoreSnapshotResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -411,6 +447,7 @@ export const readItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Create Item
+ * Create a product (needs user approval). unit_type: unit, gram (price per kg, stock in grams), liter or pack.
  */
 export const createItem = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CreateItemData, ThrowOnError>,
@@ -427,6 +464,7 @@ export const createItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Update Item
+ * Change a product's name, price, stock, min_stock, category or SKU (needs user approval). Get the id from search_products.
  */
 export const updateItem = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<UpdateItemData, ThrowOnError>,
@@ -459,6 +497,7 @@ export const deleteItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Create Sale
+ * Register a sale (needs user approval). Get item ids from search_products first. Quantity is in grams for gram products. Credit sales need customer_id. Prices come from the catalog unless the user explicitly asks for another price.
  */
 export const createSale = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CreateSaleData, ThrowOnError>,
@@ -475,6 +514,7 @@ export const createSale = <ThrowOnError extends boolean = false>(
 
 /**
  * List Sales
+ * List sales, newest first, paginated (page, size). Optional status filter: completed, cancelled, refunded.
  */
 export const listSales = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<ListSalesData, ThrowOnError>,
@@ -555,6 +595,7 @@ export const deleteDiscountRule = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Sale
+ * One sale with its product lines, totals, payment method and status.
  */
 export const getSale = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<GetSaleData, ThrowOnError>,
@@ -571,6 +612,7 @@ export const getSale = <ThrowOnError extends boolean = false>(
 
 /**
  * Cancel Sale
+ * Cancel (undo) a sale (needs user approval): restores stock and reverses its cashbox entry. Optional body {reason}.
  */
 export const cancelSale = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CancelSaleData, ThrowOnError>,
@@ -587,6 +629,7 @@ export const cancelSale = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics Summary
+ * Revenue, sales count, average ticket and top category. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsSummary = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsSummaryData, ThrowOnError>,
@@ -603,6 +646,7 @@ export const analyticsSummary = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics By Category
+ * Revenue per product category. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsByCategory = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsByCategoryData, ThrowOnError>,
@@ -619,6 +663,7 @@ export const analyticsByCategory = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics By Payment Method
+ * Revenue per payment method. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsByPaymentMethod = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsByPaymentMethodData, ThrowOnError>,
@@ -635,6 +680,7 @@ export const analyticsByPaymentMethod = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics Top Products
+ * Best-selling products by revenue and quantity. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsTopProducts = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsTopProductsData, ThrowOnError>,
@@ -667,6 +713,7 @@ export const analyticsCustomerInsights = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics Profitability
+ * Revenue, cost of goods sold and gross margin, plus the most and least profitable products. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsProfitability = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsProfitabilityData, ThrowOnError>,
@@ -683,6 +730,7 @@ export const analyticsProfitability = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics Revenue Trend
+ * Revenue over time, one point per date. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsRevenueTrend = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsRevenueTrendData, ThrowOnError>,
@@ -731,6 +779,7 @@ export const analyticsPurchases = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics Inventory
+ * Inventory value, low-stock products and products with no recent sales.
  */
 export const analyticsInventory = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
@@ -797,6 +846,7 @@ export const analyticsCancellations = <ThrowOnError extends boolean = false>(
 
 /**
  * Analytics Cashbox
+ * Cash inflow/outflow totals by movement type. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.
  */
 export const analyticsCashbox = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<AnalyticsCashboxData, ThrowOnError>,
@@ -845,6 +895,7 @@ export const analyticsBasket = <ThrowOnError extends boolean = false>(
 
 /**
  * Create Purchase
+ * Register stock received from a supplier (needs user approval). Adds the quantities to stock. Lines without item_id create new products. total_cost_price is the total for the line.
  */
 export const createPurchase = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CreatePurchaseData, ThrowOnError>,
@@ -861,6 +912,7 @@ export const createPurchase = <ThrowOnError extends boolean = false>(
 
 /**
  * List Purchases
+ * List purchases from suppliers, newest first, paginated. Filters: q (supplier or reference), payment_status (paid, unpaid, partial), status (received, partial, cancelled).
  */
 export const listPurchases = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<ListPurchasesData, ThrowOnError>,
@@ -877,6 +929,7 @@ export const listPurchases = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Purchase
+ * One purchase with its lines, costs, supplier and payment status.
  */
 export const getPurchase = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<GetPurchaseData, ThrowOnError>,
@@ -893,6 +946,7 @@ export const getPurchase = <ThrowOnError extends boolean = false>(
 
 /**
  * Cancel Purchase
+ * Cancel (undo) a purchase (needs user approval): removes the stock again and reverses its cashbox entry. Body {reason, force}; it fails with negative_stock unless force=true when units were already sold.
  */
 export const cancelPurchase = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CancelPurchaseData, ThrowOnError>,
@@ -925,6 +979,7 @@ export const listCustomers = <ThrowOnError extends boolean = false>(
 
 /**
  * Create Customer
+ * Create a customer (needs user approval). Only name is required.
  */
 export const createCustomer = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CreateCustomerData, ThrowOnError>,
@@ -941,6 +996,7 @@ export const createCustomer = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Customer
+ * Full customer account: contact data, balance, credit sales, payments and other charges.
  */
 export const getCustomer = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<GetCustomerData, ThrowOnError>,
@@ -957,6 +1013,7 @@ export const getCustomer = <ThrowOnError extends boolean = false>(
 
 /**
  * Update Customer
+ * Update a customer's contact data or credit limit (needs user approval).
  */
 export const updateCustomer = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<UpdateCustomerData, ThrowOnError>,
@@ -973,6 +1030,7 @@ export const updateCustomer = <ThrowOnError extends boolean = false>(
 
 /**
  * Record Payment
+ * Record a payment a customer makes towards their credit balance (needs user approval).
  */
 export const recordPayment = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<RecordPaymentData, ThrowOnError>,
@@ -1037,6 +1095,7 @@ export const deleteOutcome = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Current Session
+ * The open cashbox session with opening amount, cash in/out and expected cash balance. 404 if none is open.
  */
 export const getCurrentSession = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
@@ -1053,6 +1112,7 @@ export const getCurrentSession = <ThrowOnError extends boolean = false>(
 
 /**
  * Open Session
+ * Open the cashbox with an opening cash amount (needs user approval).
  */
 export const openSession = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<OpenSessionData, ThrowOnError>,
@@ -1069,6 +1129,7 @@ export const openSession = <ThrowOnError extends boolean = false>(
 
 /**
  * Close Session
+ * Close the open cashbox session with the cash actually counted (needs user approval).
  */
 export const closeSession = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<CloseSessionData, ThrowOnError>,
@@ -1085,6 +1146,7 @@ export const closeSession = <ThrowOnError extends boolean = false>(
 
 /**
  * Add Manual Transaction
+ * Record a manual cash income or expense in the open session (needs user approval).
  */
 export const addManualTransaction = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<AddManualTransactionData, ThrowOnError>,
@@ -1101,6 +1163,7 @@ export const addManualTransaction = <ThrowOnError extends boolean = false>(
 
 /**
  * List Transactions
+ * Recent cashbox movements, optionally for one session_id.
  */
 export const listTransactions = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<ListTransactionsData, ThrowOnError>,
@@ -1149,6 +1212,7 @@ export const getSession = <ThrowOnError extends boolean = false>(
 
 /**
  * Search Categories
+ * List product category names, optionally filtered by prefix.
  */
 export const searchCategories = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<SearchCategoriesData, ThrowOnError>,
@@ -1165,6 +1229,7 @@ export const searchCategories = <ThrowOnError extends boolean = false>(
 
 /**
  * Search Suppliers
+ * Find suppliers by name prefix. Returns id and name.
  */
 export const searchSuppliers = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<SearchSuppliersData, ThrowOnError>,
@@ -1176,6 +1241,70 @@ export const searchSuppliers = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/suppliers/",
+  });
+};
+
+/**
+ * List Conversations
+ */
+export const listConversations = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListConversationsResponse,
+    ListConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/chat/conversations",
+  });
+};
+
+/**
+ * Get Conversation
+ */
+export const getConversation = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetConversationData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetConversationResponse,
+    GetConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/chat/conversations/{conversation_id}",
+  });
+};
+
+/**
+ * Rename Conversation
+ */
+export const renameConversation = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<RenameConversationData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    RenameConversationResponse,
+    RenameConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/chat/conversations/{conversation_id}",
+  });
+};
+
+/**
+ * Delete Conversation
+ */
+export const deleteConversation = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DeleteConversationData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    DeleteConversationResponse,
+    DeleteConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/chat/conversations/{conversation_id}",
   });
 };
 
@@ -1208,5 +1337,155 @@ export const executeTool = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/chat/execute",
+  });
+};
+
+/**
+ * Get Ai Settings
+ */
+export const getAiSettings = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetAiSettingsResponse,
+    GetAiSettingsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/ai-settings",
+  });
+};
+
+/**
+ * Update Ai Settings
+ */
+export const updateAiSettings = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UpdateAiSettingsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).put<
+    UpdateAiSettingsResponse,
+    UpdateAiSettingsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/ai-settings",
+  });
+};
+
+/**
+ * Reset Ai Settings
+ * Forget the user's settings and go back to the server defaults.
+ */
+export const resetAiSettings = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    ResetAiSettingsResponse,
+    ResetAiSettingsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/ai-settings",
+  });
+};
+
+/**
+ * Test Ai Settings
+ */
+export const testAiSettings = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<TestAiSettingsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    TestAiSettingsResponse,
+    TestAiSettingsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/ai-settings/test",
+  });
+};
+
+/**
+ * List Ai Models
+ * Model ids offered by the provider's /models endpoint (empty if it doesn't support it).
+ */
+export const listAiModels = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ListAiModelsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ListAiModelsResponse,
+    ListAiModelsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/ai-settings/models",
+  });
+};
+
+/**
+ * Search Products
+ * Find products by name, SKU or category words (e.g. 'coca 2l'). Returns id, price, stock and unit_type. For unit_type 'gram' the price is per kilogram and stock is in grams. Always use this to get product ids before creating sales or purchases.
+ */
+export const searchProducts = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<SearchProductsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    SearchProductsResponse,
+    SearchProductsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/assistant/products/search",
+  });
+};
+
+/**
+ * Search Customers
+ * Find customers by name, phone or ID number. Returns id, current credit balance (what they owe) and credit_limit (null = unlimited).
+ */
+export const searchCustomers = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<SearchCustomersData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    SearchCustomersResponse,
+    SearchCustomersError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/assistant/customers/search",
+  });
+};
+
+/**
+ * Product Details
+ * Details for one product: stock, price, last purchase unit cost, and units/revenue sold in the last 30 days.
+ */
+export const productDetails = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ProductDetailsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ProductDetailsResponse,
+    ProductDetailsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/assistant/products/{item_id}",
+  });
+};
+
+/**
+ * Store Snapshot
+ * Today's overview: sales total/count by payment method, whether the cashbox is open and the expected cash in it, low-stock products and customers over their credit limit. Pass tz (IANA timezone). Use this for questions like 'how did we do today?'.
+ */
+export const storeSnapshot = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<StoreSnapshotData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    StoreSnapshotResponse,
+    StoreSnapshotError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/assistant/snapshot",
   });
 };

@@ -3,17 +3,9 @@
 import { Link } from "@/i18n/routing";
 import {
   Home,
-  ShoppingBag,
   LayoutDashboard,
-  ShoppingCart,
-  Truck,
-  Users,
-  Wallet,
   Calculator,
-  TrendingUp as TrendingUpIcon,
-  MessageSquare,
 } from "lucide-react";
-import Image from "next/image";
 
 import {
   Breadcrumb,
@@ -34,6 +26,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useEffect, useState } from "react";
 import CalculatorModal from "@/components/Modals/calculator-modal";
+import { AppSidebar } from "@/components/app-sidebar";
 
 export default function DashboardLayout({
   children,
@@ -56,70 +49,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-10 w-16 flex flex-col border-r bg-background p-4">
-        <div className="flex flex-col items-center gap-8">
-          <Link
-            href="/"
-            className="flex items-center justify-center rounded-full"
-          >
-            <Image
-              src="/images/vinta.png"
-              alt="Vinta"
-              width={64}
-              height={64}
-              className="object-cover transition-transform duration-200 hover:scale-105"
-            />
-          </Link>
-           <Link
-             href="/dashboard"
-             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-           >
-             <LayoutDashboard className="h-5 w-5" />
-           </Link>
-           <Link
-             href="/products"
-             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-           >
-             <ShoppingBag className="h-5 w-5" />
-           </Link>
-           <Link
-             href="/sales"
-             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-           >
-             <ShoppingCart className="h-5 w-5" />
-           </Link>
-           <Link
-             href="/purchases"
-             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-           >
-             <Truck className="h-5 w-5" />
-           </Link>
-           <Link
-              href="/customers"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <Users className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/statistics"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <TrendingUpIcon className="h-5 w-5" />
-            </Link>
-            <Link
-               href="/cashbox"
-               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-             >
-               <Wallet className="h-5 w-5" />
-             </Link>
-             <Link
-               href="/chat"
-               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-             >
-               <MessageSquare className="h-5 w-5" />
-             </Link>
-           </div>
-         </aside>
+      <AppSidebar />
 
       <main className="ml-16 w-full p-8 bg-muted/40">
         <header className="flex justify-between items-center mb-6">

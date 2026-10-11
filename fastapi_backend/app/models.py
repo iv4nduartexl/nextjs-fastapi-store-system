@@ -2,9 +2,9 @@ import enum
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, String, ForeignKey, Enum, Numeric, DateTime, Boolean
+from sqlalchemy import BigInteger, Column, String, ForeignKey, Enum, Identity, Numeric, DateTime, Boolean, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql import func
 from uuid import uuid4
 
@@ -350,3 +350,61 @@ class CashboxTransaction(Base):
 
     session = relationship("CashboxSession", back_populates="transactions")
     user = relationship("User")
+
+
+class AISettings(Base):
+    """Per-user AI provider configuration for the chat assistant (OpenAI-compatible APIs)."""
+
+    __tablename__ = "ai_settings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), nullable=False, unique=True)
+    provider = Column(String, nullable=False, default="openrouter")
+    base_url = Column(String, nullable=False)
+    model = Column(String, nullable=False)
+    api_key_encrypted = Column(Text, nullable=True)
+    temperature = Column(Numeric(3, 2), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class ChatConversation(Base):
+    __tablename__ = "chat_conversations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=False, default="")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    messages = relationship(
+        "ChatMessage",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.seq",
+    )
+
+
+class ChatMessage(Base):
+    """One chat message.
+
+    Roles: user / assistant / tool follow the OpenAI chat format and are replayed to the model.
+    "action" rows are approval requests for write operations; they are shown in the UI but never
+    sent to the model.
+    """
+
+    __tablename__ = "chat_messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    # Insertion order (created_at is identical for rows written in the same transaction)
+    seq = Column(BigInteger, Identity(), nullable=False)
+    conversation_id = Column(
+        UUID(as_uuid=True), ForeignKey("chat_conversations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role = Column(String, nullable=False)
+    content = Column(Text, nullable=True)
+    tool_calls = Column(JSONB, nullable=True)
+    tool_call_id = Column(String, nullable=True)
+    pending_action = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    conversation = relationship("ChatConversation", back_populates="messages")

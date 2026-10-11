@@ -798,6 +798,7 @@
           "item"
         ],
         "summary": "Create Item",
+        "description": "Create a product (needs user approval). unit_type: unit, gram (price per kg, stock in grams), liter or pack.",
         "operationId": "create_item",
         "security": [
           {
@@ -844,6 +845,7 @@
           "item"
         ],
         "summary": "Update Item",
+        "description": "Change a product's name, price, stock, min_stock, category or SKU (needs user approval). Get the id from search_products.",
         "operationId": "update_item",
         "security": [
           {
@@ -946,6 +948,7 @@
           "sales"
         ],
         "summary": "Create Sale",
+        "description": "Register a sale (needs user approval). Get item ids from search_products first. Quantity is in grams for gram products. Credit sales need customer_id. Prices come from the catalog unless the user explicitly asks for another price.",
         "operationId": "create_sale",
         "security": [
           {
@@ -990,6 +993,7 @@
           "sales"
         ],
         "summary": "List Sales",
+        "description": "List sales, newest first, paginated (page, size). Optional status filter: completed, cancelled, refunded.",
         "operationId": "list_sales",
         "security": [
           {
@@ -1297,6 +1301,7 @@
           "sales"
         ],
         "summary": "Get Sale",
+        "description": "One sale with its product lines, totals, payment method and status.",
         "operationId": "get_sale",
         "security": [
           {
@@ -1345,6 +1350,7 @@
           "sales"
         ],
         "summary": "Cancel Sale",
+        "description": "Cancel (undo) a sale (needs user approval): restores stock and reverses its cashbox entry. Optional body {reason}.",
         "operationId": "cancel_sale",
         "security": [
           {
@@ -1410,6 +1416,7 @@
           "sales"
         ],
         "summary": "Analytics Summary",
+        "description": "Revenue, sales count, average ticket and top category. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_summary",
         "security": [
           {
@@ -1493,6 +1500,7 @@
           "sales"
         ],
         "summary": "Analytics By Category",
+        "description": "Revenue per product category. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_by_category",
         "security": [
           {
@@ -1580,6 +1588,7 @@
           "sales"
         ],
         "summary": "Analytics By Payment Method",
+        "description": "Revenue per payment method. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_by_payment_method",
         "security": [
           {
@@ -1667,6 +1676,7 @@
           "sales"
         ],
         "summary": "Analytics Top Products",
+        "description": "Best-selling products by revenue and quantity. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_top_products",
         "security": [
           {
@@ -1865,6 +1875,7 @@
           "sales"
         ],
         "summary": "Analytics Profitability",
+        "description": "Revenue, cost of goods sold and gross margin, plus the most and least profitable products. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_profitability",
         "security": [
           {
@@ -1948,6 +1959,7 @@
           "sales"
         ],
         "summary": "Analytics Revenue Trend",
+        "description": "Revenue over time, one point per date. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_revenue_trend",
         "security": [
           {
@@ -2201,6 +2213,7 @@
           "sales"
         ],
         "summary": "Analytics Inventory",
+        "description": "Inventory value, low-stock products and products with no recent sales.",
         "operationId": "analytics_inventory",
         "responses": {
           "200": {
@@ -2476,6 +2489,7 @@
           "sales"
         ],
         "summary": "Analytics Cashbox",
+        "description": "Cash inflow/outflow totals by movement type. `period` is one of 7d, 30d, 90d, 1y, all (default 30d); or pass start_date/end_date (ISO 8601) for a custom range.",
         "operationId": "analytics_cashbox",
         "security": [
           {
@@ -2725,6 +2739,7 @@
           "purchases"
         ],
         "summary": "Create Purchase",
+        "description": "Register stock received from a supplier (needs user approval). Adds the quantities to stock. Lines without item_id create new products. total_cost_price is the total for the line.",
         "operationId": "create_purchase",
         "security": [
           {
@@ -2769,6 +2784,7 @@
           "purchases"
         ],
         "summary": "List Purchases",
+        "description": "List purchases from suppliers, newest first, paginated. Filters: q (supplier or reference), payment_status (paid, unpaid, partial), status (received, partial, cancelled).",
         "operationId": "list_purchases",
         "security": [
           {
@@ -2882,6 +2898,7 @@
           "purchases"
         ],
         "summary": "Get Purchase",
+        "description": "One purchase with its lines, costs, supplier and payment status.",
         "operationId": "get_purchase",
         "security": [
           {
@@ -2930,6 +2947,7 @@
           "purchases"
         ],
         "summary": "Cancel Purchase",
+        "description": "Cancel (undo) a purchase (needs user approval): removes the stock again and reverses its cashbox entry. Body {reason, force}; it fails with negative_stock unless force=true when units were already sold.",
         "operationId": "cancel_purchase",
         "security": [
           {
@@ -3080,6 +3098,7 @@
           "customers"
         ],
         "summary": "Create Customer",
+        "description": "Create a customer (needs user approval). Only name is required.",
         "operationId": "create_customer",
         "security": [
           {
@@ -3126,6 +3145,7 @@
           "customers"
         ],
         "summary": "Get Customer",
+        "description": "Full customer account: contact data, balance, credit sales, payments and other charges.",
         "operationId": "get_customer",
         "security": [
           {
@@ -3172,6 +3192,7 @@
           "customers"
         ],
         "summary": "Update Customer",
+        "description": "Update a customer's contact data or credit limit (needs user approval).",
         "operationId": "update_customer",
         "security": [
           {
@@ -3230,6 +3251,7 @@
           "customers"
         ],
         "summary": "Record Payment",
+        "description": "Record a payment a customer makes towards their credit balance (needs user approval).",
         "operationId": "record_payment",
         "security": [
           {
@@ -3458,6 +3480,7 @@
           "cashbox"
         ],
         "summary": "Get Current Session",
+        "description": "The open cashbox session with opening amount, cash in/out and expected cash balance. 404 if none is open.",
         "operationId": "get_current_session",
         "responses": {
           "200": {
@@ -3484,6 +3507,7 @@
           "cashbox"
         ],
         "summary": "Open Session",
+        "description": "Open the cashbox with an opening cash amount (needs user approval).",
         "operationId": "open_session",
         "requestBody": {
           "content": {
@@ -3530,6 +3554,7 @@
           "cashbox"
         ],
         "summary": "Close Session",
+        "description": "Close the open cashbox session with the cash actually counted (needs user approval).",
         "operationId": "close_session",
         "requestBody": {
           "content": {
@@ -3576,6 +3601,7 @@
           "cashbox"
         ],
         "summary": "Add Manual Transaction",
+        "description": "Record a manual cash income or expense in the open session (needs user approval).",
         "operationId": "add_manual_transaction",
         "security": [
           {
@@ -3620,6 +3646,7 @@
           "cashbox"
         ],
         "summary": "List Transactions",
+        "description": "Recent cashbox movements, optionally for one session_id.",
         "operationId": "list_transactions",
         "security": [
           {
@@ -3830,6 +3857,7 @@
           "categories"
         ],
         "summary": "Search Categories",
+        "description": "List product category names, optionally filtered by prefix.",
         "operationId": "search_categories",
         "security": [
           {
@@ -3902,6 +3930,7 @@
           "suppliers"
         ],
         "summary": "Search Suppliers",
+        "description": "Find suppliers by name prefix. Returns id and name.",
         "operationId": "search_suppliers",
         "parameters": [
           {
@@ -3963,6 +3992,179 @@
         }
       }
     },
+    "/chat/conversations": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "List Conversations",
+        "operationId": "list_conversations",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChatConversationRead"
+                  },
+                  "type": "array",
+                  "title": "Response Chat-List Conversations"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/chat/conversations/{conversation_id}": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Get Conversation",
+        "operationId": "get_conversation",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Rename Conversation",
+        "operationId": "rename_conversation",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatConversationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Delete Conversation",
+        "operationId": "delete_conversation",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chat": {
       "post": {
         "tags": [
@@ -3974,9 +4176,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "type": "object",
-                "title": "Payload"
+                "$ref": "#/components/schemas/ChatRequest"
               }
             }
           },
@@ -3987,7 +4187,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
               }
             }
           },
@@ -4020,9 +4222,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "type": "object",
-                "title": "Payload"
+                "$ref": "#/components/schemas/ChatExecuteRequest"
               }
             }
           },
@@ -4033,7 +4233,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
               }
             }
           },
@@ -4054,10 +4256,702 @@
           }
         ]
       }
+    },
+    "/ai-settings": {
+      "get": {
+        "tags": [
+          "ai-settings"
+        ],
+        "summary": "Get Ai Settings",
+        "operationId": "get_ai_settings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "ai-settings"
+        ],
+        "summary": "Update Ai Settings",
+        "operationId": "update_ai_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AISettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ai-settings"
+        ],
+        "summary": "Reset Ai Settings",
+        "description": "Forget the user's settings and go back to the server defaults.",
+        "operationId": "reset_ai_settings",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/ai-settings/test": {
+      "post": {
+        "tags": [
+          "ai-settings"
+        ],
+        "summary": "Test Ai Settings",
+        "operationId": "test_ai_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AISettingsTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsTestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/ai-settings/models": {
+      "post": {
+        "tags": [
+          "ai-settings"
+        ],
+        "summary": "List Ai Models",
+        "description": "Model ids offered by the provider's /models endpoint (empty if it doesn't support it).",
+        "operationId": "list_ai_models",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AISettingsTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIModelList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/assistant/products/search": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Search Products",
+        "description": "Find products by name, SKU or category words (e.g. 'coca 2l'). Returns id, price, stock and unit_type. For unit_type 'gram' the price is per kilogram and stock is in grams. Always use this to get product ids before creating sales or purchases.",
+        "operationId": "search_products",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Words from the product name, SKU or category",
+              "title": "Q"
+            },
+            "description": "Words from the product name, SKU or category"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductMatch"
+                  },
+                  "title": "Response Assistant-Search Products"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistant/customers/search": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Search Customers",
+        "description": "Find customers by name, phone or ID number. Returns id, current credit balance (what they owe) and credit_limit (null = unlimited).",
+        "operationId": "search_customers",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name, phone or ID number",
+              "title": "Q"
+            },
+            "description": "Name, phone or ID number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerMatch"
+                  },
+                  "title": "Response Assistant-Search Customers"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistant/products/{item_id}": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Product Details",
+        "description": "Details for one product: stock, price, last purchase unit cost, and units/revenue sold in the last 30 days.",
+        "operationId": "product_details",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistant/snapshot": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Store Snapshot",
+        "description": "Today's overview: sales total/count by payment method, whether the cashbox is open and the expected cash in it, low-stock products and customers over their credit limit. Pass tz (IANA timezone). Use this for questions like 'how did we do today?'.",
+        "operationId": "store_snapshot",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tz",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IANA timezone used to decide what 'today' is",
+              "title": "Tz"
+            },
+            "description": "IANA timezone used to decide what 'today' is"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AIModelList": {
+        "properties": {
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "models"
+        ],
+        "title": "AIModelList"
+      },
+      "AIProviderPreset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url"
+          },
+          "default_model": {
+            "type": "string",
+            "title": "Default Model"
+          },
+          "requires_key": {
+            "type": "boolean",
+            "title": "Requires Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "base_url",
+          "default_model",
+          "requires_key"
+        ],
+        "title": "AIProviderPreset"
+      },
+      "AISettingsRead": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "has_api_key": {
+            "type": "boolean",
+            "title": "Has Api Key"
+          },
+          "api_key_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key Hint"
+          },
+          "is_custom": {
+            "type": "boolean",
+            "title": "Is Custom"
+          },
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/AIProviderPreset"
+            },
+            "type": "array",
+            "title": "Presets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "base_url",
+          "model",
+          "has_api_key",
+          "is_custom",
+          "presets"
+        ],
+        "title": "AISettingsRead"
+      },
+      "AISettingsTestRequest": {
+        "properties": {
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          }
+        },
+        "type": "object",
+        "title": "AISettingsTestRequest"
+      },
+      "AISettingsTestResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "title": "AISettingsTestResult"
+      },
+      "AISettingsUpdate": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "clear_api_key": {
+            "type": "boolean",
+            "title": "Clear Api Key",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "base_url",
+          "model"
+        ],
+        "title": "AISettingsUpdate"
+      },
       "AdvancedCustomerSchema": {
         "properties": {
           "customerId": {
@@ -4301,7 +5195,8 @@
         "properties": {
           "type": {
             "type": "string",
-            "title": "Type"
+            "title": "Type",
+            "description": "'income' (money in) or 'expense' (money out)"
           },
           "amount": {
             "anyOf": [
@@ -4313,11 +5208,13 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Amount"
+            "title": "Amount",
+            "description": "Positive amount"
           },
           "payment_method": {
             "type": "string",
             "title": "Payment Method",
+            "description": "cash, card or transfer",
             "default": "cash"
           },
           "description": {
@@ -4751,6 +5648,301 @@
         ],
         "title": "CategoryStatSchema"
       },
+      "ChatConversationDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageRead"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "created_at",
+          "updated_at",
+          "messages"
+        ],
+        "title": "ChatConversationDetail"
+      },
+      "ChatConversationRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChatConversationRead"
+      },
+      "ChatConversationUpdate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "ChatConversationUpdate"
+      },
+      "ChatExecuteRequest": {
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Conversation Id"
+          },
+          "action_message_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Action Message Id"
+          },
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "default": "en"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "currency_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency Symbol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "action_message_id",
+          "approved"
+        ],
+        "title": "ChatExecuteRequest"
+      },
+      "ChatMessageRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "pending_action": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Action"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "content",
+          "created_at"
+        ],
+        "title": "ChatMessageRead"
+      },
+      "ChatRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Message"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "default": "en"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "currency_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency Symbol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest"
+      },
+      "ChatResponse": {
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Conversation Id"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageRead"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "no_api_key",
+                  "invalid_api_key",
+                  "model_not_found",
+                  "rate_limited",
+                  "timeout",
+                  "connection_error",
+                  "bad_request",
+                  "provider_error",
+                  "too_many_steps"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "error_detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "messages"
+        ],
+        "title": "ChatResponse"
+      },
       "CustomerCreate": {
         "properties": {
           "name": {
@@ -5023,6 +6215,68 @@
         ],
         "title": "CustomerInsightSchema"
       },
+      "CustomerMatch": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "id_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Number"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Balance"
+          },
+          "credit_limit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "id_number",
+          "balance",
+          "credit_limit"
+        ],
+        "title": "CustomerMatch"
+      },
       "CustomerOutcomeCreate": {
         "properties": {
           "amount": {
@@ -5146,11 +6400,13 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Amount"
+            "title": "Amount",
+            "description": "Amount the customer pays towards their credit balance"
           },
           "payment_method": {
             "type": "string",
             "title": "Payment Method",
+            "description": "cash, card or transfer",
             "default": "cash"
           },
           "payment_date": {
@@ -6008,6 +7264,37 @@
         "type": "object",
         "title": "ItemUpdate"
       },
+      "LowStockItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stock"
+          },
+          "min_stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Min Stock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "stock",
+          "min_stock"
+        ],
+        "title": "LowStockItem"
+      },
       "LowStockItemSchema": {
         "properties": {
           "itemId": {
@@ -6251,6 +7538,30 @@
         ],
         "title": "Page[SaleRead]"
       },
+      "PaymentBreakdown": {
+        "properties": {
+          "payment_method": {
+            "type": "string",
+            "title": "Payment Method"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_method",
+          "total",
+          "count"
+        ],
+        "title": "PaymentBreakdown"
+      },
       "PaymentMethod": {
         "type": "string",
         "enum": [
@@ -6314,6 +7625,204 @@
           "byDayOfWeek"
         ],
         "title": "PeakTimesSchema"
+      },
+      "ProductDetails": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "unit_type": {
+            "type": "string",
+            "title": "Unit Type"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stock"
+          },
+          "min_stock": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Stock"
+          },
+          "last_purchase_unit_cost": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Purchase Unit Cost"
+          },
+          "last_purchase_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Purchase Date"
+          },
+          "sold_last_30_days": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sold Last 30 Days"
+          },
+          "revenue_last_30_days": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Revenue Last 30 Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sku",
+          "category",
+          "unit_type",
+          "price",
+          "stock",
+          "min_stock",
+          "last_purchase_unit_cost",
+          "last_purchase_date",
+          "sold_last_30_days",
+          "revenue_last_30_days"
+        ],
+        "title": "ProductDetails"
+      },
+      "ProductMatch": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "unit_type": {
+            "type": "string",
+            "title": "Unit Type"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stock"
+          },
+          "min_stock": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Stock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sku",
+          "category",
+          "unit_type",
+          "price",
+          "stock",
+          "min_stock"
+        ],
+        "title": "ProductMatch"
       },
       "ProfitabilitySchema": {
         "properties": {
@@ -6478,7 +7987,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Supplier {id, name}; use search_suppliers for the id, or just a name to create one"
           },
           "reference_number": {
             "anyOf": [
@@ -6489,7 +7999,8 @@
                 "type": "null"
               }
             ],
-            "title": "Reference Number"
+            "title": "Reference Number",
+            "description": "Invoice / receipt number"
           },
           "purchase_date": {
             "anyOf": [
@@ -6501,14 +8012,17 @@
                 "type": "null"
               }
             ],
-            "title": "Purchase Date"
+            "title": "Purchase Date",
+            "description": "Defaults to now"
           },
           "payment_method": {
             "$ref": "#/components/schemas/PurchasePaymentMethod",
+            "description": "cash, card, transfer or credit",
             "default": "cash"
           },
           "payment_status": {
             "$ref": "#/components/schemas/PurchasePaymentStatus",
+            "description": "paid (recorded in the cashbox), unpaid or partial",
             "default": "paid"
           },
           "tax": {
@@ -6561,15 +8075,18 @@
                 "type": "null"
               }
             ],
-            "title": "Item Id"
+            "title": "Item Id",
+            "description": "Existing product id from search_products; omit to create a new product with item_name"
           },
           "item_name": {
             "type": "string",
-            "title": "Item Name"
+            "title": "Item Name",
+            "description": "Product name (always required)"
           },
           "unit_type": {
             "type": "string",
             "title": "Unit Type",
+            "description": "unit, gram, liter or pack",
             "default": "unit"
           },
           "quantity": {
@@ -6582,7 +8099,8 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Quantity"
+            "title": "Quantity",
+            "description": "Amount received (grams for gram products)"
           },
           "total_cost_price": {
             "anyOf": [
@@ -6594,7 +8112,8 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Total Cost Price"
+            "title": "Total Cost Price",
+            "description": "Total paid for this whole line, not the unit cost"
           },
           "sku": {
             "anyOf": [
@@ -6631,11 +8150,13 @@
                 "type": "null"
               }
             ],
-            "title": "Sell Price"
+            "title": "Sell Price",
+            "description": "New selling price (per kg for gram products), if the user gives one"
           },
           "overwrite_previous_value": {
             "type": "boolean",
             "title": "Overwrite Previous Value",
+            "description": "True to replace the product's existing price/SKU/category with the values given here",
             "default": false
           }
         },
@@ -7334,10 +8855,12 @@
               "$ref": "#/components/schemas/SaleItemCreate"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "At least one product line"
           },
           "payment_method": {
             "$ref": "#/components/schemas/PaymentMethod",
+            "description": "cash, card, other (transfer), credit (customer pays later; requires customer_id) or internal (owner takes goods)",
             "default": "cash"
           },
           "amount_tendered": {
@@ -7353,7 +8876,8 @@
                 "type": "null"
               }
             ],
-            "title": "Amount Tendered"
+            "title": "Amount Tendered",
+            "description": "Cash handed over by the customer, to compute change"
           },
           "notes": {
             "anyOf": [
@@ -7376,7 +8900,8 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Id"
+            "title": "Customer Id",
+            "description": "Customer id from search_customers; required for credit sales"
           },
           "subtotal_override": {
             "anyOf": [
@@ -7391,7 +8916,8 @@
                 "type": "null"
               }
             ],
-            "title": "Subtotal Override"
+            "title": "Subtotal Override",
+            "description": "Only when the user asks to charge a different total"
           },
           "subtotal_override_reason": {
             "anyOf": [
@@ -7402,7 +8928,8 @@
                 "type": "null"
               }
             ],
-            "title": "Subtotal Override Reason"
+            "title": "Subtotal Override Reason",
+            "description": "Required when subtotal_override is set"
           }
         },
         "type": "object",
@@ -7416,7 +8943,8 @@
           "item_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Item Id"
+            "title": "Item Id",
+            "description": "Product id (look it up with search_products; never invent it)"
           },
           "quantity": {
             "anyOf": [
@@ -7428,7 +8956,8 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Quantity"
+            "title": "Quantity",
+            "description": "Amount sold. Units for unit/pack/liter products; GRAMS for products with unit_type 'gram' (e.g. 500 = half a kilo)"
           },
           "unit_price_override": {
             "anyOf": [
@@ -7443,7 +8972,8 @@
                 "type": "null"
               }
             ],
-            "title": "Unit Price Override"
+            "title": "Unit Price Override",
+            "description": "Only when the user explicitly asks for a different price (per kg for gram products)"
           },
           "manual_override_reason": {
             "anyOf": [
@@ -7454,7 +8984,8 @@
                 "type": "null"
               }
             ],
-            "title": "Manual Override Reason"
+            "title": "Manual Override Reason",
+            "description": "Required when unit_price_override is set"
           }
         },
         "type": "object",
@@ -7704,6 +9235,87 @@
           "refunded"
         ],
         "title": "SaleStatus"
+      },
+      "StoreSnapshot": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "sales_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sales Total"
+          },
+          "sales_count": {
+            "type": "integer",
+            "title": "Sales Count"
+          },
+          "sales_by_payment_method": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentBreakdown"
+            },
+            "type": "array",
+            "title": "Sales By Payment Method"
+          },
+          "cashbox_open": {
+            "type": "boolean",
+            "title": "Cashbox Open"
+          },
+          "cashbox_expected_cash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cashbox Expected Cash"
+          },
+          "cashbox_opened_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cashbox Opened At"
+          },
+          "low_stock_count": {
+            "type": "integer",
+            "title": "Low Stock Count"
+          },
+          "low_stock_items": {
+            "items": {
+              "$ref": "#/components/schemas/LowStockItem"
+            },
+            "type": "array",
+            "title": "Low Stock Items"
+          },
+          "customers_over_credit_limit": {
+            "type": "integer",
+            "title": "Customers Over Credit Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "sales_total",
+          "sales_count",
+          "sales_by_payment_method",
+          "cashbox_open",
+          "cashbox_expected_cash",
+          "cashbox_opened_at",
+          "low_stock_count",
+          "low_stock_items",
+          "customers_over_credit_limit"
+        ],
+        "title": "StoreSnapshot"
       },
       "SupplierCreate": {
         "properties": {

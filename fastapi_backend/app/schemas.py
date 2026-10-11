@@ -3,7 +3,9 @@ from datetime import datetime
 from decimal import Decimal
 
 from fastapi_users import schemas
-from pydantic import BaseModel
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field
 from uuid import UUID
 
 from app.models import (
@@ -68,20 +70,27 @@ class ItemUpdate(BaseModel):
 
 
 class SaleItemCreate(BaseModel):
-    item_id: UUID
-    quantity: Decimal
-    unit_price_override: Decimal | None = None
-    manual_override_reason: str | None = None
+    item_id: UUID = Field(description="Product id (look it up with search_products; never invent it)")
+    quantity: Decimal = Field(
+        description="Amount sold. Units for unit/pack/liter products; GRAMS for products with unit_type 'gram' (e.g. 500 = half a kilo)"
+    )
+    unit_price_override: Decimal | None = Field(
+        None, description="Only when the user explicitly asks for a different price (per kg for gram products)"
+    )
+    manual_override_reason: str | None = Field(None, description="Required when unit_price_override is set")
 
 
 class SaleCreate(BaseModel):
-    items: list[SaleItemCreate]
-    payment_method: PaymentMethod = PaymentMethod.cash
-    amount_tendered: Decimal | None = None
+    items: list[SaleItemCreate] = Field(description="At least one product line")
+    payment_method: PaymentMethod = Field(
+        PaymentMethod.cash,
+        description="cash, card, other (transfer), credit (customer pays later; requires customer_id) or internal (owner takes goods)",
+    )
+    amount_tendered: Decimal | None = Field(None, description="Cash handed over by the customer, to compute change")
     notes: str | None = None
-    customer_id: UUID | None = None
-    subtotal_override: Decimal | None = None
-    subtotal_override_reason: str | None = None
+    customer_id: UUID | None = Field(None, description="Customer id from search_customers; required for credit sales")
+    subtotal_override: Decimal | None = Field(None, description="Only when the user asks to charge a different total")
+    subtotal_override_reason: str | None = Field(None, description="Required when subtotal_override is set")
 
 
 class SaleItemRead(BaseModel):
@@ -223,8 +232,8 @@ class CustomerPage(BaseModel):
 
 
 class CustomerPaymentCreate(BaseModel):
-    amount: Decimal
-    payment_method: str = "cash"
+    amount: Decimal = Field(description="Amount the customer pays towards their credit balance")
+    payment_method: str = Field("cash", description="cash, card or transfer")
     payment_date: datetime | None = None
     notes: str | None = None
 
@@ -278,23 +287,31 @@ class SupplierRead(BaseModel):
 
 
 class PurchaseItemCreate(BaseModel):
-    item_id: UUID | None = None
-    item_name: str
-    unit_type: str = "unit"
-    quantity: Decimal
-    total_cost_price: Decimal
+    item_id: UUID | None = Field(
+        None, description="Existing product id from search_products; omit to create a new product with item_name"
+    )
+    item_name: str = Field(description="Product name (always required)")
+    unit_type: str = Field("unit", description="unit, gram, liter or pack")
+    quantity: Decimal = Field(description="Amount received (grams for gram products)")
+    total_cost_price: Decimal = Field(description="Total paid for this whole line, not the unit cost")
     sku: str | None = None
     category: str | None = None
-    sell_price: Decimal | None = None
-    overwrite_previous_value: bool = False
+    sell_price: Decimal | None = Field(None, description="New selling price (per kg for gram products), if the user gives one")
+    overwrite_previous_value: bool = Field(
+        False, description="True to replace the product's existing price/SKU/category with the values given here"
+    )
 
 
 class PurchaseCreate(BaseModel):
-    supplier: SupplierCreate | None = None
-    reference_number: str | None = None
-    purchase_date: datetime | None = None
-    payment_method: PurchasePaymentMethod = PurchasePaymentMethod.cash
-    payment_status: PurchasePaymentStatus = PurchasePaymentStatus.paid
+    supplier: SupplierCreate | None = Field(
+        None, description="Supplier {id, name}; use search_suppliers for the id, or just a name to create one"
+    )
+    reference_number: str | None = Field(None, description="Invoice / receipt number")
+    purchase_date: datetime | None = Field(None, description="Defaults to now")
+    payment_method: PurchasePaymentMethod = Field(PurchasePaymentMethod.cash, description="cash, card, transfer or credit")
+    payment_status: PurchasePaymentStatus = Field(
+        PurchasePaymentStatus.paid, description="paid (recorded in the cashbox), unpaid or partial"
+    )
     tax: Decimal = Decimal("0")
     notes: str | None = None
     items: list[PurchaseItemCreate]
@@ -395,9 +412,9 @@ class CashboxSessionList(BaseModel):
 
 
 class CashboxManualTransaction(BaseModel):
-    type: str  # "income" or "expense"
-    amount: Decimal
-    payment_method: str = "cash"
+    type: str = Field(description="'income' (money in) or 'expense' (money out)")
+    amount: Decimal = Field(description="Positive amount")
+    payment_method: str = Field("cash", description="cash, card or transfer")
     description: str | None = None
 
 
@@ -609,3 +626,120 @@ class BasketAnalysisSchema(BaseModel):
     totalBaskets: int
     avgItemsPerBasket: float
 
+
+# --- AI settings ---
+
+
+class AIProviderPreset(BaseModel):
+    id: str
+    label: str
+    base_url: str
+    default_model: str
+    requires_key: bool
+
+
+class AISettingsRead(BaseModel):
+    provider: str
+    base_url: str
+    model: str
+    temperature: float | None = None
+    has_api_key: bool
+    api_key_hint: str | None = None
+    # False when the user has no saved settings and the server defaults are in use
+    is_custom: bool
+    presets: list[AIProviderPreset]
+
+
+class AISettingsUpdate(BaseModel):
+    provider: str
+    base_url: str
+    model: str
+    temperature: float | None = Field(None, ge=0, le=2)
+    # Empty/omitted keeps the stored key
+    api_key: str | None = None
+    clear_api_key: bool = False
+
+
+class AISettingsTestRequest(BaseModel):
+    # All optional: missing values fall back to the saved settings
+    provider: str | None = None
+    base_url: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+
+
+class AISettingsTestResult(BaseModel):
+    ok: bool
+    error: str | None = None
+    detail: str | None = None
+
+
+class AIModelList(BaseModel):
+    models: list[str]
+    error: str | None = None
+    detail: str | None = None
+
+
+# --- Chat ---
+
+
+class ChatMessageRead(BaseModel):
+    id: UUID
+    role: str
+    content: str | None
+    pending_action: dict[str, Any] | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ChatConversationRead(BaseModel):
+    id: UUID
+    title: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ChatConversationDetail(ChatConversationRead):
+    messages: list[ChatMessageRead]
+
+
+class ChatConversationUpdate(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    conversation_id: UUID | None = None
+    locale: str = "en"
+    timezone: str | None = None
+    currency_symbol: str | None = None
+
+
+class ChatExecuteRequest(BaseModel):
+    conversation_id: UUID
+    action_message_id: UUID
+    approved: bool
+    locale: str = "en"
+    timezone: str | None = None
+    currency_symbol: str | None = None
+
+
+class ChatResponse(BaseModel):
+    conversation_id: UUID
+    # Only messages meant for display (user, assistant text, approval requests)
+    messages: list[ChatMessageRead]
+    error: Literal[
+        "no_api_key",
+        "invalid_api_key",
+        "model_not_found",
+        "rate_limited",
+        "timeout",
+        "connection_error",
+        "bad_request",
+        "provider_error",
+        "too_many_steps",
+    ] | None = None
+    error_detail: str | None = None

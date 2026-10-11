@@ -47,19 +47,14 @@ async def test_client(db_session):
     """Fixture to create a test client that uses the test database session."""
 
     # FastAPI-Users database override (wraps session with user operation helpers)
+    # The shared session is not closed per request: the chat runs tools as nested API requests,
+    # and closing it there would detach the outer request's objects. db_session closes it at teardown.
     async def override_get_user_db():
-        session = SQLAlchemyUserDatabase(db_session, User)
-        try:
-            yield session
-        finally:
-            await db_session.close()
+        yield SQLAlchemyUserDatabase(db_session, User)
 
     # General database override (raw session access)
     async def override_get_async_session():
-        try:
-            yield db_session
-        finally:
-            await db_session.close()
+        yield db_session
 
     # Set up test database overrides
     app.dependency_overrides[get_user_db] = override_get_user_db

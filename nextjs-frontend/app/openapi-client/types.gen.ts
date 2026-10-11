@@ -8,6 +8,53 @@ export type AdvancedCustomerSchema = {
   creditOwed: number;
 };
 
+export type AIModelList = {
+  models: Array<string>;
+  error?: string | null;
+  detail?: string | null;
+};
+
+export type AIProviderPreset = {
+  id: string;
+  label: string;
+  base_url: string;
+  default_model: string;
+  requires_key: boolean;
+};
+
+export type AISettingsRead = {
+  provider: string;
+  base_url: string;
+  model: string;
+  temperature?: number | null;
+  has_api_key: boolean;
+  api_key_hint?: string | null;
+  is_custom: boolean;
+  presets: Array<AIProviderPreset>;
+};
+
+export type AISettingsTestRequest = {
+  provider?: string | null;
+  base_url?: string | null;
+  model?: string | null;
+  api_key?: string | null;
+};
+
+export type AISettingsTestResult = {
+  ok: boolean;
+  error?: string | null;
+  detail?: string | null;
+};
+
+export type AISettingsUpdate = {
+  provider: string;
+  base_url: string;
+  model: string;
+  temperature?: number | null;
+  api_key?: string | null;
+  clear_api_key?: boolean;
+};
+
 export type AnalyticsSummarySchema = {
   totalRevenue: number;
   totalOrders: number;
@@ -60,8 +107,17 @@ export type CashboxAnalyticsSchema = {
 };
 
 export type CashboxManualTransaction = {
+  /**
+   * 'income' (money in) or 'expense' (money out)
+   */
   type: string;
+  /**
+   * Positive amount
+   */
   amount: number | string;
+  /**
+   * cash, card or transfer
+   */
   payment_method?: string;
   description?: string | null;
 };
@@ -139,6 +195,69 @@ export type CategoryStatSchema = {
   orderCount: number;
 };
 
+export type ChatConversationDetail = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: Array<ChatMessageRead>;
+};
+
+export type ChatConversationRead = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChatConversationUpdate = {
+  title: string;
+};
+
+export type ChatExecuteRequest = {
+  conversation_id: string;
+  action_message_id: string;
+  approved: boolean;
+  locale?: string;
+  timezone?: string | null;
+  currency_symbol?: string | null;
+};
+
+export type ChatMessageRead = {
+  id: string;
+  role: string;
+  content: string | null;
+  pending_action?: {
+    [key: string]: unknown;
+  } | null;
+  created_at: string;
+};
+
+export type ChatRequest = {
+  message: string;
+  conversation_id?: string | null;
+  locale?: string;
+  timezone?: string | null;
+  currency_symbol?: string | null;
+};
+
+export type ChatResponse = {
+  conversation_id: string;
+  messages: Array<ChatMessageRead>;
+  error?:
+    | "no_api_key"
+    | "invalid_api_key"
+    | "model_not_found"
+    | "rate_limited"
+    | "timeout"
+    | "connection_error"
+    | "bad_request"
+    | "provider_error"
+    | "too_many_steps"
+    | null;
+  error_detail?: string | null;
+};
+
 export type CustomerCreate = {
   name: string;
   phone?: string | null;
@@ -178,6 +297,15 @@ export type CustomerInsightSchema = {
   lastOrder: string;
 };
 
+export type CustomerMatch = {
+  id: string;
+  name: string;
+  phone: string | null;
+  id_number: string | null;
+  balance: string;
+  credit_limit: string | null;
+};
+
 export type CustomerOutcomeCreate = {
   amount: number | string;
   description: string;
@@ -201,7 +329,13 @@ export type CustomerPage = {
 };
 
 export type CustomerPaymentCreate = {
+  /**
+   * Amount the customer pays towards their credit balance
+   */
   amount: number | string;
+  /**
+   * cash, card or transfer
+   */
   payment_method?: string;
   payment_date?: string | null;
   notes?: string | null;
@@ -350,6 +484,13 @@ export type login = {
   client_secret?: string | null;
 };
 
+export type LowStockItem = {
+  id: string;
+  name: string;
+  stock: string;
+  min_stock: string;
+};
+
 export type LowStockItemSchema = {
   itemId: string;
   name: string;
@@ -383,6 +524,12 @@ export type Page_SaleRead_ = {
   pages?: number | null;
 };
 
+export type PaymentBreakdown = {
+  payment_method: string;
+  total: string;
+  count: number;
+};
+
 export type PaymentMethod = "cash" | "card" | "other" | "credit" | "internal";
 
 export type PaymentMethodStatSchema = {
@@ -397,6 +544,32 @@ export type PeakTimesSchema = {
   byDayOfWeek: Array<{
     [key: string]: unknown;
   }>;
+};
+
+export type ProductDetails = {
+  id: string;
+  name: string;
+  sku: string | null;
+  category: string | null;
+  unit_type: string;
+  price: string | null;
+  stock: string;
+  min_stock: string | null;
+  last_purchase_unit_cost: string | null;
+  last_purchase_date: string | null;
+  sold_last_30_days: string;
+  revenue_last_30_days: string;
+};
+
+export type ProductMatch = {
+  id: string;
+  name: string;
+  sku: string | null;
+  category: string | null;
+  unit_type: string;
+  price: string | null;
+  stock: string;
+  min_stock: string | null;
 };
 
 export type ProfitabilitySchema = {
@@ -433,10 +606,25 @@ export type PurchaseCancelRequest = {
 };
 
 export type PurchaseCreate = {
+  /**
+   * Supplier {id, name}; use search_suppliers for the id, or just a name to create one
+   */
   supplier?: SupplierCreate | null;
+  /**
+   * Invoice / receipt number
+   */
   reference_number?: string | null;
+  /**
+   * Defaults to now
+   */
   purchase_date?: string | null;
+  /**
+   * cash, card, transfer or credit
+   */
   payment_method?: PurchasePaymentMethod;
+  /**
+   * paid (recorded in the cashbox), unpaid or partial
+   */
   payment_status?: PurchasePaymentStatus;
   tax?: number | string;
   notes?: string | null;
@@ -444,14 +632,35 @@ export type PurchaseCreate = {
 };
 
 export type PurchaseItemCreate = {
+  /**
+   * Existing product id from search_products; omit to create a new product with item_name
+   */
   item_id?: string | null;
+  /**
+   * Product name (always required)
+   */
   item_name: string;
+  /**
+   * unit, gram, liter or pack
+   */
   unit_type?: string;
+  /**
+   * Amount received (grams for gram products)
+   */
   quantity: number | string;
+  /**
+   * Total paid for this whole line, not the unit cost
+   */
   total_cost_price: number | string;
   sku?: string | null;
   category?: string | null;
+  /**
+   * New selling price (per kg for gram products), if the user gives one
+   */
   sell_price?: number | string | null;
+  /**
+   * True to replace the product's existing price/SKU/category with the values given here
+   */
   overwrite_previous_value?: boolean;
 };
 
@@ -550,19 +759,49 @@ export type SaleCancelRequest = {
 };
 
 export type SaleCreate = {
+  /**
+   * At least one product line
+   */
   items: Array<SaleItemCreate>;
+  /**
+   * cash, card, other (transfer), credit (customer pays later; requires customer_id) or internal (owner takes goods)
+   */
   payment_method?: PaymentMethod;
+  /**
+   * Cash handed over by the customer, to compute change
+   */
   amount_tendered?: number | string | null;
   notes?: string | null;
+  /**
+   * Customer id from search_customers; required for credit sales
+   */
   customer_id?: string | null;
+  /**
+   * Only when the user asks to charge a different total
+   */
   subtotal_override?: number | string | null;
+  /**
+   * Required when subtotal_override is set
+   */
   subtotal_override_reason?: string | null;
 };
 
 export type SaleItemCreate = {
+  /**
+   * Product id (look it up with search_products; never invent it)
+   */
   item_id: string;
+  /**
+   * Amount sold. Units for unit/pack/liter products; GRAMS for products with unit_type 'gram' (e.g. 500 = half a kilo)
+   */
   quantity: number | string;
+  /**
+   * Only when the user explicitly asks for a different price (per kg for gram products)
+   */
   unit_price_override?: number | string | null;
+  /**
+   * Required when unit_price_override is set
+   */
   manual_override_reason?: string | null;
 };
 
@@ -598,6 +837,19 @@ export type SaleRead = {
 };
 
 export type SaleStatus = "completed" | "cancelled" | "refunded";
+
+export type StoreSnapshot = {
+  date: string;
+  sales_total: string;
+  sales_count: number;
+  sales_by_payment_method: Array<PaymentBreakdown>;
+  cashbox_open: boolean;
+  cashbox_expected_cash: string | null;
+  cashbox_opened_at: string | null;
+  low_stock_count: number;
+  low_stock_items: Array<LowStockItem>;
+  customers_over_credit_limit: number;
+};
 
 export type SupplierCreate = {
   id?: string | null;
@@ -1341,22 +1593,136 @@ export type SearchSuppliersResponse = Array<SupplierRead>;
 
 export type SearchSuppliersError = HTTPValidationError;
 
-export type ChatWithMcpData = {
-  body: {
-    [key: string]: unknown;
+export type ListConversationsResponse = Array<ChatConversationRead>;
+
+export type ListConversationsError = unknown;
+
+export type GetConversationData = {
+  path: {
+    conversation_id: string;
   };
 };
 
-export type ChatWithMcpResponse = unknown;
+export type GetConversationResponse = ChatConversationDetail;
+
+export type GetConversationError = HTTPValidationError;
+
+export type RenameConversationData = {
+  body: ChatConversationUpdate;
+  path: {
+    conversation_id: string;
+  };
+};
+
+export type RenameConversationResponse = ChatConversationRead;
+
+export type RenameConversationError = HTTPValidationError;
+
+export type DeleteConversationData = {
+  path: {
+    conversation_id: string;
+  };
+};
+
+export type DeleteConversationResponse = void;
+
+export type DeleteConversationError = HTTPValidationError;
+
+export type ChatWithMcpData = {
+  body: ChatRequest;
+};
+
+export type ChatWithMcpResponse = ChatResponse;
 
 export type ChatWithMcpError = HTTPValidationError;
 
 export type ExecuteToolData = {
-  body: {
-    [key: string]: unknown;
+  body: ChatExecuteRequest;
+};
+
+export type ExecuteToolResponse = ChatResponse;
+
+export type ExecuteToolError = HTTPValidationError;
+
+export type GetAiSettingsResponse = AISettingsRead;
+
+export type GetAiSettingsError = unknown;
+
+export type UpdateAiSettingsData = {
+  body: AISettingsUpdate;
+};
+
+export type UpdateAiSettingsResponse = AISettingsRead;
+
+export type UpdateAiSettingsError = HTTPValidationError;
+
+export type ResetAiSettingsResponse = void;
+
+export type ResetAiSettingsError = unknown;
+
+export type TestAiSettingsData = {
+  body: AISettingsTestRequest;
+};
+
+export type TestAiSettingsResponse = AISettingsTestResult;
+
+export type TestAiSettingsError = HTTPValidationError;
+
+export type ListAiModelsData = {
+  body: AISettingsTestRequest;
+};
+
+export type ListAiModelsResponse = AIModelList;
+
+export type ListAiModelsError = HTTPValidationError;
+
+export type SearchProductsData = {
+  query: {
+    limit?: number;
+    /**
+     * Words from the product name, SKU or category
+     */
+    q: string;
   };
 };
 
-export type ExecuteToolResponse = unknown;
+export type SearchProductsResponse = Array<ProductMatch>;
 
-export type ExecuteToolError = HTTPValidationError;
+export type SearchProductsError = HTTPValidationError;
+
+export type SearchCustomersData = {
+  query: {
+    limit?: number;
+    /**
+     * Name, phone or ID number
+     */
+    q: string;
+  };
+};
+
+export type SearchCustomersResponse = Array<CustomerMatch>;
+
+export type SearchCustomersError = HTTPValidationError;
+
+export type ProductDetailsData = {
+  path: {
+    item_id: string;
+  };
+};
+
+export type ProductDetailsResponse = ProductDetails;
+
+export type ProductDetailsError = HTTPValidationError;
+
+export type StoreSnapshotData = {
+  query?: {
+    /**
+     * IANA timezone used to decide what 'today' is
+     */
+    tz?: string | null;
+  };
+};
+
+export type StoreSnapshotResponse = StoreSnapshot;
+
+export type StoreSnapshotError = HTTPValidationError;

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import Customer, CustomerPayment, CustomerOutcome, Sale, PaymentMethod, SaleStatus
 from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import (
@@ -24,7 +24,7 @@ from app.schemas import (
     CustomerUpdate,
     SaleRead,
 )
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 
 router = APIRouter(tags=["customers"])
 
@@ -100,13 +100,13 @@ async def _batch_balances(customer_ids: list[UUID], db: AsyncSession) -> dict:
 @router.get("/", response_model=CustomerPage)
 async def list_customers(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     q: str | None = Query(None),
     show_inactive: bool = Query(False),
 ):
-    base = select(Customer).where(Customer.user_id == user.id)
+    base = select(Customer).where(Customer.business_id == tenant.business_id)
     if not show_inactive:
         base = base.where(Customer.is_active == True)
     if q:
@@ -152,9 +152,9 @@ async def list_customers(
 async def create_customer(
     data: CustomerCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    customer = Customer(**data.model_dump(), user_id=user.id)
+    customer = Customer(**data.model_dump(), business_id=tenant.business_id, user_id=tenant.user_id)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)
@@ -167,11 +167,11 @@ async def create_customer(
 async def get_customer(
     customer_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
         select(Customer)
-        .where(Customer.id == customer_id, Customer.user_id == user.id)
+        .where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
         .options(
             selectinload(Customer.sales).selectinload(Sale.sale_items),
             selectinload(Customer.credit_payments),
@@ -221,10 +221,10 @@ async def update_customer(
     customer_id: UUID,
     data: CustomerUpdate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+        select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
     )
     customer = result.scalars().first()
     if not customer:
@@ -243,10 +243,10 @@ async def record_payment(
     customer_id: UUID,
     data: CustomerPaymentCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+        select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
     )
     customer = result.scalars().first()
     if not customer:
@@ -284,7 +284,7 @@ async def record_payment(
 
     payment = CustomerPayment(
         customer_id=customer_id,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         amount=data.amount,
         payment_method=data.payment_method,
         payment_date=data.payment_date or datetime.now(timezone.utc),
@@ -298,7 +298,7 @@ async def record_payment(
     from app.routes.cashbox import record_auto_transaction
     await record_auto_transaction(
         db=db,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         tx_type=CashboxTransactionType.customer_payment,
         direction=CashboxTransactionDirection.in_,
         amount=data.amount,
@@ -317,10 +317,10 @@ async def record_outcome(
     customer_id: UUID,
     data: CustomerOutcomeCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+        select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
     )
     customer = result.scalars().first()
     if not customer:
@@ -334,7 +334,7 @@ async def record_outcome(
 
     outcome = CustomerOutcome(
         customer_id=customer_id,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         amount=data.amount,
         description=data.description.strip(),
         outcome_date=data.outcome_date or datetime.now(timezone.utc),
@@ -351,10 +351,10 @@ async def delete_payment(
     customer_id: UUID,
     payment_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     customer_result = await db.execute(
-        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+        select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
     )
     customer = customer_result.scalars().first()
     if not customer:
@@ -364,7 +364,7 @@ async def delete_payment(
         select(CustomerPayment).where(
             CustomerPayment.id == payment_id,
             CustomerPayment.customer_id == customer_id,
-            CustomerPayment.user_id == user.id,
+            CustomerPayment.business_id == tenant.business_id,
         )
     )
     payment = payment_result.scalars().first()
@@ -381,10 +381,10 @@ async def delete_outcome(
     customer_id: UUID,
     outcome_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     customer_result = await db.execute(
-        select(Customer).where(Customer.id == customer_id, Customer.user_id == user.id)
+        select(Customer).where(Customer.id == customer_id, Customer.business_id == tenant.business_id)
     )
     customer = customer_result.scalars().first()
     if not customer:
@@ -394,7 +394,7 @@ async def delete_outcome(
         select(CustomerOutcome).where(
             CustomerOutcome.id == outcome_id,
             CustomerOutcome.customer_id == customer_id,
-            CustomerOutcome.user_id == user.id,
+            CustomerOutcome.business_id == tenant.business_id,
         )
     )
     outcome = outcome_result.scalars().first()

@@ -8,7 +8,7 @@ from app.models import CashboxTransaction, Item
 
 
 async def _create_item(db_session, user, stock="10", price="5.00"):
-    item = Item(name="Cola", stock=Decimal(stock), price=Decimal(price), user_id=user.id)
+    item = Item(name="Cola", stock=Decimal(stock), price=Decimal(price), user_id=user.id, business_id=user.business_id)
     db_session.add(item)
     await db_session.commit()
     await db_session.refresh(item)

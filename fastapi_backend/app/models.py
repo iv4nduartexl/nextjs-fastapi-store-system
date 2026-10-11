@@ -2,8 +2,8 @@ import enum
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import BigInteger, Column, String, ForeignKey, Enum, Identity, Numeric, DateTime, Boolean, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import BigInteger, Column, String, ForeignKey, Enum, Identity, Index, Numeric, DateTime, Boolean, Text, UniqueConstraint, text
+from sqlalchemy.orm import declared_attr, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql import func
 from uuid import uuid4
@@ -71,32 +71,65 @@ class PurchasePaymentMethod(str, enum.Enum):
     credit = "credit"
 
 
+class UserRole(str, enum.Enum):
+    owner = "owner"
+    cashier = "cashier"
+
+
+class Business(Base):
+    """A store using the system. All business data is scoped to one business."""
+
+    __tablename__ = "businesses"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True, server_default=text("true"))
+    currency_symbol = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    users = relationship("User", back_populates="business")
+
+
+class TenantMixin:
+    """Marks a table as business-owned: rows are only visible inside their business (see app/tenancy.py)."""
+
+    @declared_attr
+    def business_id(cls):
+        return Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=False, index=True)
+
+
 class User(SQLAlchemyBaseUserTableUUID, Base):
     username = Column(String, unique=True, nullable=True, index=True)
+    full_name = Column(String, nullable=True)
+    # Null only for the platform superuser, who belongs to no business
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=True, index=True)
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.owner, server_default="owner")
+    must_change_password = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    business = relationship("Business", back_populates="users")
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
     sales = relationship("Sale", back_populates="user", foreign_keys="Sale.user_id")
     purchases = relationship("Purchase", back_populates="user", foreign_keys="Purchase.user_id")
     customers = relationship("Customer", back_populates="user")
 
 
-class Category(Base):
+class Category(TenantMixin, Base):
     __tablename__ = "categories"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
 
-    from sqlalchemy import UniqueConstraint
-    __table_args__ = (UniqueConstraint("name", "user_id", name="uq_category_name_user"),)
+    __table_args__ = (UniqueConstraint("business_id", "name", name="uq_category_business_name"),)
 
 
-class Item(Base):
+class Item(TenantMixin, Base):
     __tablename__ = "items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    sku = Column(String, nullable=True, unique=True, index=True)
+    # Unique per business (uq_item_business_sku), not globally
+    sku = Column(String, nullable=True, index=True)
     category = Column(String, nullable=True)
     unit_type = Column(Enum(UnitType), nullable=False, default=UnitType.unit)
     stock = Column(Numeric(10, 3), nullable=False, default=0)
@@ -110,8 +143,10 @@ class Item(Base):
     sale_items = relationship("SaleItem", back_populates="item")
     purchase_items = relationship("PurchaseItem", back_populates="item")
 
+    __table_args__ = (UniqueConstraint("business_id", "sku", name="uq_item_business_sku"),)
 
-class Sale(Base):
+
+class Sale(TenantMixin, Base):
     __tablename__ = "sales"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -156,7 +191,7 @@ class SaleItem(Base):
     item = relationship("Item", back_populates="sale_items")
 
 
-class SalePriceChangeLog(Base):
+class SalePriceChangeLog(TenantMixin, Base):
     __tablename__ = "sale_price_change_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -171,7 +206,7 @@ class SalePriceChangeLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class QuantityDiscountRule(Base):
+class QuantityDiscountRule(TenantMixin, Base):
     __tablename__ = "quantity_discount_rules"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -190,7 +225,7 @@ class QuantityDiscountRule(Base):
     free_qty = Column(Numeric(10, 3), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-class Supplier(Base):
+class Supplier(TenantMixin, Base):
     __tablename__ = "suppliers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -198,10 +233,12 @@ class Supplier(Base):
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    # Who created it (suppliers had no owner before businesses existed)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
 
     purchases = relationship("Purchase", back_populates="supplier")
 
-class Purchase(Base):
+class Purchase(TenantMixin, Base):
     __tablename__ = "purchases"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -241,7 +278,7 @@ class PurchaseItem(Base):
     item = relationship("Item", back_populates="purchase_items")
 
 
-class Customer(Base):
+class Customer(TenantMixin, Base):
     __tablename__ = "customers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -262,7 +299,7 @@ class Customer(Base):
     custom_outcomes = relationship("CustomerOutcome", back_populates="customer", cascade="all, delete-orphan")
 
 
-class CustomerPayment(Base):
+class CustomerPayment(TenantMixin, Base):
     __tablename__ = "customer_payments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -278,7 +315,7 @@ class CustomerPayment(Base):
     user = relationship("User")
 
 
-class CustomerOutcome(Base):
+class CustomerOutcome(TenantMixin, Base):
     __tablename__ = "customer_outcomes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -316,7 +353,7 @@ class CashboxTransactionDirection(str, enum.Enum):
     out = "out"
 
 
-class CashboxSession(Base):
+class CashboxSession(TenantMixin, Base):
     __tablename__ = "cashbox_sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -329,11 +366,21 @@ class CashboxSession(Base):
     notes = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    # One shared cashbox per business: at most one open session
+    __table_args__ = (
+        Index(
+            "uq_cashbox_open_session_business",
+            "business_id",
+            unique=True,
+            postgresql_where=text("status = 'open'"),
+        ),
+    )
+
     user = relationship("User")
     transactions = relationship("CashboxTransaction", back_populates="session", cascade="all, delete-orphan")
 
 
-class CashboxTransaction(Base):
+class CashboxTransaction(TenantMixin, Base):
     __tablename__ = "cashbox_transactions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -352,13 +399,14 @@ class CashboxTransaction(Base):
     user = relationship("User")
 
 
-class AISettings(Base):
-    """Per-user AI provider configuration for the chat assistant (OpenAI-compatible APIs)."""
+class AISettings(TenantMixin, Base):
+    """Per-business AI provider configuration for the chat assistant (OpenAI-compatible APIs)."""
 
     __tablename__ = "ai_settings"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), nullable=False, unique=True)
+    # Last user who changed the settings
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     provider = Column(String, nullable=False, default="openrouter")
     base_url = Column(String, nullable=False)
     model = Column(String, nullable=False)
@@ -366,8 +414,10 @@ class AISettings(Base):
     temperature = Column(Numeric(3, 2), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
+    __table_args__ = (UniqueConstraint("business_id", name="uq_ai_settings_business"),)
 
-class ChatConversation(Base):
+
+class ChatConversation(TenantMixin, Base):
     __tablename__ = "chat_conversations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -408,3 +458,20 @@ class ChatMessage(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     conversation = relationship("ChatConversation", back_populates="messages")
+
+
+class AuditLog(Base):
+    """Security-relevant actions: admin changes, password resets, impersonation, cancellations."""
+
+    __tablename__ = "audit_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    actor_user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    # Set when the actor was a superuser acting as another user
+    impersonated_by = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True, index=True)
+    action = Column(String, nullable=False)
+    target_type = Column(String, nullable=True)
+    target_id = Column(String, nullable=True)
+    details = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)

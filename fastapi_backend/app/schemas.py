@@ -22,6 +22,11 @@ from app.models import (
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
     username: str | None = None
+    full_name: str | None = None
+    # Read-only here: UserCreate/UserUpdate deliberately don't accept these
+    business_id: uuid.UUID | None = None
+    role: str | None = None
+    must_change_password: bool = False
 
 
 class UserCreate(schemas.BaseUserCreate):

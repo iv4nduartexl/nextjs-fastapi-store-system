@@ -23,7 +23,7 @@ from sqlalchemy.future import select
 from .config import settings
 from .database import get_user_db
 from .email import send_reset_password_email
-from .models import User
+from .models import Business, User, UserRole
 from .schemas import UserCreate
 
 AUTH_URL_PATH = "auth"
@@ -34,7 +34,16 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = settings.VERIFICATION_SECRET_KEY
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
-        print(f"User {user.id} has registered.")
+        # Self-registered users get their own business as its owner
+        if user.business_id is None and not user.is_superuser:
+            session = self.user_db.session
+            business = Business(name=user.username or user.email)
+            session.add(business)
+            await session.flush()
+            user.business_id = business.id
+            user.role = UserRole.owner
+            session.add(user)
+            await session.commit()
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None

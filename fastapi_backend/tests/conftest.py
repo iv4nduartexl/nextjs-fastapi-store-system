@@ -6,7 +6,7 @@ from fastapi_users.password import PasswordHelper
 import uuid
 
 from app.config import settings
-from app.models import User, Base
+from app.models import Business, User, Base
 
 from app.database import get_user_db, get_async_session
 from app.main import app
@@ -70,9 +70,14 @@ async def test_client(db_session):
 async def authenticated_user(test_client, db_session):
     """Fixture to create and authenticate a test user directly in the database."""
 
+    business = Business(id=uuid.uuid4(), name="Test Store")
+    db_session.add(business)
+    await db_session.flush()
+
     # Create user data
     user_data = {
         "id": uuid.uuid4(),
+        "business_id": business.id,
         "email": "test@example.com",
         "hashed_password": PasswordHelper().hash("TestPassword123#"),
         "is_active": True,
@@ -94,5 +99,6 @@ async def authenticated_user(test_client, db_session):
     return {
         "headers": {"Authorization": f"Bearer {access_token}"},
         "user": user,
+        "business": business,
         "user_data": {"email": user_data["email"], "password": "TestPassword123#"},
     }

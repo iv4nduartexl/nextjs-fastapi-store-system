@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.ai_provider import decrypt_api_key
 from app.config import settings
-from app.models import AISettings, ChatMessage, Item, Sale, User
+from app.models import AISettings, Business, ChatMessage, Item, Sale, User
 from app.routes import chat as chat_module
 
 
@@ -70,7 +70,7 @@ async def _configure_ai(test_client, headers, api_key="sk-test-1234567890"):
 
 
 async def _create_item(db_session, user, name="Coca Cola 2L", stock="10", price="5.00"):
-    item = Item(name=name, stock=Decimal(stock), price=Decimal(price), user_id=user.id)
+    item = Item(name=name, stock=Decimal(stock), price=Decimal(price), user_id=user.id, business_id=user.business_id)
     db_session.add(item)
     await db_session.commit()
     await db_session.refresh(item)
@@ -100,9 +100,11 @@ def test_tools_exclude_auth_users_and_chat():
 
 @pytest.mark.asyncio(loop_scope="function")
 async def test_search_products_is_scoped_to_user(test_client, db_session, authenticated_user):
+    other_business = Business(id=uuid.uuid4(), name="Other Store")
+    db_session.add(other_business)
     other = User(
         id=uuid.uuid4(), email="other@example.com", hashed_password="x",
-        is_active=True, is_superuser=False, is_verified=True,
+        is_active=True, is_superuser=False, is_verified=True, business_id=other_business.id,
     )
     db_session.add(other)
     await db_session.commit()

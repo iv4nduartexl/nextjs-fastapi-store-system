@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import (
     CashboxSession,
     CashboxTransaction,
@@ -58,7 +58,7 @@ from app.schemas import (
     SaleCreate,
     SaleRead,
 )
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 from app.routes.cashbox import record_auto_transaction, reverse_auto_transactions
 
 router = APIRouter(tags=["sales"])
@@ -108,9 +108,9 @@ def _apply_rule(unit_price: Decimal, sale_units: Decimal, rule: QuantityDiscount
     return unit_price
 
 
-async def _ensure_item_access(item_id: UUID, db: AsyncSession, user: User) -> None:
+async def _ensure_item_access(item_id: UUID, db: AsyncSession, tenant: TenantContext) -> None:
     result = await db.execute(
-        select(Item).where(Item.id == item_id, Item.user_id == user.id, Item.is_deleted == False)
+        select(Item).where(Item.id == item_id, Item.business_id == tenant.business_id, Item.is_deleted == False)
     )
     if not result.scalars().first():
         raise HTTPException(status_code=404, detail="Item not found")
@@ -148,14 +148,14 @@ def _validate_discount_rule_payload(
 async def create_sale(
     sale_data: SaleCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     if not sale_data.items:
         raise HTTPException(status_code=422, detail="Sale must have at least one item")
 
     item_ids = [si.item_id for si in sale_data.items]
     result = await db.execute(
-        select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id, Item.is_deleted == False)
+        select(Item).filter(Item.id.in_(item_ids), Item.business_id == tenant.business_id, Item.is_deleted == False)
     )
     items_map = {item.id: item for item in result.scalars().all()}
 
@@ -169,7 +169,7 @@ async def create_sale(
 
     discount_rules_result = await db.execute(
         select(QuantityDiscountRule)
-        .where(QuantityDiscountRule.user_id == user.id, QuantityDiscountRule.is_active == True)
+        .where(QuantityDiscountRule.business_id == tenant.business_id, QuantityDiscountRule.is_active == True)
         .order_by(QuantityDiscountRule.priority.asc(), QuantityDiscountRule.created_at.asc())
     )
     discount_rules = discount_rules_result.scalars().all()
@@ -200,7 +200,7 @@ async def create_sale(
             unit_price = si.unit_price_override.quantize(Decimal("0.01"))
             pricing_source = PricingSource.manual_override
             manual_override_reason = si.manual_override_reason.strip()
-            manual_overridden_by = user.id
+            manual_overridden_by = tenant.user_id
             manual_overridden_at = datetime.now(timezone.utc)
         else:
             applicable_rules = []
@@ -258,7 +258,7 @@ async def create_sale(
         if not sale_data.customer_id:
             raise HTTPException(status_code=422, detail="customer_id is required for credit sales")
         cust_result = await db.execute(
-            select(Customer).filter(Customer.id == sale_data.customer_id, Customer.user_id == user.id)
+            select(Customer).filter(Customer.id == sale_data.customer_id, Customer.business_id == tenant.business_id)
         )
         if not cust_result.scalars().first():
             raise HTTPException(status_code=404, detail="Customer not found")
@@ -279,7 +279,7 @@ async def create_sale(
         change_given = (sale_data.amount_tendered - final_total).quantize(Decimal("0.01"))
 
     sale = Sale(
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         total=final_total,
         payment_method=sale_data.payment_method,
         amount_tendered=sale_data.amount_tendered,
@@ -303,7 +303,7 @@ async def create_sale(
                     old_value=sale_item.base_unit_price,
                     new_value=sale_item.unit_price,
                     reason=sale_item.manual_override_reason,
-                    user_id=user.id,
+                    business_id=tenant.business_id, user_id=tenant.user_id,
                 )
             )
         elif sale_item.pricing_source == PricingSource.quantity_discount:
@@ -316,7 +316,7 @@ async def create_sale(
                     old_value=sale_item.base_unit_price,
                     new_value=sale_item.unit_price,
                     reason=sale_item.discount_rule_name,
-                    user_id=user.id,
+                    business_id=tenant.business_id, user_id=tenant.user_id,
                 )
             )
 
@@ -330,7 +330,7 @@ async def create_sale(
                 old_value=total,
                 new_value=final_total,
                 reason=sale_data.subtotal_override_reason,
-                user_id=user.id,
+                business_id=tenant.business_id, user_id=tenant.user_id,
             )
         )
 
@@ -352,7 +352,7 @@ async def create_sale(
 
         await record_auto_transaction(
             db=db,
-            user_id=user.id,
+            business_id=tenant.business_id, user_id=tenant.user_id,
             tx_type=tx_type,
             direction=direction,
             amount=final_total,
@@ -364,7 +364,7 @@ async def create_sale(
     else:
         await record_auto_transaction(
             db=db,
-            user_id=user.id,
+            business_id=tenant.business_id, user_id=tenant.user_id,
             tx_type=CashboxTransactionType.sale,
             direction=CashboxTransactionDirection.in_,
             amount=final_total,
@@ -392,9 +392,9 @@ async def list_discount_rules(
     item_id: UUID | None = Query(None),
     include_inactive: bool = Query(False),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    query = select(QuantityDiscountRule).where(QuantityDiscountRule.user_id == user.id)
+    query = select(QuantityDiscountRule).where(QuantityDiscountRule.business_id == tenant.business_id)
     if not include_inactive:
         query = query.where(QuantityDiscountRule.is_active == True)
     if item_id is not None:
@@ -412,13 +412,13 @@ async def list_discount_rules(
 async def create_discount_rule(
     payload: QuantityDiscountRuleCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     _validate_discount_rule_payload(payload)
     if payload.item_id is not None:
-        await _ensure_item_access(payload.item_id, db, user)
+        await _ensure_item_access(payload.item_id, db, tenant)
 
-    rule = QuantityDiscountRule(**payload.model_dump(), user_id=user.id)
+    rule = QuantityDiscountRule(**payload.model_dump(), business_id=tenant.business_id, user_id=tenant.user_id)
     db.add(rule)
     await db.commit()
     await db.refresh(rule)
@@ -430,10 +430,10 @@ async def update_discount_rule(
     rule_id: UUID,
     payload: QuantityDiscountRuleUpdate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(QuantityDiscountRule).where(QuantityDiscountRule.id == rule_id, QuantityDiscountRule.user_id == user.id)
+        select(QuantityDiscountRule).where(QuantityDiscountRule.id == rule_id, QuantityDiscountRule.business_id == tenant.business_id)
     )
     rule = result.scalars().first()
     if not rule:
@@ -449,7 +449,7 @@ async def update_discount_rule(
 
     next_item_id = payload.item_id if payload.item_id is not None else rule.item_id
     if next_item_id is not None:
-        await _ensure_item_access(next_item_id, db, user)
+        await _ensure_item_access(next_item_id, db, tenant)
 
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(rule, field, value)
@@ -463,10 +463,10 @@ async def update_discount_rule(
 async def delete_discount_rule(
     rule_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(QuantityDiscountRule).where(QuantityDiscountRule.id == rule_id, QuantityDiscountRule.user_id == user.id)
+        select(QuantityDiscountRule).where(QuantityDiscountRule.id == rule_id, QuantityDiscountRule.business_id == tenant.business_id)
     )
     rule = result.scalars().first()
     if not rule:
@@ -480,7 +480,7 @@ async def delete_discount_rule(
 @router.get("/", response_model=Page[SaleRead])
 async def list_sales(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
     payment_method: str | None = Query(None),
@@ -489,7 +489,7 @@ async def list_sales(
     params = Params(page=page, size=size)
     query = (
         select(Sale)
-        .filter(Sale.user_id == user.id)
+        .filter(Sale.business_id == tenant.business_id)
         .order_by(Sale.created_at.desc())
         .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
@@ -514,11 +514,11 @@ async def list_sales(
 async def get_sale(
     sale_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
         select(Sale)
-        .filter(Sale.id == sale_id, Sale.user_id == user.id)
+        .filter(Sale.id == sale_id, Sale.business_id == tenant.business_id)
         .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
     sale = result.scalars().first()
@@ -535,11 +535,11 @@ async def cancel_sale(
     sale_id: UUID,
     data: SaleCancelRequest | None = None,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
         select(Sale)
-        .filter(Sale.id == sale_id, Sale.user_id == user.id)
+        .filter(Sale.id == sale_id, Sale.business_id == tenant.business_id)
         .options(selectinload(Sale.sale_items), selectinload(Sale.customer))
     )
     sale = result.scalars().first()
@@ -552,7 +552,7 @@ async def cancel_sale(
     item_ids = [si.item_id for si in sale.sale_items if si.item_id is not None]
     if item_ids:
         item_result = await db.execute(
-            select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id)
+            select(Item).filter(Item.id.in_(item_ids), Item.business_id == tenant.business_id)
         )
         items_map = {item.id: item for item in item_result.scalars().all()}
 
@@ -565,12 +565,12 @@ async def cancel_sale(
     reason = ((data.reason if data else None) or "").strip() or None
     sale.status = SaleStatus.cancelled
     sale.cancelled_at = datetime.now(timezone.utc)
-    sale.cancelled_by = user.id
+    sale.cancelled_by = tenant.user_id
     sale.cancel_reason = reason
 
     await reverse_auto_transactions(
         db=db,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         reference_type="sale",
         reference_id=sale.id,
         reversal_type=CashboxTransactionType.sale_cancel,
@@ -597,19 +597,19 @@ async def analytics_summary(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     query = select(
         func.sum(Sale.total).label("total_revenue"),
         func.count().label("total_orders"),
-    ).filter(Sale.user_id == user.id, Sale.status == "completed")
+    ).filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
 
     # Top category
     category_query = (
         select(Item.category, func.sum(SaleItem.subtotal).label("revenue"))
         .join(SaleItem, Item.id == SaleItem.item_id)
         .join(Sale, Sale.id == SaleItem.sale_id)
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     )
 
     # Apply date filtering
@@ -674,13 +674,13 @@ async def analytics_by_category(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     query = select(Item.category, func.sum(SaleItem.subtotal).label("revenue"), func.sum(SaleItem.quantity).label("quantity"), func.count(sql_distinct(Sale.id)).label("orderCount"))\
         .select_from(SaleItem)\
         .join(Sale, Sale.id == SaleItem.sale_id)\
         .join(Item, Item.id == SaleItem.item_id)\
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     if start_date:
         query = query.filter(Sale.created_at >= start_date)
     if end_date:
@@ -724,10 +724,10 @@ async def analytics_by_payment_method(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     query = select(Sale.payment_method, func.sum(Sale.total).label("revenue"), func.count().label("count"))\
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     if start_date:
         query = query.filter(Sale.created_at >= start_date)
     if end_date:
@@ -773,7 +773,7 @@ async def analytics_top_products(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     query = select(SaleItem.item_id, SaleItem.item_name, Item.category,
                    func.sum(SaleItem.subtotal).label("revenue"),
@@ -782,7 +782,7 @@ async def analytics_top_products(
         .select_from(SaleItem)\
         .join(Sale, Sale.id == SaleItem.sale_id)\
         .join(Item, Item.id == SaleItem.item_id)\
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     if start_date:
         query = query.filter(Sale.created_at >= start_date)
     if end_date:
@@ -831,7 +831,7 @@ async def analytics_customer_insights(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     from app.models import Customer
 
@@ -842,7 +842,7 @@ async def analytics_customer_insights(
                    func.max(Sale.created_at).label("lastOrder"))\
         .select_from(Sale)\
         .join(Customer, Customer.id == Sale.customer_id)\
-        .filter(Sale.user_id == user.id, Sale.status == "completed", Sale.customer_id.isnot(None))
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed", Sale.customer_id.isnot(None))
     if start_date:
         query = query.filter(Sale.created_at >= start_date)
     if end_date:
@@ -915,7 +915,7 @@ async def analytics_profitability(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     sale_query = (
         select(
@@ -928,7 +928,7 @@ async def analytics_profitability(
         .select_from(SaleItem)
         .join(Sale, Sale.id == SaleItem.sale_id)
         .join(Item, Item.id == SaleItem.item_id)
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     )
     sale_query = _apply_period_filter(sale_query, Sale, period, start_date, end_date)
     sale_query = sale_query.group_by(SaleItem.item_id, Item.name, Item.category)
@@ -953,7 +953,7 @@ async def analytics_profitability(
         )
         .select_from(PurchaseItem)
         .join(Purchase, Purchase.id == PurchaseItem.purchase_id)
-        .filter(Purchase.user_id == user.id, Purchase.status == "received")
+        .filter(Purchase.business_id == tenant.business_id, Purchase.status == "received")
     )
     cost_query = _apply_period_filter(cost_query, Purchase, period, start_date, end_date)
     cost_query = cost_query.group_by(PurchaseItem.item_id)
@@ -1006,13 +1006,13 @@ async def analytics_revenue_trend(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     query = select(
         func.date(Sale.created_at).label("day"),
         func.sum(Sale.total).label("revenue"),
         func.count().label("orders"),
-    ).filter(Sale.user_id == user.id, Sale.status == "completed")
+    ).filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     query = _apply_period_filter(query, Sale, period, start_date, end_date)
     query = query.group_by(func.date(Sale.created_at)).order_by(func.date(Sale.created_at))
 
@@ -1041,13 +1041,13 @@ async def analytics_day_of_week(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     query = select(
         extract("dow", Sale.created_at).label("dow"),
         func.sum(Sale.total).label("revenue"),
         func.count().label("orders"),
-    ).filter(Sale.user_id == user.id, Sale.status == "completed")
+    ).filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     query = _apply_period_filter(query, Sale, period, start_date, end_date)
     query = query.group_by("dow").order_by("dow")
 
@@ -1078,9 +1078,9 @@ async def analytics_purchases(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    base_query = select(Purchase).filter(Purchase.user_id == user.id, Purchase.status != PurchaseStatus.cancelled)
+    base_query = select(Purchase).filter(Purchase.business_id == tenant.business_id, Purchase.status != PurchaseStatus.cancelled)
     base_query = _apply_period_filter(base_query, Purchase, period, start_date, end_date)
 
     result = await db.execute(base_query)
@@ -1099,7 +1099,7 @@ async def analytics_purchases(
         )
         .select_from(Purchase)
         .outerjoin(Supplier, Supplier.id == Purchase.supplier_id)
-        .filter(Purchase.user_id == user.id, Purchase.status != PurchaseStatus.cancelled)
+        .filter(Purchase.business_id == tenant.business_id, Purchase.status != PurchaseStatus.cancelled)
     )
     supplier_query = _apply_period_filter(supplier_query, Purchase, period, start_date, end_date)
     supplier_query = supplier_query.group_by(Purchase.supplier_id, Supplier.name).order_by(func.sum(Purchase.total_cost).desc())
@@ -1123,7 +1123,7 @@ async def analytics_purchases(
             func.count().label("count"),
             func.sum(Purchase.total_cost).label("total"),
         )
-        .filter(Purchase.user_id == user.id, Purchase.status != PurchaseStatus.cancelled)
+        .filter(Purchase.business_id == tenant.business_id, Purchase.status != PurchaseStatus.cancelled)
     )
     status_query = _apply_period_filter(status_query, Purchase, period, start_date, end_date)
     status_query = status_query.group_by(Purchase.payment_status)
@@ -1154,10 +1154,10 @@ async def analytics_purchases(
 @router.get("/analytics/inventory", response_model=InventoryAnalyticsSchema)
 async def analytics_inventory(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     items_result = await db.execute(
-        select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
+        select(Item).filter(Item.business_id == tenant.business_id, Item.is_deleted == False)
     )
     items = items_result.scalars().all()
 
@@ -1182,7 +1182,7 @@ async def analytics_inventory(
         select(SaleItem.item_id, func.max(Sale.created_at).label("last_sold"))
         .select_from(SaleItem)
         .join(Sale, Sale.id == SaleItem.sale_id)
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
         .group_by(SaleItem.item_id)
     )
     sold_items = {row.item_id: row.last_sold for row in sold_items_result.all()}
@@ -1215,12 +1215,12 @@ async def analytics_discounts(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     base = (
         select(SaleItem)
         .join(Sale, Sale.id == SaleItem.sale_id)
-        .filter(Sale.user_id == user.id, Sale.status == "completed")
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     )
     base = _apply_period_filter(base, Sale, period, start_date, end_date)
 
@@ -1265,16 +1265,16 @@ async def analytics_customers_advanced(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     all_customers_result = await db.execute(
-        select(func.count()).select_from(Customer).filter(Customer.user_id == user.id, Customer.is_active == True)
+        select(func.count()).select_from(Customer).filter(Customer.business_id == tenant.business_id, Customer.is_active == True)
     )
     total_customers = all_customers_result.scalar() or 0
 
     period_query = (
         select(Sale.customer_id, func.sum(Sale.total).label("totalSpent"), func.count().label("orderCount"))
-        .filter(Sale.user_id == user.id, Sale.status == "completed", Sale.customer_id.isnot(None))
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed", Sale.customer_id.isnot(None))
     )
     period_query = _apply_period_filter(period_query, Sale, period, start_date, end_date)
     period_query = period_query.group_by(Sale.customer_id)
@@ -1295,7 +1295,7 @@ async def analytics_customers_advanced(
 
     all_time_query = (
         select(Sale.customer_id, func.sum(Sale.total).label("totalSpent"), func.count().label("orderCount"))
-        .filter(Sale.user_id == user.id, Sale.status == "completed", Sale.customer_id.isnot(None))
+        .filter(Sale.business_id == tenant.business_id, Sale.status == "completed", Sale.customer_id.isnot(None))
         .group_by(Sale.customer_id)
     )
     all_time_result = await db.execute(all_time_query)
@@ -1306,7 +1306,7 @@ async def analytics_customers_advanced(
     credit_query = (
         select(func.coalesce(func.sum(Sale.total), 0).label("credit_total"))
         .filter(
-            Sale.user_id == user.id,
+            Sale.business_id == tenant.business_id,
             Sale.status == "completed",
             Sale.payment_method == PaymentMethod.credit,
             Sale.customer_id.isnot(None),
@@ -1319,7 +1319,7 @@ async def analytics_customers_advanced(
     paid_query = (
         select(func.coalesce(func.sum(CustomerPayment.amount), 0).label("paid_total"))
         .join(Customer, Customer.id == CustomerPayment.customer_id)
-        .filter(Customer.user_id == user.id)
+        .filter(Customer.business_id == tenant.business_id)
     )
     paid_query = _apply_period_filter(paid_query, CustomerPayment, period, start_date, end_date)
     paid_result = await db.execute(paid_query)
@@ -1328,7 +1328,7 @@ async def analytics_customers_advanced(
     credit_outstanding = float((credit_total - paid_total).quantize(Decimal("0.01")))
 
     names_result = await db.execute(
-        select(Customer.id, Customer.name).filter(Customer.user_id == user.id)
+        select(Customer.id, Customer.name).filter(Customer.business_id == tenant.business_id)
     )
     names_map = {row.id: row.name for row in names_result.all()}
 
@@ -1365,9 +1365,9 @@ async def analytics_cancellations(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    total_query = select(func.count()).select_from(Sale).filter(Sale.user_id == user.id, Sale.status == "completed")
+    total_query = select(func.count()).select_from(Sale).filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     total_query = _apply_period_filter(total_query, Sale, period, start_date, end_date)
     total_result = await db.execute(total_query)
     total_completed = total_result.scalar() or 0
@@ -1375,7 +1375,7 @@ async def analytics_cancellations(
     cancel_query = select(
         func.count().label("count"),
         func.coalesce(func.sum(Sale.total), 0).label("revenue"),
-    ).filter(Sale.user_id == user.id, Sale.status == "cancelled")
+    ).filter(Sale.business_id == tenant.business_id, Sale.status == "cancelled")
     cancel_query = _apply_period_filter(cancel_query, Sale, period, start_date, end_date)
     cancel_result = await db.execute(cancel_query)
     cancel_row = cancel_result.one()
@@ -1383,7 +1383,7 @@ async def analytics_cancellations(
     refund_query = select(
         func.count().label("count"),
         func.coalesce(func.sum(Sale.total), 0).label("revenue"),
-    ).filter(Sale.user_id == user.id, Sale.status == "refunded")
+    ).filter(Sale.business_id == tenant.business_id, Sale.status == "refunded")
     refund_query = _apply_period_filter(refund_query, Sale, period, start_date, end_date)
     refund_result = await db.execute(refund_query)
     refund_row = refund_result.one()
@@ -1415,9 +1415,9 @@ async def analytics_cashbox(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    query = select(CashboxTransaction).filter(CashboxTransaction.user_id == user.id)
+    query = select(CashboxTransaction).filter(CashboxTransaction.business_id == tenant.business_id)
     query = _apply_period_filter(query, CashboxTransaction, period, start_date, end_date)
 
     result = await db.execute(query)
@@ -1464,9 +1464,9 @@ async def analytics_peak_times(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    base = select(Sale).filter(Sale.user_id == user.id, Sale.status == "completed")
+    base = select(Sale).filter(Sale.business_id == tenant.business_id, Sale.status == "completed")
     base = _apply_period_filter(base, Sale, period, start_date, end_date)
 
     result = await db.execute(base)
@@ -1540,14 +1540,14 @@ async def analytics_basket(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     sale_items_query = (
         select(SaleItem.sale_id, Item.category)
         .join(Sale, Sale.id == SaleItem.sale_id)
         .join(Item, Item.id == SaleItem.item_id)
         .filter(
-            Sale.user_id == user.id,
+            Sale.business_id == tenant.business_id,
             Sale.status == "completed",
             Item.category.isnot(None),
             Item.category != "",
@@ -1587,7 +1587,7 @@ async def analytics_basket(
             select(Sale.id, func.sum(SaleItem.subtotal).label("sale_revenue"))
             .join(SaleItem, SaleItem.sale_id == Sale.id)
             .filter(
-                Sale.user_id == user.id,
+                Sale.business_id == tenant.business_id,
                 Sale.status == "completed",
             )
         )

@@ -10,11 +10,11 @@ from sqlalchemy.future import select
 from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, Supplier, UnitType
 from app.models import CashboxTransactionType, CashboxTransactionDirection
 from app.schemas import PurchaseCancelRequest, PurchaseCreate, PurchaseRead
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 from app.routes.cashbox import record_auto_transaction, reverse_auto_transactions
 from app.routes.categories import upsert_category
 from app.routes.suppliers import upsert_supplier
@@ -30,7 +30,7 @@ def transform_purchases(purchases):
 async def create_purchase(
     data: PurchaseCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     if not data.items:
         raise HTTPException(status_code=422, detail="Purchase must have at least one item")
@@ -40,7 +40,7 @@ async def create_purchase(
     items_map: dict[UUID, Item] = {}
     if item_ids:
         result = await db.execute(
-            select(Item).filter(Item.id.in_(item_ids), Item.user_id == user.id)
+            select(Item).filter(Item.id.in_(item_ids), Item.business_id == tenant.business_id)
         )
         items_map = {item.id: item for item in result.scalars().all()}
 
@@ -61,7 +61,7 @@ async def create_purchase(
                 sku=line.sku or None,
                 category=line.category or None,
                 price=line.sell_price if line.sell_price is not None else None,
-                user_id=user.id,
+                business_id=tenant.business_id, user_id=tenant.user_id,
             )
             db.add(new_item)
             new_catalog_items[idx] = new_item
@@ -109,10 +109,10 @@ async def create_purchase(
 
     total_cost = (subtotal + tax).quantize(Decimal("0.01"))
     
-    supplier = await upsert_supplier(data.supplier, db)
+    supplier = await upsert_supplier(data.supplier, tenant, db)
 
     purchase = Purchase(
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         supplier_id=supplier.id if supplier else None,
         reference_number=data.reference_number,
         purchase_date=data.purchase_date or datetime.now(timezone.utc),
@@ -154,7 +154,7 @@ async def create_purchase(
     # Upsert categories for all lines that have one
     for line in data.items:
         if line.category:
-            await upsert_category(line.category, user.id, db)
+            await upsert_category(line.category, tenant, db)
     await db.commit()
 
     # Auto-record in cashbox (only for paid purchases, silent if no session open)
@@ -165,7 +165,7 @@ async def create_purchase(
         if pmethod != "credit":
             await record_auto_transaction(
                 db=db,
-                user_id=user.id,
+                business_id=tenant.business_id, user_id=tenant.user_id,
                 tx_type=CashboxTransactionType.purchase,
                 direction=CashboxTransactionDirection.out,
                 amount=purchase.total_cost,
@@ -187,7 +187,7 @@ async def create_purchase(
 @router.get("/", response_model=Page[PurchaseRead])
 async def list_purchases(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
     q: str | None = Query(None),
@@ -198,7 +198,7 @@ async def list_purchases(
     query = (
         select(Purchase)
         .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
-        .filter(Purchase.user_id == user.id)
+        .filter(Purchase.business_id == tenant.business_id)
         .order_by(Purchase.purchase_date.desc(), Purchase.created_at.desc(), Purchase.id.desc())
     )
     if q:
@@ -219,12 +219,12 @@ async def list_purchases(
 async def get_purchase(
     purchase_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
         select(Purchase)
         .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
-        .filter(Purchase.id == purchase_id, Purchase.user_id == user.id)
+        .filter(Purchase.id == purchase_id, Purchase.business_id == tenant.business_id)
     )
     purchase = result.scalars().first()
     if not purchase:
@@ -237,13 +237,13 @@ async def cancel_purchase(
     purchase_id: UUID,
     data: PurchaseCancelRequest | None = None,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     data = data or PurchaseCancelRequest()
     result = await db.execute(
         select(Purchase)
         .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
-        .filter(Purchase.id == purchase_id, Purchase.user_id == user.id)
+        .filter(Purchase.id == purchase_id, Purchase.business_id == tenant.business_id)
     )
     purchase = result.scalars().first()
     if not purchase:
@@ -264,7 +264,7 @@ async def cancel_purchase(
     items_map: dict[UUID, Item] = {}
     if qty_by_item:
         item_result = await db.execute(
-            select(Item).filter(Item.id.in_(qty_by_item.keys()), Item.user_id == user.id)
+            select(Item).filter(Item.id.in_(qty_by_item.keys()), Item.business_id == tenant.business_id)
         )
         items_map = {item.id: item for item in item_result.scalars().all()}
 
@@ -295,12 +295,12 @@ async def cancel_purchase(
     reason = (data.reason or "").strip() or None
     purchase.status = PurchaseStatus.cancelled
     purchase.cancelled_at = datetime.now(timezone.utc)
-    purchase.cancelled_by = user.id
+    purchase.cancelled_by = tenant.user_id
     purchase.cancel_reason = reason
 
     await reverse_auto_transactions(
         db=db,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         reference_type="purchase",
         reference_id=purchase.id,
         reversal_type=CashboxTransactionType.purchase_cancel,

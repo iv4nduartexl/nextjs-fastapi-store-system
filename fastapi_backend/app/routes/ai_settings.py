@@ -14,11 +14,11 @@ from app.ai_provider import (
     default_llm_config,
     encrypt_api_key,
     get_llm_config,
-    get_user_ai_settings,
+    get_business_ai_settings,
     provider_error_detail,
     to_decimal_temperature,
 )
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import AISettings
 from app.schemas import (
     AIModelList,
@@ -27,7 +27,7 @@ from app.schemas import (
     AISettingsTestResult,
     AISettingsUpdate,
 )
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +50,10 @@ def _read(config: LLMConfig, is_custom: bool) -> AISettingsRead:
 @router.get("", response_model=AISettingsRead)
 async def get_ai_settings(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    row = await get_user_ai_settings(db, user.id)
-    config = await get_llm_config(db, user.id)
+    row = await get_business_ai_settings(db, tenant.business_id)
+    config = await get_llm_config(db, tenant.business_id)
     return _read(config, is_custom=row is not None)
 
 
@@ -61,7 +61,7 @@ async def get_ai_settings(
 async def update_ai_settings(
     data: AISettingsUpdate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     if data.provider not in PRESETS_BY_ID:
         raise HTTPException(status_code=422, detail="Unknown provider")
@@ -72,9 +72,9 @@ async def update_ai_settings(
     if not model:
         raise HTTPException(status_code=422, detail="model is required")
 
-    row = await get_user_ai_settings(db, user.id)
+    row = await get_business_ai_settings(db, tenant.business_id)
     if row is None:
-        row = AISettings(user_id=user.id)
+        row = AISettings(business_id=tenant.business_id, user_id=tenant.user_id)
         db.add(row)
 
     row.provider = data.provider
@@ -87,25 +87,25 @@ async def update_ai_settings(
         row.api_key_encrypted = encrypt_api_key(data.api_key.strip())
 
     await db.commit()
-    config = await get_llm_config(db, user.id)
+    config = await get_llm_config(db, tenant.business_id)
     return _read(config, is_custom=True)
 
 
 @router.delete("", status_code=204)
 async def reset_ai_settings(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    """Forget the user's settings and go back to the server defaults."""
-    row = await get_user_ai_settings(db, user.id)
+    """Forget the business's settings and go back to the server defaults."""
+    row = await get_business_ai_settings(db, tenant.business_id)
     if row is not None:
         await db.delete(row)
         await db.commit()
 
 
-async def _config_for_test(data: AISettingsTestRequest, db: AsyncSession, user: User) -> LLMConfig:
-    saved = await get_llm_config(db, user.id)
-    row = await get_user_ai_settings(db, user.id)
+async def _config_for_test(data: AISettingsTestRequest, db: AsyncSession, tenant: TenantContext) -> LLMConfig:
+    saved = await get_llm_config(db, tenant.business_id)
+    row = await get_business_ai_settings(db, tenant.business_id)
     provider = data.provider or saved.provider
     base_url = (data.base_url or saved.base_url).strip()
     api_key = (data.api_key or "").strip() or None
@@ -128,9 +128,9 @@ async def _config_for_test(data: AISettingsTestRequest, db: AsyncSession, user: 
 async def test_ai_settings(
     data: AISettingsTestRequest,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    config = await _config_for_test(data, db, user)
+    config = await _config_for_test(data, db, tenant)
     if not config.is_usable:
         return AISettingsTestResult(ok=False, error="no_api_key")
     try:
@@ -151,10 +151,10 @@ async def test_ai_settings(
 async def list_ai_models(
     data: AISettingsTestRequest,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     """Model ids offered by the provider's /models endpoint (empty if it doesn't support it)."""
-    config = await _config_for_test(data, db, user)
+    config = await _config_for_test(data, db, tenant)
     if not config.base_url:
         return AIModelList(models=[])
     try:

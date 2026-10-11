@@ -14,7 +14,7 @@ from sqlalchemy import and_, case, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import (
     Customer,
     Item,
@@ -27,7 +27,7 @@ from app.models import (
 )
 from app.routes.cashbox import _build_session_read, _get_open_session
 from app.routes.customers import _batch_balances
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 
 router = APIRouter(tags=["assistant"])
 
@@ -110,7 +110,7 @@ async def search_products(
     q: str = Query(..., min_length=1, description="Words from the product name, SKU or category"),
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     words = [w for w in q.strip().split() if w]
     # Every word must appear in the name, SKU or category, in any order ("coca 2l" finds "Coca Cola 2L")
@@ -126,7 +126,7 @@ async def search_products(
     )
     result = await db.execute(
         select(Item)
-        .where(Item.user_id == user.id, Item.is_deleted == False, and_(*word_filters))  # noqa: E712
+        .where(Item.business_id == tenant.business_id, Item.is_deleted == False, and_(*word_filters))  # noqa: E712
         .order_by(rank, Item.name)
         .limit(limit)
     )
@@ -138,7 +138,7 @@ async def search_customers(
     q: str = Query(..., min_length=1, description="Name, phone or ID number"),
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     words = [w for w in q.strip().split() if w]
     word_filters = [
@@ -151,7 +151,7 @@ async def search_customers(
     ]
     result = await db.execute(
         select(Customer)
-        .where(Customer.user_id == user.id, Customer.is_active == True, and_(*word_filters))  # noqa: E712
+        .where(Customer.business_id == tenant.business_id, Customer.is_active == True, and_(*word_filters))  # noqa: E712
         .order_by(Customer.name)
         .limit(limit)
     )
@@ -180,9 +180,9 @@ async def search_customers(
 async def product_details(
     item_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    result = await db.execute(select(Item).where(Item.id == item_id, Item.user_id == user.id))
+    result = await db.execute(select(Item).where(Item.id == item_id, Item.business_id == tenant.business_id))
     item = result.scalars().first()
     if not item:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -193,7 +193,7 @@ async def product_details(
             .join(Purchase, Purchase.id == PurchaseItem.purchase_id)
             .where(
                 PurchaseItem.item_id == item.id,
-                Purchase.user_id == user.id,
+                Purchase.business_id == tenant.business_id,
                 Purchase.status != PurchaseStatus.cancelled,
             )
             .order_by(Purchase.purchase_date.desc())
@@ -211,7 +211,7 @@ async def product_details(
             .join(Sale, Sale.id == SaleItem.sale_id)
             .where(
                 SaleItem.item_id == item.id,
-                Sale.user_id == user.id,
+                Sale.business_id == tenant.business_id,
                 Sale.status == SaleStatus.completed,
                 Sale.created_at >= since,
             )
@@ -231,7 +231,7 @@ async def product_details(
 async def store_snapshot(
     tz: str | None = Query(None, description="IANA timezone used to decide what 'today' is"),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     zone = _tz(tz)
     today = datetime.now(zone).date()
@@ -242,7 +242,7 @@ async def store_snapshot(
         await db.execute(
             select(Sale.payment_method, func.sum(Sale.total), func.count(Sale.id))
             .where(
-                Sale.user_id == user.id,
+                Sale.business_id == tenant.business_id,
                 Sale.status == SaleStatus.completed,
                 Sale.created_at >= start,
                 Sale.created_at < end,
@@ -255,14 +255,14 @@ async def store_snapshot(
         for row in by_method
     ]
 
-    session = await _get_open_session(db, user.id)
+    session = await _get_open_session(db, tenant.business_id)
     session_read = _build_session_read(session) if session else None
 
     low_stock_rows = (
         await db.execute(
             select(Item)
             .where(
-                Item.user_id == user.id,
+                Item.business_id == tenant.business_id,
                 Item.is_deleted == False,  # noqa: E712
                 Item.min_stock.isnot(None),
                 Item.stock <= Item.min_stock,
@@ -274,7 +274,7 @@ async def store_snapshot(
     limited_customers = (
         await db.execute(
             select(Customer).where(
-                Customer.user_id == user.id,
+                Customer.business_id == tenant.business_id,
                 Customer.is_active == True,  # noqa: E712
                 Customer.credit_limit.isnot(None),
             )

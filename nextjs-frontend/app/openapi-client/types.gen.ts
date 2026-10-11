@@ -915,6 +915,10 @@ export type UserRead = {
   is_superuser?: boolean;
   is_verified?: boolean;
   username?: string | null;
+  full_name?: string | null;
+  business_id?: string | null;
+  role?: string | null;
+  must_change_password?: boolean;
 };
 
 export type UserUpdate = {

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import (
     CashboxSession,
     CashboxSessionStatus,
@@ -23,7 +23,7 @@ from app.schemas import (
     CashboxSessionList,
     CashboxTransactionRead,
 )
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 
 router = APIRouter(tags=["cashbox"])
 
@@ -100,10 +100,11 @@ def _build_session_read(session: CashboxSession) -> CashboxSessionRead:
     return sr
 
 
-async def _get_open_session(db: AsyncSession, user_id: UUID) -> CashboxSession | None:
+async def _get_open_session(db: AsyncSession, business_id: UUID) -> CashboxSession | None:
+    """The business's open session (the cashbox is shared by all its users)."""
     result = await db.execute(
         select(CashboxSession)
-        .where(CashboxSession.user_id == user_id, CashboxSession.status == CashboxSessionStatus.open)
+        .where(CashboxSession.business_id == business_id, CashboxSession.status == CashboxSessionStatus.open)
         .options(selectinload(CashboxSession.transactions))
     )
     return result.scalars().first()
@@ -111,6 +112,7 @@ async def _get_open_session(db: AsyncSession, user_id: UUID) -> CashboxSession |
 
 async def record_auto_transaction(
     db: AsyncSession,
+    business_id: UUID,
     user_id: UUID,
     tx_type: CashboxTransactionType,
     direction: CashboxTransactionDirection,
@@ -123,7 +125,7 @@ async def record_auto_transaction(
     """Auto-create a cashbox transaction if there's an open session. Silent if none."""
     result = await db.execute(
         select(CashboxSession).where(
-            CashboxSession.user_id == user_id,
+            CashboxSession.business_id == business_id,
             CashboxSession.status == CashboxSessionStatus.open,
         )
     )
@@ -131,6 +133,7 @@ async def record_auto_transaction(
 
     tx = CashboxTransaction(
         session_id=session.id if session else None,
+        business_id=business_id,
         user_id=user_id,
         type=tx_type,
         direction=direction,
@@ -145,6 +148,7 @@ async def record_auto_transaction(
 
 async def reverse_auto_transactions(
     db: AsyncSession,
+    business_id: UUID,
     user_id: UUID,
     reference_type: str,
     reference_id: UUID,
@@ -157,7 +161,7 @@ async def reverse_auto_transactions(
     """
     result = await db.execute(
         select(CashboxTransaction).where(
-            CashboxTransaction.user_id == user_id,
+            CashboxTransaction.business_id == business_id,
             CashboxTransaction.reference_type == reference_type,
             CashboxTransaction.reference_id == reference_id,
             CashboxTransaction.type.not_in(REVERSAL_TYPES),
@@ -166,6 +170,7 @@ async def reverse_auto_transactions(
     for original in result.scalars().all():
         await record_auto_transaction(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             tx_type=reversal_type,
             direction=(
@@ -186,9 +191,9 @@ async def reverse_auto_transactions(
 @router.get("/session/current", response_model=CashboxSessionRead)
 async def get_current_session(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    session = await _get_open_session(db, user.id)
+    session = await _get_open_session(db, tenant.business_id)
     if not session:
         raise HTTPException(status_code=404, detail="No open cashbox session")
     return _build_session_read(session)
@@ -198,14 +203,14 @@ async def get_current_session(
 async def open_session(
     data: CashboxSessionCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    existing = await _get_open_session(db, user.id)
+    existing = await _get_open_session(db, tenant.business_id)
     if existing:
         raise HTTPException(status_code=409, detail="A session is already open")
 
     session = CashboxSession(
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         opening_amount=data.opening_amount,
         notes=data.notes,
         opened_at=datetime.now(timezone.utc),
@@ -216,7 +221,7 @@ async def open_session(
     # Create the opening balance transaction
     opening_tx = CashboxTransaction(
         session_id=session.id,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         type=CashboxTransactionType.opening,
         direction=CashboxTransactionDirection.in_,
         amount=data.opening_amount,
@@ -239,9 +244,9 @@ async def open_session(
 async def close_session(
     data: CashboxSessionClose,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    session = await _get_open_session(db, user.id)
+    session = await _get_open_session(db, tenant.business_id)
     if not session:
         raise HTTPException(status_code=404, detail="No open cashbox session")
 
@@ -266,14 +271,14 @@ async def close_session(
 async def add_manual_transaction(
     data: CashboxManualTransaction,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     if data.type not in ("income", "expense"):
         raise HTTPException(status_code=422, detail="type must be 'income' or 'expense'")
     if data.amount <= 0:
         raise HTTPException(status_code=422, detail="amount must be positive")
 
-    session = await _get_open_session(db, user.id)
+    session = await _get_open_session(db, tenant.business_id)
     if not session:
         raise HTTPException(status_code=409, detail="No open cashbox session. Open a session first.")
 
@@ -282,7 +287,7 @@ async def add_manual_transaction(
 
     tx = CashboxTransaction(
         session_id=session.id,
-        user_id=user.id,
+        business_id=tenant.business_id, user_id=tenant.user_id,
         type=tx_type,
         direction=direction,
         amount=data.amount,
@@ -300,9 +305,9 @@ async def list_transactions(
     session_id: UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=500),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    q = select(CashboxTransaction).where(CashboxTransaction.user_id == user.id)
+    q = select(CashboxTransaction).where(CashboxTransaction.business_id == tenant.business_id)
     if session_id:
         q = q.where(CashboxTransaction.session_id == session_id)
     q = q.order_by(CashboxTransaction.created_at.desc()).limit(limit)
@@ -317,11 +322,11 @@ async def list_sessions(
     filter: str = Query("all", description="all|today|yesterday|week|custom"),
     filter_date: str | None = Query(None, description="YYYY-MM-DD for custom filter"),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     from datetime import date, timedelta
 
-    base = select(CashboxSession).where(CashboxSession.user_id == user.id)
+    base = select(CashboxSession).where(CashboxSession.business_id == tenant.business_id)
 
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -375,11 +380,11 @@ async def list_sessions(
 async def get_session(
     session_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
         select(CashboxSession)
-        .where(CashboxSession.id == session_id, CashboxSession.user_id == user.id)
+        .where(CashboxSession.id == session_id, CashboxSession.business_id == tenant.business_id)
         .options(selectinload(CashboxSession.transactions))
     )
     session = result.scalars().first()

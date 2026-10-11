@@ -121,8 +121,8 @@ class LLMConfig:
         return bool(self.base_url and self.model and (self.api_key or not requires_key))
 
 
-async def get_user_ai_settings(db: AsyncSession, user_id: UUID) -> AISettings | None:
-    result = await db.execute(select(AISettings).where(AISettings.user_id == user_id))
+async def get_business_ai_settings(db: AsyncSession, business_id: UUID) -> AISettings | None:
+    result = await db.execute(select(AISettings).where(AISettings.business_id == business_id))
     return result.scalars().first()
 
 
@@ -135,9 +135,9 @@ def default_llm_config() -> LLMConfig:
     )
 
 
-async def get_llm_config(db: AsyncSession, user_id: UUID) -> LLMConfig:
-    """The user's own provider settings, or the server defaults from the environment."""
-    row = await get_user_ai_settings(db, user_id)
+async def get_llm_config(db: AsyncSession, business_id: UUID) -> LLMConfig:
+    """The business's provider settings, or the server defaults from the environment."""
+    row = await get_business_ai_settings(db, business_id)
     if row is None:
         return default_llm_config()
     return LLMConfig(

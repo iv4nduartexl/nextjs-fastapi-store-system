@@ -3932,6 +3932,11 @@
         "summary": "Search Suppliers",
         "description": "Find suppliers by name prefix. Returns id and name.",
         "operationId": "search_suppliers",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "q",
@@ -4331,7 +4336,7 @@
           "ai-settings"
         ],
         "summary": "Reset Ai Settings",
-        "description": "Forget the user's settings and go back to the server defaults.",
+        "description": "Forget the business's settings and go back to the server defaults.",
         "operationId": "reset_ai_settings",
         "responses": {
           "204": {
@@ -9619,6 +9624,45 @@
               }
             ],
             "title": "Username"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "business_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Id"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "must_change_password": {
+            "type": "boolean",
+            "title": "Must Change Password",
+            "default": false
           }
         },
         "type": "object",

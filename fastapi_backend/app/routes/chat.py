@@ -28,7 +28,7 @@ from app.ai_provider import (
     provider_error_detail,
     temperature_kwargs,
 )
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.mcp_tools import ALLOWED_OPERATIONS, WRITE_OPERATIONS
 from app.models import ChatConversation, ChatMessage, Customer, Item, Supplier
 from app.schemas import (
@@ -40,7 +40,7 @@ from app.schemas import (
     ChatRequest,
     ChatResponse,
 )
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +66,10 @@ class ChatError(Exception):
 class ChatContext:
     """Everything one request needs to talk to the model and run tools."""
 
-    def __init__(self, request: Request, db: AsyncSession, user: User, conversation_id: UUID,
+    def __init__(self, request: Request, db: AsyncSession, tenant: TenantContext, conversation_id: UUID,
                  locale: str, timezone_name: str | None, currency_symbol: str | None):
         self.db = db
-        self.user = user
+        self.tenant = tenant
         self.conversation_id = conversation_id
         self.locale = locale
         self.timezone_name = timezone_name
@@ -165,10 +165,13 @@ def _add_message(ctx: ChatContext, **fields) -> ChatMessage:
     return message
 
 
-async def _get_conversation(db: AsyncSession, user: User, conversation_id: UUID) -> ChatConversation:
+async def _get_conversation(db: AsyncSession, tenant: TenantContext, conversation_id: UUID) -> ChatConversation:
+    # Conversations are private to the user who started them, inside their business
     result = await db.execute(
         select(ChatConversation).where(
-            ChatConversation.id == conversation_id, ChatConversation.user_id == user.id
+            ChatConversation.id == conversation_id,
+            ChatConversation.business_id == tenant.business_id,
+            ChatConversation.user_id == tenant.user_id,
         )
     )
     conversation = result.scalars().first()
@@ -276,7 +279,7 @@ def _parse_args(raw: str | None) -> dict | None:
     return args if isinstance(args, dict) else None
 
 
-async def enrich_tool_args(args: dict, db: AsyncSession, user: User) -> dict:
+async def enrich_tool_args(args: dict, db: AsyncSession, tenant: TenantContext) -> dict:
     """Copy of the tool arguments with names/prices added so the approval card is readable."""
     enriched = json.loads(json.dumps(args))
     try:
@@ -286,7 +289,7 @@ async def enrich_tool_args(args: dict, db: AsyncSession, user: User) -> dict:
             if ids:
                 result = await db.execute(
                     select(Item.id, Item.name, Item.price, Item.unit_type).where(
-                        Item.id.in_(ids), Item.user_id == user.id
+                        Item.id.in_(ids), Item.business_id == tenant.business_id
                     )
                 )
                 catalog = {str(r.id): r for r in result.all()}
@@ -304,7 +307,7 @@ async def enrich_tool_args(args: dict, db: AsyncSession, user: User) -> dict:
 
         if enriched.get("customer_id"):
             result = await db.execute(
-                select(Customer.name).where(Customer.id == enriched["customer_id"], Customer.user_id == user.id)
+                select(Customer.name).where(Customer.id == enriched["customer_id"], Customer.business_id == tenant.business_id)
             )
             name = result.scalar_one_or_none()
             if name:
@@ -312,7 +315,11 @@ async def enrich_tool_args(args: dict, db: AsyncSession, user: User) -> dict:
 
         supplier = enriched.get("supplier")
         if isinstance(supplier, dict) and supplier.get("id") and not supplier.get("name"):
-            result = await db.execute(select(Supplier.name).where(Supplier.id == supplier["id"]))
+            result = await db.execute(
+                select(Supplier.name).where(
+                    Supplier.id == supplier["id"], Supplier.business_id == tenant.business_id
+                )
+            )
             supplier["name"] = result.scalar_one_or_none()
     except Exception:
         # The preview is best-effort; never block the approval because of it
@@ -341,7 +348,7 @@ async def _process_tool_queue(ctx: ChatContext, queue: list[dict], name_map: dic
                 pending_action={
                     "status": ACTION_PENDING,
                     "name": mcp_name,
-                    "preview": await enrich_tool_args(args, ctx.db, ctx.user),
+                    "preview": await enrich_tool_args(args, ctx.db, ctx.tenant),
                     # The exact calls to run on approval; never taken from the browser
                     "queue": queue[index:],
                 },
@@ -355,7 +362,7 @@ async def _process_tool_queue(ctx: ChatContext, queue: list[dict], name_map: dic
 
 
 async def _run_model(ctx: ChatContext) -> None:
-    config = await get_llm_config(ctx.db, ctx.user.id)
+    config = await get_llm_config(ctx.db, ctx.tenant.business_id)
     if not config.is_usable:
         raise ChatError("no_api_key")
     client = build_client(config)
@@ -459,11 +466,14 @@ async def _respond(ctx: ChatContext, conversation: ChatConversation, error: Chat
 @router.get("/conversations", response_model=list[ChatConversationRead])
 async def list_conversations(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
         select(ChatConversation)
-        .where(ChatConversation.user_id == user.id)
+        .where(
+            ChatConversation.business_id == tenant.business_id,
+            ChatConversation.user_id == tenant.user_id,
+        )
         .order_by(ChatConversation.updated_at.desc())
         .limit(100)
     )
@@ -474,9 +484,9 @@ async def list_conversations(
 async def get_conversation(
     conversation_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    conversation = await _get_conversation(db, user, conversation_id)
+    conversation = await _get_conversation(db, tenant, conversation_id)
     messages = await _conversation_messages(db, conversation_id)
     return ChatConversationDetail(
         id=conversation.id,
@@ -492,9 +502,9 @@ async def rename_conversation(
     conversation_id: UUID,
     data: ChatConversationUpdate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    conversation = await _get_conversation(db, user, conversation_id)
+    conversation = await _get_conversation(db, tenant, conversation_id)
     conversation.title = data.title.strip()
     await db.commit()
     await db.refresh(conversation)
@@ -505,9 +515,9 @@ async def rename_conversation(
 async def delete_conversation(
     conversation_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    conversation = await _get_conversation(db, user, conversation_id)
+    conversation = await _get_conversation(db, tenant, conversation_id)
     await db.delete(conversation)
     await db.commit()
     return Response(status_code=204)
@@ -517,18 +527,18 @@ async def delete_conversation(
 async def chat_with_mcp(
     request: Request,
     payload: ChatRequest,
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
     db: AsyncSession = Depends(get_async_session),
 ):
     if payload.conversation_id:
-        conversation = await _get_conversation(db, user, payload.conversation_id)
+        conversation = await _get_conversation(db, tenant, payload.conversation_id)
     else:
-        conversation = ChatConversation(user_id=user.id, title=_title_from(payload.message))
+        conversation = ChatConversation(business_id=tenant.business_id, user_id=tenant.user_id, title=_title_from(payload.message))
         db.add(conversation)
         await db.flush()
 
     ctx = ChatContext(
-        request, db, user, conversation.id, payload.locale, payload.timezone, payload.currency_symbol
+        request, db, tenant, conversation.id, payload.locale, payload.timezone, payload.currency_symbol
     )
 
     # A new message while an approval is pending means the user moved on: decline it
@@ -549,10 +559,10 @@ async def chat_with_mcp(
 async def execute_tool(
     request: Request,
     payload: ChatExecuteRequest,
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
     db: AsyncSession = Depends(get_async_session),
 ):
-    conversation = await _get_conversation(db, user, payload.conversation_id)
+    conversation = await _get_conversation(db, tenant, payload.conversation_id)
     result = await db.execute(
         select(ChatMessage).where(
             ChatMessage.id == payload.action_message_id,
@@ -567,7 +577,7 @@ async def execute_tool(
         raise HTTPException(status_code=409, detail="This action was already resolved")
 
     ctx = ChatContext(
-        request, db, user, conversation.id, payload.locale, payload.timezone, payload.currency_symbol
+        request, db, tenant, conversation.id, payload.locale, payload.timezone, payload.currency_symbol
     )
     action_id = action.id
     error = None

@@ -8,10 +8,10 @@ from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.database import User, get_async_session
+from app.database import get_async_session
 from app.models import Item
 from app.schemas import ItemRead, ItemCreate, ItemUpdate
-from app.users import current_active_user
+from app.tenancy import TenantContext, current_tenant
 from app.routes.categories import upsert_category
 
 router = APIRouter(tags=["item"])
@@ -28,14 +28,14 @@ def transform_items(items):
 @router.get("/", response_model=Page[ItemRead])
 async def read_item(
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
     params: Params = Depends(),
     q: str | None = Query(None, description="Search query (name, SKU, or category)"),
     category: str | None = Query(None, description="Filter by exact category name"),
     order: str | None = Query(None, description="Order by field (e.g., 'name', '-price')"),
 ):
     
-    query = select(Item).filter(Item.user_id == user.id, Item.is_deleted == False)
+    query = select(Item).filter(Item.business_id == tenant.business_id, Item.is_deleted == False)
     if q:
         query = query.filter(
             or_(
@@ -53,7 +53,6 @@ async def read_item(
             column = getattr(Item, order_field)
             query = query.order_by(column.desc() if order.startswith("-") else column.asc())
 
-    print("User ID:", user.id)  # Debugging line to check the user ID
     print("Executing query:", query)  # Debugging line to check the generated SQL
     result = await apaginate(db, query, params, transformer=transform_items)
     print ("Query result:", result)  # Debugging line to check the results
@@ -64,13 +63,13 @@ async def read_item(
 async def create_item(
     item: ItemCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
-    db_item = Item(**item.model_dump(), user_id=user.id)
+    db_item = Item(**item.model_dump(), business_id=tenant.business_id, user_id=tenant.user_id)
     db.add(db_item)
     await db.commit()
     if item.category:
-        await upsert_category(item.category, user.id, db)
+        await upsert_category(item.category, tenant, db)
         await db.commit()
     await db.refresh(db_item)
     return db_item
@@ -81,10 +80,10 @@ async def update_item(
     item_id: UUID,
     data: ItemUpdate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(Item).filter(Item.id == item_id, Item.user_id == user.id)
+        select(Item).filter(Item.id == item_id, Item.business_id == tenant.business_id)
     )
     item = result.scalars().first()
     if not item:
@@ -95,7 +94,7 @@ async def update_item(
 
     await db.commit()
     if data.category:
-        await upsert_category(data.category, user.id, db)
+        await upsert_category(data.category, tenant, db)
         await db.commit()
     await db.refresh(item)
     return item
@@ -105,10 +104,10 @@ async def update_item(
 async def delete_item(
     item_id: UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    tenant: TenantContext = Depends(current_tenant),
 ):
     result = await db.execute(
-        select(Item).filter(Item.id == item_id, Item.user_id == user.id)
+        select(Item).filter(Item.id == item_id, Item.business_id == tenant.business_id)
     )
     item = result.scalars().first()
 

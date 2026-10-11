@@ -1374,7 +1374,7 @@ export const updateAiSettings = <ThrowOnError extends boolean = false>(
 
 /**
  * Reset Ai Settings
- * Forget the user's settings and go back to the server defaults.
+ * Forget the business's settings and go back to the server defaults.
  */
 export const resetAiSettings = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,

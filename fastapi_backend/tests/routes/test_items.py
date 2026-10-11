@@ -37,11 +37,13 @@ class TestItems:
                 "name": "First Item",
                 "description": "First Description",
                 "user_id": authenticated_user["user"].id,
+                "business_id": authenticated_user["business"].id,
             },
             {
                 "name": "Second Item",
                 "description": "Second Description",
                 "user_id": authenticated_user["user"].id,
+                "business_id": authenticated_user["business"].id,
             },
         ]
         # create items in the database
@@ -82,6 +84,7 @@ class TestItems:
             "name": "Item to Delete",
             "description": "Will be deleted",
             "user_id": authenticated_user["user"].id,
+            "business_id": authenticated_user["business"].id,
         }
         await db_session.execute(insert(Item).values(**item_data))
 

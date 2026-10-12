@@ -1,4 +1,5 @@
 // What blocks each wizard step (with the reason shown to the user) and what deserves a second look.
+import { toDateInputValue } from "@/lib/dates";
 import { normalize } from "@/lib/pos/catalog-search";
 import { linesTotal, priceChanged, purchaseTotal, type PurchaseDraft, type PurchasingProduct } from "@/lib/purchases/draft";
 
@@ -16,7 +17,17 @@ export type BlockReason =
   | "newProductPrice"
   | "choosePayment"
   | "partialAmount"
+  | "cashboxSource"
   | "taxAmount";
+
+/**
+ * Something is paid now but the purchase is dated in the past: we must ask whether the money
+ * left today's cashbox or was paid back then (a past day's cashbox was already counted).
+ */
+export function needsCashboxQuestion(draft: PurchaseDraft, today: string = toDateInputValue()): boolean {
+  const { kind } = draft.payment;
+  return (kind === "paid" || kind === "partial") && draft.date !== today;
+}
 
 export function stepBlockers(draft: PurchaseDraft, step: WizardStep): BlockReason[] {
   const reasons: BlockReason[] = [];
@@ -38,6 +49,7 @@ export function stepBlockers(draft: PurchaseDraft, step: WizardStep): BlockReaso
       const total = purchaseTotal(draft);
       if (!paidAmount || paidAmount <= 0 || paidAmount >= total) reasons.push("partialAmount");
     }
+    if (needsCashboxQuestion(draft) && draft.payment.fromCashboxToday == null) reasons.push("cashboxSource");
     if (hasTax && (tax == null || tax < 0)) reasons.push("taxAmount");
   }
   return reasons;
@@ -82,7 +94,7 @@ export function draftWarnings(draft: PurchaseDraft, catalog: PurchasingProduct[]
 }
 
 /** An existing product whose name looks like the new one (to avoid creating duplicates). */
-export function findSimilarProduct(name: string, catalog: PurchasingProduct[]): PurchasingProduct | undefined {
+export function findSimilarProduct<T extends { name: string }>(name: string, catalog: T[]): T | undefined {
   const wanted = normalize(name).replace(/\s+/g, " ");
   if (wanted.length < 3) return undefined;
   return catalog.find((p) => {

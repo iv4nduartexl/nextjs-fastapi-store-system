@@ -35,5 +35,10 @@ export function useCatalog() {
     return () => clearInterval(timer);
   }, [refresh]);
 
-  return { products, loading, error, refresh };
+  /** Show a product created here right away, without waiting for the next refresh. */
+  const addLocal = useCallback((product: PosProduct) => {
+    setProducts((prev) => [...prev.filter((p) => p.id !== product.id), product]);
+  }, []);
+
+  return { products, loading, error, refresh, addLocal };
 }

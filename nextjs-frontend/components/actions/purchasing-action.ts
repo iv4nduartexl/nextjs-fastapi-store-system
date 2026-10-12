@@ -40,3 +40,31 @@ export async function hasOpenCashbox(): Promise<boolean> {
   const result = await apiFetch("/cashbox/session/current");
   return result.status === 200;
 }
+
+export interface PayableInvoice {
+  id: string;
+  purchase_date: string;
+  reference_number: string | null;
+  total_cost: string;
+  paid_amount: string;
+  remaining: string;
+}
+
+export interface SupplierPayables {
+  supplier_id: string | null;
+  supplier_name: string | null;
+  total_owed: string;
+  oldest_date: string;
+  invoices: PayableInvoice[];
+}
+
+export interface PayablesSummary {
+  total_owed: string;
+  supplier_count: number;
+  suppliers: SupplierPayables[];
+}
+
+/** What is still owed to suppliers, grouped by supplier. */
+export async function fetchPayables() {
+  return apiFetch<PayablesSummary>("/purchasing/payables");
+}

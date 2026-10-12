@@ -13,10 +13,11 @@ import {
   fetchPurchases,
   PurchasesPage,
 } from "@/components/actions/purchases-action";
+import { fetchPayables } from "@/components/actions/purchasing-action";
 import { formatCurrency } from "@/lib/currency";
 import { PageSizeSelector } from "@/components/page-size-selector";
 import { PagePagination } from "@/components/page-pagination";
-import { Truck } from "lucide-react";
+import { ChevronRight, Truck, Wallet } from "lucide-react";
 import { TableFilters } from "@/components/ui/table-filters";
 
 interface Props {
@@ -51,7 +52,11 @@ export default async function PurchasesListPage({ searchParams }: Props) {
   const t = await getTranslations("purchases");
   const locale = await getLocale();
 
-  const result = await fetchPurchases(page, size, q, paymentStatus, status);
+  const [result, payables] = await Promise.all([
+    fetchPurchases(page, size, q, paymentStatus, status),
+    fetchPayables(),
+  ]);
+  const owed = payables.data;
   const data = "message" in result ? null : (result as PurchasesPage);
   const totalPages = data ? Math.ceil((data.total || 0) / size) : 0;
 
@@ -75,6 +80,26 @@ export default async function PurchasesListPage({ searchParams }: Props) {
           </Button>
         </Link>
       </div>
+
+      {/* What is still owed to suppliers */}
+      {owed && owed.supplier_count > 0 && (
+        <Link
+          href="/purchases/payables"
+          className="flex items-center gap-3 mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100 transition"
+        >
+          <Wallet className="h-5 w-5 text-amber-700 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-900">
+              {t("payments.youOwe", {
+                amount: formatCurrency(owed.total_owed),
+                count: owed.supplier_count,
+              })}
+            </p>
+            <p className="text-xs text-amber-800">{t("payments.seePayables")}</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-amber-700" />
+        </Link>
+      )}
 
       {/* Summary cards */}
       {data && data.items.length > 0 && (
@@ -160,6 +185,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
               <TableHead>{t("table.reference")}</TableHead>
               <TableHead className="text-center">{t("table.items")}</TableHead>
               <TableHead className="text-right">{t("table.total")}</TableHead>
+              <TableHead className="text-right">{t("table.owed")}</TableHead>
               <TableHead className="text-center">
                 {t("table.payment")}
               </TableHead>
@@ -176,7 +202,7 @@ export default async function PurchasesListPage({ searchParams }: Props) {
             {!data?.items?.length ? (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={11}
                   className="text-center py-16 text-gray-400"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -209,6 +235,17 @@ export default async function PurchasesListPage({ searchParams }: Props) {
                   </TableCell>
                   <TableCell className="text-right font-mono font-semibold text-gray-900">
                     {formatCurrency(purchase.total_cost)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-amber-700">
+                    {purchase.status !== "cancelled" && purchase.payment_status !== "paid"
+                      ? formatCurrency(
+                          Math.max(
+                            0,
+                            parseFloat(purchase.total_cost) -
+                              (parseFloat(purchase.paid_amount ?? "0") || 0),
+                          ),
+                        )
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">

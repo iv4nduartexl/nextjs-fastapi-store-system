@@ -564,6 +564,50 @@ export type InventoryAnalyticsSchema = {
   deadStockItems: Array<DeadStockItemSchema>;
 };
 
+export type InventoryCountCreate = {
+  category?: string | null;
+  notes?: string | null;
+  lines: Array<InventoryCountLineIn>;
+  zero_uncounted?: boolean;
+};
+
+export type InventoryCountLineIn = {
+  item_id: string;
+  counted: number | string;
+  expected: number | string;
+};
+
+export type InventoryCountLineRead = {
+  item_id: string | null;
+  item_name: string;
+  unit_type: UnitType;
+  expected: string;
+  counted: string;
+  previous_stock: string;
+  new_stock: string;
+};
+
+export type InventoryCountRead = {
+  id: string;
+  category: string | null;
+  notes: string | null;
+  lines_counted: number;
+  lines_changed: number;
+  applied_at: string;
+  user_name?: string | null;
+  lines?: Array<InventoryCountLineRead>;
+};
+
+export type InventoryCountSummary = {
+  id: string;
+  category: string | null;
+  notes: string | null;
+  lines_counted: number;
+  lines_changed: number;
+  applied_at: string;
+  user_name?: string | null;
+};
+
 export type ItemCreate = {
   name: string;
   description?: string | null;
@@ -573,6 +617,7 @@ export type ItemCreate = {
   stock?: number | string;
   min_stock?: number | string | null;
   price?: number | string | null;
+  source?: "pos" | "products" | "purchase" | null;
 };
 
 export type ItemRead = {
@@ -665,6 +710,21 @@ export type Page_SaleRead_ = {
   page: number | null;
   size: number | null;
   pages?: number | null;
+};
+
+export type PayableInvoice = {
+  id: string;
+  purchase_date: string;
+  reference_number: string | null;
+  total_cost: string;
+  paid_amount: string;
+  remaining: string;
+};
+
+export type PayablesSummary = {
+  total_owed: string;
+  supplier_count: number;
+  suppliers: Array<SupplierPayables>;
 };
 
 export type PaymentBreakdown = {
@@ -779,6 +839,10 @@ export type PurchaseCreate = {
    * Total printed on the supplier's invoice, kept to check the lines against it
    */
   invoice_total?: number | string | null;
+  /**
+   * Whether the money paid now leaves today's open cashbox. Defaults to true only when the purchase is dated today (a past day's cashbox was already counted)
+   */
+  payment_affects_cashbox?: boolean | null;
   items: Array<PurchaseItemCreate>;
 };
 
@@ -856,6 +920,7 @@ export type PurchaseRead = {
   cancel_reason?: string | null;
   paid_amount?: string | null;
   invoice_total?: string | null;
+  payments?: Array<SupplierPaymentRead>;
   user_id?: string | null;
   user_name?: string | null;
   cancelled_by_name?: string | null;
@@ -1047,6 +1112,51 @@ export type StoreSnapshot = {
 export type SupplierCreate = {
   id?: string | null;
   name: string;
+};
+
+export type SupplierDebtWriteOff = {
+  /**
+   * Why the remaining balance is no longer owed
+   */
+  reason?: string | null;
+};
+
+export type SupplierPayables = {
+  supplier_id: string | null;
+  supplier_name: string | null;
+  total_owed: string;
+  oldest_date: string;
+  invoices: Array<PayableInvoice>;
+};
+
+export type SupplierPaymentCreate = {
+  /**
+   * Amount paid now towards this purchase
+   */
+  amount: number | string;
+  method?: "cash" | "card" | "transfer";
+  /**
+   * When the money left; defaults to now
+   */
+  paid_at?: string | null;
+  /**
+   * Record it in today's open cashbox; defaults to true when paid today
+   */
+  affects_cashbox?: boolean | null;
+  notes?: string | null;
+};
+
+export type method = "cash" | "card" | "transfer";
+
+export type SupplierPaymentRead = {
+  id: string;
+  amount: string;
+  method: string;
+  paid_at: string;
+  affects_cashbox: boolean;
+  notes?: string | null;
+  user_name?: string | null;
+  created_at: string;
 };
 
 export type SupplierRead = {
@@ -1603,6 +1713,39 @@ export type CancelPurchaseResponse = PurchaseRead;
 
 export type CancelPurchaseError = HTTPValidationError;
 
+export type AddSupplierPaymentData = {
+  body: SupplierPaymentCreate;
+  path: {
+    purchase_id: string;
+  };
+};
+
+export type AddSupplierPaymentResponse = PurchaseRead;
+
+export type AddSupplierPaymentError = HTTPValidationError;
+
+export type WriteOffSupplierDebtData = {
+  body: SupplierDebtWriteOff;
+  path: {
+    purchase_id: string;
+  };
+};
+
+export type WriteOffSupplierDebtResponse = PurchaseRead;
+
+export type WriteOffSupplierDebtError = HTTPValidationError;
+
+export type DeleteSupplierPaymentData = {
+  path: {
+    payment_id: string;
+    purchase_id: string;
+  };
+};
+
+export type DeleteSupplierPaymentResponse = PurchaseRead;
+
+export type DeleteSupplierPaymentError = HTTPValidationError;
+
 export type ListCustomersData = {
   query?: {
     page?: number;
@@ -2105,3 +2248,29 @@ export type UsualProductsData = {
 export type UsualProductsResponse = Array<UsualProduct>;
 
 export type UsualProductsError = HTTPValidationError;
+
+export type PayablesResponse = PayablesSummary;
+
+export type PayablesError = unknown;
+
+export type ListCountsResponse = Array<InventoryCountSummary>;
+
+export type ListCountsError = unknown;
+
+export type ApplyCountData = {
+  body: InventoryCountCreate;
+};
+
+export type ApplyCountResponse = InventoryCountRead;
+
+export type ApplyCountError = HTTPValidationError;
+
+export type GetCountData = {
+  path: {
+    count_id: string;
+  };
+};
+
+export type GetCountResponse = InventoryCountRead;
+
+export type GetCountError = HTTPValidationError;

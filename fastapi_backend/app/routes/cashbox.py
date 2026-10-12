@@ -27,7 +27,11 @@ from app.tenancy import TenantContext, current_tenant
 
 router = APIRouter(tags=["cashbox"])
 
-REVERSAL_TYPES = (CashboxTransactionType.sale_cancel, CashboxTransactionType.purchase_cancel)
+REVERSAL_TYPES = (
+    CashboxTransactionType.sale_cancel,
+    CashboxTransactionType.purchase_cancel,
+    CashboxTransactionType.supplier_payment_cancel,
+)
 
 
 # ─── Helper ──────────────────────────────────────────────────────────────────

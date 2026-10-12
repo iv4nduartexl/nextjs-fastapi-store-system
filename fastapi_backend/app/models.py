@@ -208,6 +208,8 @@ class SaleItem(Base):
     base_unit_price = Column(Numeric(10, 2), nullable=False)
     unit_price = Column(Numeric(10, 2), nullable=False)
     quantity = Column(Numeric(10, 3), nullable=False)
+    # How much was actually taken from stock (stock never goes below 0); NULL on older sales = quantity
+    stock_deducted = Column(Numeric(10, 3), nullable=True)
     subtotal = Column(Numeric(10, 2), nullable=False)
     pricing_source = Column(Enum(PricingSource), nullable=False, default=PricingSource.base)
     discount_rule_name = Column(String, nullable=True)
@@ -292,6 +294,14 @@ class Purchase(TenantMixin, Base):
     cancel_reason = Column(String, nullable=True)
 
     purchase_items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
+    # Always loaded with the purchase (a few rows per invoice)
+    payments = relationship(
+        "SupplierPayment",
+        back_populates="purchase",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="SupplierPayment.paid_at",
+    )
     user = relationship("User", back_populates="purchases", foreign_keys=[user_id], lazy="joined")
     cancelled_by_user = relationship("User", foreign_keys=[cancelled_by], lazy="joined")
 
@@ -392,6 +402,9 @@ class CashboxTransactionType(str, enum.Enum):
     # Reversal entries written when a sale or purchase is cancelled
     sale_cancel = "sale_cancel"
     purchase_cancel = "purchase_cancel"
+    # Paying a supplier invoice (at purchase time or later), and undoing such a payment
+    supplier_payment = "supplier_payment"
+    supplier_payment_cancel = "supplier_payment_cancel"
 
 
 class CashboxTransactionDirection(str, enum.Enum):
@@ -536,3 +549,74 @@ class LoginAttempt(Base):
     email = Column(String, nullable=False, index=True)
     ip = Column(String, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+
+class SupplierPayment(TenantMixin, Base):
+    """Money paid towards a purchase invoice, at purchase time or later."""
+
+    __tablename__ = "supplier_payments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    purchase_id = Column(UUID(as_uuid=True), ForeignKey("purchases.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    method = Column(String, nullable=False)  # cash / card / transfer
+    # When the money actually left (may be earlier than when it was registered)
+    paid_at = Column(DateTime(timezone=True), nullable=False)
+    # False when it was paid outside today's cashbox (e.g. a past day already closed)
+    affects_cashbox = Column(Boolean, nullable=False, default=True)
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    purchase = relationship("Purchase", back_populates="payments")
+    user = relationship("User", lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return _loaded_user_name(self, "user")
+
+
+class InventoryCount(TenantMixin, Base):
+    """A stock count applied by an owner: what was counted and how each product's stock changed."""
+
+    __tablename__ = "inventory_counts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    # NULL = the whole catalog
+    category = Column(String, nullable=True)
+    notes = Column(String, nullable=True)
+    lines_counted = Column(Integer, nullable=False, default=0)
+    lines_changed = Column(Integer, nullable=False, default=0)
+    applied_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", lazy="joined")
+    lines = relationship(
+        "InventoryCountLine",
+        back_populates="count",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="InventoryCountLine.item_name",
+    )
+
+    @property
+    def user_name(self) -> str | None:
+        return _loaded_user_name(self, "user")
+
+
+class InventoryCountLine(Base):
+    __tablename__ = "inventory_count_lines"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    count_id = Column(UUID(as_uuid=True), ForeignKey("inventory_counts.id", ondelete="CASCADE"), nullable=False, index=True)
+    item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
+    item_name = Column(String, nullable=False)
+    unit_type = Column(Enum(UnitType), nullable=False)
+    # System stock when the product was counted, and what was counted
+    expected = Column(Numeric(10, 3), nullable=False)
+    counted = Column(Numeric(10, 3), nullable=False)
+    # Stock right before and after applying (sales between counting and applying are kept)
+    previous_stock = Column(Numeric(10, 3), nullable=False)
+    new_stock = Column(Numeric(10, 3), nullable=False)
+
+    count = relationship("InventoryCount", back_populates="lines")

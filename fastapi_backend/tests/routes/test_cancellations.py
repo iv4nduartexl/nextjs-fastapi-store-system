@@ -173,4 +173,4 @@ class TestCancelPurchase:
             f"/purchases/{purchase_id}/cancel", json={"force": True}, headers=headers
         )
         assert forced.status_code == status.HTTP_200_OK
-        assert await _stock(db_session, item.id) == Decimal("-3")
+        assert await _stock(db_session, item.id) == Decimal("0")  # never below 0

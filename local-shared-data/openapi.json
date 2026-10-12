@@ -2796,6 +2796,183 @@
         }
       }
     },
+    "/purchases/{purchase_id}/payments": {
+      "post": {
+        "tags": [
+          "purchases"
+        ],
+        "summary": "Add Supplier Payment",
+        "description": "Pay (part of) what is still owed on a purchase.",
+        "operationId": "add_supplier_payment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "purchase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purchase Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierPaymentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/purchases/{purchase_id}/write-off": {
+      "post": {
+        "tags": [
+          "purchases"
+        ],
+        "summary": "Write Off Supplier Debt",
+        "description": "The rest is no longer owed (supplier forgave it, wrong amount\u2026): the purchase and its stock stay.\nRecorded as a non-cash entry in the payment history, so deleting it brings the debt back.",
+        "operationId": "write_off_supplier_debt",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "purchase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purchase Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierDebtWriteOff"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/purchases/{purchase_id}/payments/{payment_id}": {
+      "delete": {
+        "tags": [
+          "purchases"
+        ],
+        "summary": "Delete Supplier Payment",
+        "description": "Undo a mistaken payment: reverses its cashbox entry in today's session and reopens the debt.",
+        "operationId": "delete_supplier_payment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "purchase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purchase Id"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/customers/": {
       "get": {
         "tags": [
@@ -5502,6 +5679,156 @@
                     "$ref": "#/components/schemas/UsualProduct"
                   },
                   "title": "Response Purchasing-Usual Products"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/purchasing/payables": {
+      "get": {
+        "tags": [
+          "purchasing"
+        ],
+        "summary": "Payables",
+        "description": "What is still owed to suppliers: open invoices grouped by supplier, oldest first.",
+        "operationId": "payables",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayablesSummary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/inventory/counts": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "List Counts",
+        "operationId": "list_counts",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryCountSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Inventory-List Counts"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "Apply Count",
+        "description": "Apply a count. Each product moves by (counted \u2212 stock seen when counting), never below 0,\nso sales made while counting are not lost.",
+        "operationId": "apply_count",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryCountCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/inventory/counts/{count_id}": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "Get Count",
+        "operationId": "get_count",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "count_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Count Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountRead"
                 }
               }
             }
@@ -8565,6 +8892,284 @@
         ],
         "title": "InventoryAnalyticsSchema"
       },
+      "InventoryCountCreate": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryCountLineIn"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "minItems": 1,
+            "title": "Lines"
+          },
+          "zero_uncounted": {
+            "type": "boolean",
+            "title": "Zero Uncounted",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "lines"
+        ],
+        "title": "InventoryCountCreate"
+      },
+      "InventoryCountLineIn": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "counted": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Counted"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Expected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "counted",
+          "expected"
+        ],
+        "title": "InventoryCountLineIn"
+      },
+      "InventoryCountLineRead": {
+        "properties": {
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "item_name": {
+            "type": "string",
+            "title": "Item Name"
+          },
+          "unit_type": {
+            "$ref": "#/components/schemas/UnitType"
+          },
+          "expected": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Expected"
+          },
+          "counted": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Counted"
+          },
+          "previous_stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Previous Stock"
+          },
+          "new_stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "New Stock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_name",
+          "unit_type",
+          "expected",
+          "counted",
+          "previous_stock",
+          "new_stock"
+        ],
+        "title": "InventoryCountLineRead"
+      },
+      "InventoryCountRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "lines_counted": {
+            "type": "integer",
+            "title": "Lines Counted"
+          },
+          "lines_changed": {
+            "type": "integer",
+            "title": "Lines Changed"
+          },
+          "applied_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Applied At"
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Name"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryCountLineRead"
+            },
+            "type": "array",
+            "title": "Lines",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "notes",
+          "lines_counted",
+          "lines_changed",
+          "applied_at"
+        ],
+        "title": "InventoryCountRead"
+      },
+      "InventoryCountSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "lines_counted": {
+            "type": "integer",
+            "title": "Lines Counted"
+          },
+          "lines_changed": {
+            "type": "integer",
+            "title": "Lines Changed"
+          },
+          "applied_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Applied At"
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "notes",
+          "lines_counted",
+          "lines_changed",
+          "applied_at"
+        ],
+        "title": "InventoryCountSummary"
+      },
       "ItemCreate": {
         "properties": {
           "name": {
@@ -8650,6 +9255,22 @@
               }
             ],
             "title": "Price"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "pos",
+                  "products",
+                  "purchase"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
           }
         },
         "type": "object",
@@ -9258,6 +9879,83 @@
         ],
         "title": "Page[SaleRead]"
       },
+      "PayableInvoice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "purchase_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Purchase Date"
+          },
+          "reference_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Number"
+          },
+          "total_cost": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Cost"
+          },
+          "paid_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Paid Amount"
+          },
+          "remaining": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Remaining"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "purchase_date",
+          "reference_number",
+          "total_cost",
+          "paid_amount",
+          "remaining"
+        ],
+        "title": "PayableInvoice"
+      },
+      "PayablesSummary": {
+        "properties": {
+          "total_owed": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Owed"
+          },
+          "supplier_count": {
+            "type": "integer",
+            "title": "Supplier Count"
+          },
+          "suppliers": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierPayables"
+            },
+            "type": "array",
+            "title": "Suppliers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_owed",
+          "supplier_count",
+          "suppliers"
+        ],
+        "title": "PayablesSummary"
+      },
       "PaymentBreakdown": {
         "properties": {
           "payment_method": {
@@ -9802,6 +10500,18 @@
             "title": "Invoice Total",
             "description": "Total printed on the supplier's invoice, kept to check the lines against it"
           },
+          "payment_affects_cashbox": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Affects Cashbox",
+            "description": "Whether the money paid now leaves today's open cashbox. Defaults to true only when the purchase is dated today (a past day's cashbox was already counted)"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/PurchaseItemCreate"
@@ -10158,6 +10868,14 @@
               }
             ],
             "title": "Invoice Total"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierPaymentRead"
+            },
+            "type": "array",
+            "title": "Payments",
+            "default": []
           },
           "user_id": {
             "anyOf": [
@@ -11382,6 +12100,212 @@
           "name"
         ],
         "title": "SupplierCreate"
+      },
+      "SupplierDebtWriteOff": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Why the remaining balance is no longer owed"
+          }
+        },
+        "type": "object",
+        "title": "SupplierDebtWriteOff"
+      },
+      "SupplierPayables": {
+        "properties": {
+          "supplier_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Id"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "total_owed": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Owed"
+          },
+          "oldest_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Oldest Date"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/PayableInvoice"
+            },
+            "type": "array",
+            "title": "Invoices"
+          }
+        },
+        "type": "object",
+        "required": [
+          "supplier_id",
+          "supplier_name",
+          "total_owed",
+          "oldest_date",
+          "invoices"
+        ],
+        "title": "SupplierPayables"
+      },
+      "SupplierPaymentCreate": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Amount",
+            "description": "Amount paid now towards this purchase"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "card",
+              "transfer"
+            ],
+            "title": "Method",
+            "default": "cash"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At",
+            "description": "When the money left; defaults to now"
+          },
+          "affects_cashbox": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affects Cashbox",
+            "description": "Record it in today's open cashbox; defaults to true when paid today"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount"
+        ],
+        "title": "SupplierPaymentCreate"
+      },
+      "SupplierPaymentRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "paid_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Paid At"
+          },
+          "affects_cashbox": {
+            "type": "boolean",
+            "title": "Affects Cashbox"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "method",
+          "paid_at",
+          "affects_cashbox",
+          "created_at"
+        ],
+        "title": "SupplierPaymentRead"
       },
       "SupplierRead": {
         "properties": {

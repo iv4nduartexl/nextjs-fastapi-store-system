@@ -8,6 +8,7 @@ from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.accounts import audit
 from app.database import get_async_session
 from app.models import Item
 from app.schemas import ItemRead, ItemCreate, ItemUpdate
@@ -65,8 +66,31 @@ async def create_item(
     db: AsyncSession = Depends(get_async_session),
     tenant: TenantContext = Depends(current_tenant),
 ):
-    db_item = Item(**item.model_dump(), business_id=tenant.business_id, user_id=tenant.user_id)
+    values = item.model_dump(exclude={"source"})
+    values["name"] = values["name"].strip()
+    values["sku"] = (values["sku"] or "").strip() or None
+    if not values["name"]:
+        raise HTTPException(status_code=422, detail={"code": "name_required", "message": "Name is required"})
+    if values["sku"]:
+        existing = (
+            await db.execute(select(Item).where(Item.business_id == tenant.business_id, Item.sku == values["sku"]))
+        ).scalars().first()
+        if existing:
+            # The client can offer to use the existing product instead
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "sku_exists",
+                    "message": "A product with this code already exists",
+                    "item": ItemRead.model_validate(existing).model_dump(mode="json"),
+                },
+            )
+    db_item = Item(**values, business_id=tenant.business_id, user_id=tenant.user_id)
     db.add(db_item)
+    await db.flush()
+    audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="item_created",
+          business_id=tenant.business_id, target_type="item", target_id=db_item.id,
+          details={"name": db_item.name, "source": item.source})
     await db.commit()
     if item.category:
         await upsert_category(item.category, tenant, db)

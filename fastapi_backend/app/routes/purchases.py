@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -11,9 +11,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from app.database import get_async_session
-from app.models import Item, Purchase, PurchaseItem, PurchasePaymentMethod, PurchasePaymentStatus, PurchaseStatus, Supplier, UnitType
+from app.models import Item, Purchase, PurchaseItem, PurchasePaymentMethod, PurchasePaymentStatus, PurchaseStatus, Supplier, SupplierPayment, UnitType
 from app.models import CashboxTransactionType, CashboxTransactionDirection
-from app.schemas import PurchaseCancelRequest, PurchaseCreate, PurchaseRead
+from app.schemas import PurchaseCancelRequest, PurchaseCreate, PurchaseRead, SupplierDebtWriteOff, SupplierPaymentCreate
 from app.accounts import audit
 from app.tenancy import TenantContext, current_tenant, require_owner
 from app.routes.cashbox import record_auto_transaction, reverse_auto_transactions
@@ -41,6 +41,9 @@ async def create_purchase(
         raise HTTPException(status_code=422, detail="credit_purchase_must_be_unpaid")
     if data.payment_status == PurchasePaymentStatus.partial and not (data.paid_amount and data.paid_amount > 0):
         raise HTTPException(status_code=422, detail="partial_payment_requires_amount")
+    now = datetime.now(timezone.utc)
+    if data.purchase_date and data.purchase_date > now + FUTURE_TOLERANCE:
+        raise HTTPException(status_code=422, detail="purchase_date_in_future")
 
     # Resolve item references for items that link to existing catalog entries
     item_ids = [i.item_id for i in data.items if i.item_id is not None]
@@ -130,14 +133,15 @@ async def create_purchase(
         business_id=tenant.business_id, user_id=tenant.user_id,
         supplier_id=supplier.id if supplier else None,
         reference_number=data.reference_number,
-        purchase_date=data.purchase_date or datetime.now(timezone.utc),
+        purchase_date=data.purchase_date or now,
         status=PurchaseStatus.received,
-        payment_status=data.payment_status,
+        # Set by the payment below (if any)
+        payment_status=PurchasePaymentStatus.unpaid,
         payment_method=data.payment_method,
         subtotal=subtotal,
         tax=tax,
         total_cost=total_cost,
-        paid_amount=paid_amount,
+        paid_amount=Decimal("0"),
         invoice_total=data.invoice_total,
         notes=data.notes,
         purchase_items=line_objs,
@@ -165,6 +169,26 @@ async def create_purchase(
                 if db_item.unit_type is None or line.overwrite_previous_value:
                     db_item.unit_type = UnitType(line.unit_type)
 
+    # What was paid now becomes the first payment of this invoice
+    if paid_amount > 0:
+        await db.flush()
+        affects = (
+            data.payment_affects_cashbox
+            if data.payment_affects_cashbox is not None
+            else _is_today(purchase.purchase_date, now)
+        )
+        await register_supplier_payment(
+            db,
+            tenant,
+            purchase,
+            amount=paid_amount,
+            method=data.payment_method.value,
+            # Paid outside today's cashbox means it was paid back on the purchase date
+            paid_at=now if affects else purchase.purchase_date,
+            affects_cashbox=affects,
+            supplier_name=supplier.name if supplier else None,
+        )
+
     await db.commit()
     await db.refresh(purchase)
 
@@ -175,30 +199,7 @@ async def create_purchase(
     await db.commit()
 
     # Auto-record in cashbox (only for paid purchases, silent if no session open)
-    # Only what was actually paid now leaves the cashbox (all of it, part of it, or nothing)
-    if paid_amount > 0:
-        method_map = {"cash": "cash", "card": "card", "transfer": "transfer", "credit": "credit"}
-        pmethod = method_map.get(purchase.payment_method.value, "cash")
-        if pmethod != "credit":
-            await record_auto_transaction(
-                db=db,
-                business_id=tenant.business_id, user_id=tenant.user_id,
-                tx_type=CashboxTransactionType.purchase,
-                direction=CashboxTransactionDirection.out,
-                amount=paid_amount,
-                payment_method=pmethod,
-                reference_type="purchase",
-                reference_id=purchase.id,
-                description=f"Purchase{' - ' + supplier.name if supplier else ''}",
-            )
-            await db.commit()
-
-    result = await db.execute(
-        select(Purchase)
-        .options(selectinload(Purchase.purchase_items))
-        .filter(Purchase.id == purchase.id)
-    )
-    return PurchaseRead.model_validate(result.scalars().first())
+    return await _purchase_read(db, purchase.id)
 
 
 @router.get("/", response_model=Page[PurchaseRead])
@@ -310,7 +311,8 @@ async def cancel_purchase(
 
     for item_id, qty in qty_by_item.items():
         if item_id in items_map:
-            items_map[item_id].stock = items_map[item_id].stock - qty
+            # Stock never goes below 0
+            items_map[item_id].stock = max(Decimal("0"), items_map[item_id].stock - qty)
 
     reason = (data.reason or "").strip() or None
     purchase.status = PurchaseStatus.cancelled
@@ -318,6 +320,7 @@ async def cancel_purchase(
     purchase.cancelled_by = tenant.user_id
     purchase.cancel_reason = reason
 
+    # Entries recorded before supplier payments existed reference the purchase itself
     await reverse_auto_transactions(
         db=db,
         business_id=tenant.business_id, user_id=tenant.user_id,
@@ -326,6 +329,15 @@ async def cancel_purchase(
         reversal_type=CashboxTransactionType.purchase_cancel,
         description=reason,
     )
+    for payment in purchase.payments:
+        await reverse_auto_transactions(
+            db=db,
+            business_id=tenant.business_id, user_id=tenant.user_id,
+            reference_type="supplier_payment",
+            reference_id=payment.id,
+            reversal_type=CashboxTransactionType.purchase_cancel,
+            description=reason,
+        )
     audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="purchase_cancelled",
           business_id=tenant.business_id, target_type="purchase", target_id=purchase.id, details={"reason": reason})
     await db.commit()
@@ -337,3 +349,200 @@ async def cancel_purchase(
         .execution_options(populate_existing=True)
     )
     return PurchaseRead.model_validate(result.scalars().first())
+
+
+# ─── Supplier payments ───────────────────────────────────────────────────────
+
+FUTURE_TOLERANCE = timedelta(minutes=5)
+
+
+def _is_today(moment: datetime, now: datetime) -> bool:
+    """Close enough to now to be paid from today's open cashbox."""
+    return abs(now - moment) < timedelta(hours=24)
+
+
+def _recompute_payment_status(purchase: Purchase) -> None:
+    paid = purchase.paid_amount or Decimal("0")
+    if paid <= 0:
+        purchase.payment_status = PurchasePaymentStatus.unpaid
+    elif paid >= purchase.total_cost:
+        purchase.payment_status = PurchasePaymentStatus.paid
+    else:
+        purchase.payment_status = PurchasePaymentStatus.partial
+
+
+async def register_supplier_payment(
+    db: AsyncSession,
+    tenant: TenantContext,
+    purchase: Purchase,
+    *,
+    amount: Decimal,
+    method: str,
+    paid_at: datetime,
+    affects_cashbox: bool,
+    supplier_name: str | None = None,
+    notes: str | None = None,
+) -> SupplierPayment:
+    """Record money paid towards a purchase: payment row, cached totals/status and (optionally) the cashbox."""
+    payment = SupplierPayment(
+        purchase_id=purchase.id,
+        business_id=tenant.business_id,
+        user_id=tenant.user_id,
+        amount=amount,
+        method=method,
+        paid_at=paid_at,
+        affects_cashbox=affects_cashbox,
+        notes=notes,
+    )
+    db.add(payment)
+    await db.flush()
+    purchase.paid_amount = (purchase.paid_amount or Decimal("0")) + amount
+    _recompute_payment_status(purchase)
+
+    if affects_cashbox:
+        await record_auto_transaction(
+            db=db,
+            business_id=tenant.business_id, user_id=tenant.user_id,
+            tx_type=CashboxTransactionType.supplier_payment,
+            direction=CashboxTransactionDirection.out,
+            amount=amount,
+            payment_method=method,
+            reference_type="supplier_payment",
+            reference_id=payment.id,
+            description=supplier_name,
+        )
+    return payment
+
+
+async def _purchase_read(db: AsyncSession, purchase_id: UUID) -> PurchaseRead:
+    result = await db.execute(
+        select(Purchase)
+        .options(selectinload(Purchase.purchase_items), selectinload(Purchase.supplier))
+        .filter(Purchase.id == purchase_id)
+        .execution_options(populate_existing=True)
+    )
+    return PurchaseRead.model_validate(result.scalars().first())
+
+
+async def _get_purchase(db: AsyncSession, tenant: TenantContext, purchase_id: UUID) -> Purchase:
+    result = await db.execute(
+        select(Purchase)
+        .options(selectinload(Purchase.supplier))
+        .filter(Purchase.id == purchase_id, Purchase.business_id == tenant.business_id)
+    )
+    purchase = result.scalars().first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    return purchase
+
+
+@router.post("/{purchase_id}/payments", response_model=PurchaseRead, status_code=201)
+async def add_supplier_payment(
+    purchase_id: UUID,
+    data: SupplierPaymentCreate,
+    db: AsyncSession = Depends(get_async_session),
+    tenant: TenantContext = Depends(current_tenant),
+):
+    """Pay (part of) what is still owed on a purchase."""
+    purchase = await _get_purchase(db, tenant, purchase_id)
+    if purchase.status == PurchaseStatus.cancelled:
+        raise HTTPException(status_code=409, detail="purchase_cancelled")
+
+    remaining = purchase.total_cost - (purchase.paid_amount or Decimal("0"))
+    amount = data.amount.quantize(Decimal("0.01"))
+    if amount > remaining:
+        raise HTTPException(status_code=422, detail="payment_exceeds_remaining")
+
+    now = datetime.now(timezone.utc)
+    paid_at = data.paid_at or now
+    if paid_at > now + FUTURE_TOLERANCE:
+        raise HTTPException(status_code=422, detail="payment_date_in_future")
+    affects = data.affects_cashbox if data.affects_cashbox is not None else _is_today(paid_at, now)
+
+    payment = await register_supplier_payment(
+        db,
+        tenant,
+        purchase,
+        amount=amount,
+        method=data.method,
+        paid_at=paid_at,
+        affects_cashbox=affects,
+        supplier_name=purchase.supplier.name if purchase.supplier else None,
+        notes=(data.notes or "").strip() or None,
+    )
+    audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="supplier_payment_added",
+          business_id=tenant.business_id, target_type="purchase", target_id=purchase.id,
+          details={"payment_id": str(payment.id), "amount": str(amount), "affects_cashbox": affects})
+    await db.commit()
+    return await _purchase_read(db, purchase.id)
+
+
+# Payment "method" of a written-off balance: nothing was paid and the cashbox isn't touched
+WRITE_OFF_METHOD = "write_off"
+
+
+@router.post("/{purchase_id}/write-off", response_model=PurchaseRead, status_code=201)
+async def write_off_supplier_debt(
+    purchase_id: UUID,
+    data: SupplierDebtWriteOff,
+    db: AsyncSession = Depends(get_async_session),
+    tenant: TenantContext = Depends(require_owner),
+):
+    """The rest is no longer owed (supplier forgave it, wrong amount…): the purchase and its stock stay.
+    Recorded as a non-cash entry in the payment history, so deleting it brings the debt back."""
+    purchase = await _get_purchase(db, tenant, purchase_id)
+    if purchase.status == PurchaseStatus.cancelled:
+        raise HTTPException(status_code=409, detail="purchase_cancelled")
+    remaining = purchase.total_cost - (purchase.paid_amount or Decimal("0"))
+    if remaining <= 0:
+        raise HTTPException(status_code=409, detail="nothing_owed")
+    reason = (data.reason or "").strip() or None
+
+    payment = await register_supplier_payment(
+        db,
+        tenant,
+        purchase,
+        amount=remaining,
+        method=WRITE_OFF_METHOD,
+        paid_at=datetime.now(timezone.utc),
+        affects_cashbox=False,
+        notes=reason,
+    )
+    audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="supplier_debt_written_off",
+          business_id=tenant.business_id, target_type="purchase", target_id=purchase.id,
+          details={"payment_id": str(payment.id), "amount": str(remaining), "reason": reason})
+    await db.commit()
+    return await _purchase_read(db, purchase.id)
+
+
+@router.delete("/{purchase_id}/payments/{payment_id}", response_model=PurchaseRead)
+async def delete_supplier_payment(
+    purchase_id: UUID,
+    payment_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    tenant: TenantContext = Depends(require_owner),
+):
+    """Undo a mistaken payment: reverses its cashbox entry in today's session and reopens the debt."""
+    purchase = await _get_purchase(db, tenant, purchase_id)
+    payment = next((p for p in purchase.payments if p.id == payment_id), None)
+    if payment is None:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    if purchase.status == PurchaseStatus.cancelled:
+        raise HTTPException(status_code=409, detail="purchase_cancelled")
+
+    await reverse_auto_transactions(
+        db=db,
+        business_id=tenant.business_id, user_id=tenant.user_id,
+        reference_type="supplier_payment",
+        reference_id=payment.id,
+        reversal_type=CashboxTransactionType.supplier_payment_cancel,
+        description=purchase.supplier.name if purchase.supplier else None,
+    )
+    purchase.paid_amount = (purchase.paid_amount or Decimal("0")) - payment.amount
+    _recompute_payment_status(purchase)
+    audit(db, actor_id=tenant.user_id, impersonated_by=tenant.impersonated_by, action="supplier_payment_deleted",
+          business_id=tenant.business_id, target_type="purchase", target_id=purchase.id,
+          details={"payment_id": str(payment.id), "amount": str(payment.amount)})
+    await db.delete(payment)
+    await db.commit()
+    return await _purchase_read(db, purchase.id)

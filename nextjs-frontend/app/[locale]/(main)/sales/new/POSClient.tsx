@@ -28,6 +28,7 @@ import {
 import { type CustomerRead } from "@/components/actions/customers-action";
 import autoAnimate from "@formkit/auto-animate";
 import ProductQuantityModal from "@/components/Modals/product-quantity-modal";
+import { QuickCreateProduct } from "@/components/pos/quick-create-product";
 import { PartialPaymentInput } from "@/components/Pages/sales/new/PosClient/partial-payment-input";
 import {
   findBySku,
@@ -165,21 +166,23 @@ function ProductGrid({
               </span>
             </div>
             <div className="flex flex-col flex-1 min-w-0 p-2.5 gap-1">
-              {isOut ? (
-                <span className="self-start text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold leading-none">
-                  {tPos("outOfStock")}
-                </span>
-              ) : isLow ? (
-                <span className="self-start text-[9px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold leading-none">
-                  ⚠ {tPos("lowStock")}
-                </span>
-              ) : null}
               <span
                 title={product.name}
                 className="font-semibold text-xs leading-snug text-gray-800 line-clamp-2"
               >
+                {isLow && !isOut && (
+                  <span
+                    className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400 align-middle"
+                    title={tPos("lowStock")}
+                    aria-label={tPos("lowStock")}
+                  />
+                )}
                 {product.name}
               </span>
+              {/* Only a hint: out-of-stock products can still be sold (stock stays at 0) */}
+              {isOut && (
+                <span className="text-[10px] leading-none text-gray-400">{tPos("noStockHint")}</span>
+              )}
               <span className="mt-auto text-green-700 font-bold text-sm tabular-nums">
                 {hasPrice ? (
                   formatCurrency(product.price)
@@ -213,6 +216,8 @@ export default function POSClient() {
   const [search, setSearch] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
+  // Text of a product that doesn't exist yet, while the "create it" dialog is open
+  const [quickCreateText, setQuickCreateText] = useState<string | null>(null);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   // Cart line whose full name is shown (tap to expand, for touch screens without hover)
@@ -555,7 +560,7 @@ export default function POSClient() {
 
   useBarcodeScanner((code) => {
     if (!addByCode(code, null)) setScanNotice(code);
-  }, !selectedWeightQuantityProduct && !priceModalItemId && !subtotalModalOpen);
+  }, !selectedWeightQuantityProduct && !priceModalItemId && !subtotalModalOpen && quickCreateText == null);
 
   function updateQty(itemId: string, qty: number) {
     if (qty === null) return;
@@ -613,7 +618,7 @@ export default function POSClient() {
   // ── Keyboard shortcuts (F1 search, F2/F3/F4 payment, F9 charge, +/−/Del last line) ──
   const shortcutHandler = useRef<(e: KeyboardEvent) => void>(() => {});
   shortcutHandler.current = (e: KeyboardEvent) => {
-    if (selectedWeightQuantityProduct || priceModalItemId || subtotalModalOpen) return;
+    if (selectedWeightQuantityProduct || priceModalItemId || subtotalModalOpen || quickCreateText != null) return;
     const inSearch = e.target === searchRef.current;
     const typingElsewhere = isTypingField(e.target) && !inSearch;
     const last = cart[cart.length - 1];
@@ -941,7 +946,14 @@ export default function POSClient() {
             {scanNotice && (
               <p role="alert" className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
                 <PackageX size={14} />
-                {t("codeNotFound", { code: scanNotice })}
+                <span className="flex-1">{t("codeNotFound", { code: scanNotice })}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuickCreateText(scanNotice)}
+                  className="shrink-0 rounded-md bg-amber-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-amber-700"
+                >
+                  {t("quickCreate.createWithCode")}
+                </button>
               </p>
             )}
             {chargeArmed && (
@@ -1001,6 +1013,15 @@ export default function POSClient() {
                 <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
                   <PackageX size={32} className="text-gray-300" />
                   <p className="text-sm">{t("noProducts")}</p>
+                  {multiplier.term.trim() && (
+                    <Button
+                      type="button"
+                      onClick={() => setQuickCreateText(multiplier.term.trim())}
+                      className="gap-1.5 bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus size={15} /> {t("quickCreate.createNamed", { name: multiplier.term.trim() })}
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <ProductGrid
@@ -1729,6 +1750,24 @@ export default function POSClient() {
             </div>
           );
         })()}
+
+      {quickCreateText != null && (
+        <QuickCreateProduct
+          initialText={quickCreateText}
+          catalog={catalog.products}
+          categories={categories}
+          onClose={() => {
+            setQuickCreateText(null);
+            setTimeout(() => searchRef.current?.focus(), 0);
+          }}
+          onReady={(product) => {
+            catalog.addLocal(product);
+            setQuickCreateText(null);
+            setScanNotice(null);
+            addToCart(product, product.unit_type === "gram" ? null : multiplier.quantity);
+          }}
+        />
+      )}
 
       <ProductQuantityModal
         isOpen={!!selectedWeightQuantityProduct}

@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.database import get_async_session
-from app.models import Item, Purchase, PurchaseItem, PurchaseStatus, Supplier
+from app.models import Item, Purchase, PurchaseItem, PurchasePaymentStatus, PurchaseStatus, Supplier
+from app.schemas import PayableInvoice, PayablesSummary, SupplierPayables
 from app.tenancy import TenantContext, current_tenant
 
 router = APIRouter(tags=["purchasing"])
@@ -176,3 +177,56 @@ async def usual_products(
         for row in top
         if row.item_id in items and row.item_id in latest
     ]
+
+
+@router.get("/payables", response_model=PayablesSummary)
+async def payables(
+    db: AsyncSession = Depends(get_async_session),
+    tenant: TenantContext = Depends(current_tenant),
+):
+    """What is still owed to suppliers: open invoices grouped by supplier, oldest first."""
+    rows = (
+        await db.execute(
+            select(Purchase, Supplier.name)
+            .outerjoin(Supplier, Supplier.id == Purchase.supplier_id)
+            .where(
+                *_active_purchases(tenant),
+                Purchase.payment_status != PurchasePaymentStatus.paid,
+            )
+            .order_by(Purchase.purchase_date.asc())
+        )
+    ).all()
+
+    groups: dict[UUID | None, SupplierPayables] = {}
+    for purchase, supplier_name in rows:
+        paid = purchase.paid_amount or Decimal("0")
+        remaining = purchase.total_cost - paid
+        if remaining <= 0:
+            continue
+        group = groups.get(purchase.supplier_id)
+        if group is None:
+            group = groups[purchase.supplier_id] = SupplierPayables(
+                supplier_id=purchase.supplier_id,
+                supplier_name=supplier_name,
+                total_owed=Decimal("0"),
+                oldest_date=purchase.purchase_date,
+                invoices=[],
+            )
+        group.total_owed += remaining
+        group.invoices.append(
+            PayableInvoice(
+                id=purchase.id,
+                purchase_date=purchase.purchase_date,
+                reference_number=purchase.reference_number,
+                total_cost=purchase.total_cost,
+                paid_amount=paid,
+                remaining=remaining,
+            )
+        )
+
+    suppliers = sorted(groups.values(), key=lambda g: g.total_owed, reverse=True)
+    return PayablesSummary(
+        total_owed=sum((g.total_owed for g in suppliers), Decimal("0")),
+        supplier_count=len(suppliers),
+        suppliers=suppliers,
+    )

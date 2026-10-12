@@ -43,6 +43,8 @@ const TX_ICONS: Record<string, React.ElementType> = {
   owner_withdrawal: Crown,
   sale_cancel: Undo2,
   purchase_cancel: Undo2,
+  supplier_payment: ShoppingBag,
+  supplier_payment_cancel: Undo2,
 };
 
 const METHOD_ICONS: Record<string, React.ElementType> = {

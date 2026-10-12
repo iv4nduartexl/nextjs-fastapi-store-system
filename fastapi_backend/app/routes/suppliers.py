@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func
 from sqlalchemy.future import select
 
 from app.database import get_async_session
@@ -32,6 +33,17 @@ async def upsert_supplier(
         # An id from another business (or a stale one) is never reused; fall back to the name
 
     if supplier.name:
+        # Same name already in this business (any capitalisation): reuse it instead of duplicating
+        result = await db.execute(
+            select(Supplier).where(
+                Supplier.business_id == tenant.business_id,
+                func.lower(func.trim(Supplier.name)) == supplier.name.strip().lower(),
+            )
+        )
+        same_name = result.scalars().first()
+        if same_name:
+            return same_name
+
         new_supplier = Supplier(
             name=supplier.name, business_id=tenant.business_id, user_id=tenant.user_id
         )

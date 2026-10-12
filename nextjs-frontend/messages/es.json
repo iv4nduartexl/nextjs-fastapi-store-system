@@ -122,7 +122,9 @@
       "gram": "G",
       "liter": "L",
       "pack": "PKT"
-    }
+    },
+    "payablesTitle": "Por pagar a proveedores",
+    "payablesSuppliers": "{count, plural, one {a # proveedor} other {a # proveedores}}"
   },
   "sales": {
     "title": "Ventas",
@@ -255,7 +257,53 @@
       "applyPrice": "Aplicar",
       "overrideSubtotal": "Sobrescribir subtotal",
       "overrideSubtotalPlaceholder": "Nuevo subtotal",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "noStockHint": "0 en stock",
+      "quickCreate": {
+        "createWithCode": "Crear producto",
+        "createNamed": "Crear «{name}»",
+        "title": "Nuevo producto",
+        "subtitle": "Se crea y se agrega a la venta",
+        "close": "Cerrar",
+        "codeExists": "El código {code} ya es de «{name}».",
+        "addExisting": "Agregar «{name}»",
+        "name": "Nombre",
+        "namePlaceholder": "Ej.: Galletitas María 200g",
+        "similar": "¿Es «{name}»?",
+        "useThis": "Usar ese",
+        "unit": "Se vende por",
+        "units": {
+          "unit": "Unidad",
+          "gram": "Kg",
+          "liter": "Litro",
+          "pack": "Paquete"
+        },
+        "priceLabel": {
+          "unit": "Precio por unidad",
+          "gram": "Precio por kg",
+          "liter": "Precio por litro",
+          "pack": "Precio por paquete"
+        },
+        "code": "Código de barras",
+        "optional": "opcional",
+        "moreOptions": "Más opciones",
+        "category": "Categoría",
+        "stock": "¿Cuántos tienes?",
+        "stockUnit": {
+          "unit": "u.",
+          "gram": "kg",
+          "liter": "L",
+          "pack": "paq."
+        },
+        "errors": {
+          "name": "Escribe el nombre",
+          "price": "Pon el precio",
+          "generic": "No se pudo crear el producto. Inténtalo de nuevo."
+        },
+        "cancel": "Cancelar",
+        "createAndAdd": "Crear y agregar",
+        "createAndAddPrice": "Crear y agregar · {price}"
+      }
     }
   },
   "products": {
@@ -297,7 +345,8 @@
     "deleteConfirmTitle": "¿Eliminar Producto?",
     "deleteConfirmDesc": "Este producto se ocultará de las ventas, pero el historial de compras y ventas se conservará.",
     "deleteConfirm": "Eliminar",
-    "deleting": "Eliminando..."
+    "deleting": "Eliminando...",
+    "takeInventory": "Hacer inventario"
   },
   "purchases": {
     "wizard": {
@@ -325,7 +374,8 @@
         "newProductPrice": "Los productos nuevos necesitan precio de venta",
         "choosePayment": "Elige cómo lo pagaste",
         "partialAmount": "Indica cuánto pagaste (menos que el total)",
-        "taxAmount": "Indica el monto del impuesto"
+        "taxAmount": "Indica el monto del impuesto",
+        "cashboxSource": "Indica de dónde salió el dinero"
       },
       "submitError": "No se pudo registrar la compra. Inténtalo de nuevo.",
       "resume": {
@@ -480,7 +530,12 @@
         "hasTax": "La factura trae impuestos aparte",
         "tax": "Monto de impuestos",
         "notes": "Nota",
-        "optional": "opcional"
+        "optional": "opcional",
+        "cashboxQuestion": "La compra es del {date}. ¿De dónde salió el dinero?",
+        "fromToday": "De la caja de hoy",
+        "fromTodayHint": "Se registra como salida en la caja abierta ahora.",
+        "paidBackThen": "Ya se pagó ese día",
+        "paidBackThenHint": "Queda pagada, pero la caja de hoy no se toca (ese cierre ya está hecho)."
       },
       "review": {
         "title": "¿Está todo bien?",
@@ -511,7 +566,9 @@
         "stockChanges": "Stock que se suma",
         "paymentTitle": "Pago",
         "paidAll": "Pagado todo con {method}",
-        "paidPartial": "Pagado {amount} con {method}"
+        "paidPartial": "Pagado {amount} con {method}",
+        "paidBackThen": "Pagada el {date} · la caja no se modifica",
+        "fromCashboxToday": "Saldrán {amount} de la caja de hoy"
       }
     },
     "title": "Compras",
@@ -537,7 +594,8 @@
       "paymentStatus": "Estado de Pago",
       "status": "Estado",
       "actions": "Acciones",
-      "view": "Ver"
+      "view": "Ver",
+      "owed": "Falta"
     },
     "paymentMethod": {
       "cash": "Efectivo",
@@ -647,6 +705,81 @@
       "noSupplier": "Sin proveedor",
       "noReference": "—",
       "linked": "Vinculado al catálogo"
+    },
+    "payments": {
+      "title": "Pagos",
+      "paidOf": "Pagado {paid} de {total}",
+      "missing": "Falta {amount}",
+      "register": "Registrar pago",
+      "none": "Todavía no hay pagos registrados.",
+      "inCashbox": "En caja",
+      "outsideCashbox": "Fuera de caja",
+      "delete": "Eliminar pago",
+      "confirmDelete": "¿Eliminar este pago? Si salió de la caja, se devolverá a la caja abierta.",
+      "dialogTitle": "Registrar pago",
+      "owed": "Debes {amount}",
+      "close": "Cerrar",
+      "amount": "Monto",
+      "allOwed": "Todo lo que falta {amount}",
+      "half": "Mitad",
+      "date": "Fecha del pago",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "sourceQuestion": "¿El dinero salió de la caja de hoy?",
+      "willOwe": "Quedará debiendo {amount}",
+      "willBePaid": "Quedará pagada",
+      "cashboxImpact": "Saldrán {amount} de la caja de hoy",
+      "noCashboxImpact": "La caja no se modifica",
+      "cancel": "Cancelar",
+      "confirm": "Registrar pago",
+      "payablesTitle": "Por pagar",
+      "backToPurchases": "Volver a compras",
+      "youOwe": "Debes {amount} a {count, plural, one {# proveedor} other {# proveedores}}",
+      "seePayables": "Ver qué facturas faltan pagar",
+      "nothingOwed": "No debes nada a tus proveedores.",
+      "allPaid": "¡Todo pagado! No hay facturas pendientes.",
+      "noSupplier": "Sin proveedor",
+      "owesTotal": "Debes",
+      "daysAgo": "{days, plural, =0 {hoy} one {hace # día} other {hace # días}}",
+      "pay": "Pagar",
+      "errors": {
+        "tooMuch": "No puede ser más de lo que falta ({remaining})",
+        "amount": "Ingresa un monto mayor a 0",
+        "source": "Indica de dónde salió el dinero",
+        "payment_exceeds_remaining": "El pago supera lo que falta pagar.",
+        "payment_date_in_future": "La fecha del pago no puede ser futura.",
+        "purchase_cancelled": "La compra está anulada.",
+        "generic": "No se pudo registrar el pago. Inténtalo de nuevo."
+      },
+      "writtenOff": "Saldo anulado",
+      "void": {
+        "button": "Anular",
+        "title": "Anular deuda",
+        "owed": "Debes {amount}",
+        "close": "Cerrar",
+        "question": "¿Qué pasó?",
+        "writeOff": {
+          "label": "Ya no se debe",
+          "hint": "El proveedor perdonó el saldo o el monto estaba mal. La compra y el stock quedan; solo se borran los {amount} que faltan."
+        },
+        "cancelPurchase": {
+          "label": "Anular la compra entera",
+          "hint": "La mercadería no llegó o se registró por error. Se quita del stock y se devuelven a la caja los pagos de hoy."
+        },
+        "reason": "Motivo",
+        "reasonPlaceholder": "Ej.: el proveedor hizo un descuento",
+        "errors": {
+          "choose": "Elige qué pasó",
+          "reason": "Escribe el motivo",
+          "generic": "No se pudo anular. Inténtalo de nuevo."
+        },
+        "stockWarning": "Parte de esta compra ya se vendió. Si continúas, estos productos quedarán en 0:",
+        "stockLine": "stock actual {stock}, comprado {quantity}",
+        "keep": "Volver",
+        "confirm": "Anular",
+        "forceConfirm": "Anular igual",
+        "optional": "opcional"
+      }
     }
   },
   "addItem": {
@@ -1050,7 +1183,9 @@
       "credit_sale": "Venta a Crédito",
       "owner_withdrawal": "Retiro del Dueño",
       "sale_cancel": "Venta anulada",
-      "purchase_cancel": "Compra anulada"
+      "purchase_cancel": "Compra anulada",
+      "supplier_payment": "Pago a proveedor",
+      "supplier_payment_cancel": "Pago a proveedor anulado"
     },
     "txDescription": {
       "paymentFrom": "Pago de {name}"
@@ -1098,8 +1233,8 @@
     "reasonPlaceholder": "ej. producto equivocado, carga duplicada…",
     "confirm": "Confirmar anulación",
     "keep": "No anular",
-    "negativeStockTitle": "Algunos productos quedarían con stock negativo",
-    "negativeStockDescription": "Parte de esta compra ya fue vendida. Si continúas, estos productos quedarán con stock negativo:",
+    "negativeStockTitle": "Algunos productos quedarán sin stock",
+    "negativeStockDescription": "Parte de esta compra ya fue vendida. Si continúas, estos productos quedarán en 0:",
     "negativeStockLine": "stock actual {stock}, comprado {quantity}",
     "forceConfirm": "Anular de todos modos",
     "alreadyCancelled": "Este registro ya estaba anulado.",
@@ -1253,7 +1388,8 @@
     "statistics": "Estadísticas",
     "cashbox": "Caja",
     "chat": "Asistente",
-    "team": "Equipo"
+    "team": "Equipo",
+    "inventory": "Inventario"
   },
   "account": {
     "roles": {
@@ -1421,6 +1557,109 @@
         "sale_cancelled": "Venta anulada",
         "purchase_cancelled": "Compra anulada"
       }
+    }
+  },
+  "inventory": {
+    "start": {
+      "title": "Hacer inventario",
+      "subtitle": "Cuenta lo que hay en los estantes y corrige el stock en un solo paso.",
+      "resume": "Tienes un conteo sin terminar: {count, plural, one {# producto contado} other {# productos contados}} ({scope}).",
+      "resumeButton": "Continuar conteo",
+      "discard": "Descartar",
+      "question": "¿Qué vas a contar?",
+      "everything": "Todo el inventario",
+      "products": "{count, plural, one {# producto} other {# productos}}",
+      "orCategory": "O una categoría"
+},
+    "history": {
+      "title": "Inventarios anteriores",
+      "none": "Todavía no hiciste ningún inventario.",
+      "changes": "{changed} cambios de {counted} contados"
+    },
+    "count": {
+      "progress": "{counted} de {total} contados",
+      "changeScope": "Cambiar qué contar",
+      "searchPlaceholder": "Escanea o busca un producto…",
+      "notFound": "No encontramos «{code}»",
+      "hint": "Escanea: cada escaneo suma 1. Para kg o litros, escribe la cantidad y Enter.",
+      "filter": {
+        "pending": "Por contar",
+        "counted": "Contados",
+        "differences": "Con diferencias"
+      },
+      "noResults": "Ningún producto coincide con la búsqueda.",
+      "empty": {
+        "pending": "¡Contaste todo! Revisa y aplica.",
+        "counted": "Todavía no contaste nada.",
+        "differences": "Sin diferencias por ahora."
+      },
+      "showMore": "Mostrar {count} más",
+      "footer": "{counted} contados · {differences} con diferencias",
+      "review": "Revisar",
+      "unit": {
+        "unit": "u.",
+        "gram": "kg",
+        "liter": "L",
+        "pack": "paq."
+      },
+      "countedPlaceholder": "Contado",
+      "countedFor": "Cantidad contada de {name}",
+      "columns": {
+        "product": "Producto",
+        "system": "En sistema",
+        "counted": "Contado",
+        "difference": "Diferencia"
+      },
+      "sameAsSystem": "Igual al sistema",
+      "discard": "Quitar {name} del conteo",
+      "save": "Guardar",
+      "unsavedDifference": "Sin guardar: Enter o ✓ para guardar"
+    },
+    "review": {
+      "backToCount": "Volver a contar",
+      "title": "Revisar inventario",
+      "subtitle": "{counted, plural, one {# producto contado} other {# productos contados}}. Solo cambia lo que tiene diferencias.",
+      "changes": "Cambios",
+      "value": "Diferencia a precio de venta",
+      "missingGoods": "Falta mercadería",
+      "extraGoods": "Hay más mercadería de la registrada",
+      "noValueChange": "Todo coincide",
+      "noChanges": "Todo lo que contaste coincide con el sistema.",
+      "zeroUncounted": "Poner en 0 los {count, plural, one {# producto no contado} other {# productos no contados}}",
+      "zeroUncountedHint": "Úsalo solo si contaste todo y lo que no aparece ya no está. Si no, quedan como están.",
+      "notes": "Notas",
+      "optional": "opcional",
+      "apply": "Aplicar inventario",
+      "errors": {
+        "generic": "No se pudo aplicar el inventario. Tu conteo sigue guardado; inténtalo de nuevo."
+      },
+      "show": {
+        "differences": "Con diferencias ({count})",
+        "all": "Todos los contados ({count})"
+      },
+      "nothingCounted": "No quedan productos contados.",
+      "undoDiscard": "Deshacer",
+      "searchPlaceholder": "Buscar en el conteo…",
+      "clearSearch": "Limpiar búsqueda",
+      "noMatches": "Ningún producto contado coincide con la búsqueda.",
+      "pageRange": "{from}–{to} de {total}",
+      "previousPage": "Página anterior",
+      "nextPage": "Página siguiente",
+      "footer": "{counted} contados · {changes} cambios"
+    },
+    "done": {
+      "title": "Inventario aplicado",
+      "summary": "{counted} productos contados, {changed} con el stock corregido.",
+      "seeDetail": "Ver detalle",
+      "newCount": "Nuevo inventario"
+    },
+    "detail": {
+      "back": "Volver a inventario",
+      "product": "Producto",
+      "counted": "Contado",
+      "before": "Antes",
+      "after": "Después",
+      "difference": "Diferencia"
     }
   }
 }

@@ -1,4 +1,5 @@
-import { draftWarnings, findSimilarProduct, firstBlockedStep, stepBlockers } from "@/lib/purchases/checks";
+import { formatDateInputValue, toDateInputValue } from "@/lib/dates";
+import { draftWarnings, findSimilarProduct, firstBlockedStep, needsCashboxQuestion, stepBlockers } from "@/lib/purchases/checks";
 import {
   draftReducer,
   emptyDraft,
@@ -30,8 +31,9 @@ function product(over: Partial<PurchasingProduct> = {}): PurchasingProduct {
 
 const catalog = [product(), product({ id: "p2", name: "Queso Paraguay", unit_type: "gram", price: "80000", last_unit_cost: "60000" })];
 
+// Dated today unless a test says otherwise, so the past-date cashbox question stays out of the way
 function withLines(...lines: ReturnType<typeof lineFromProduct>[]): PurchaseDraft {
-  return lines.reduce((d, line) => draftReducer(d, { type: "addLine", line }), emptyDraft("2026-10-11"));
+  return lines.reduce((d, line) => draftReducer(d, { type: "addLine", line }), emptyDraft(toDateInputValue()));
 }
 
 describe("lines", () => {
@@ -155,5 +157,44 @@ describe("payload", () => {
     expect(body.items[0].sell_price).toBeUndefined();
     expect(body.items[0].overwrite_previous_value).toBe(false);
     expect(body.paid_amount).toBe(8500);
+  });
+});
+
+describe("past-dated purchases and the cashbox", () => {
+  const today = "2026-10-11";
+  function dated(date: string, patch: Partial<PurchaseDraft["payment"]>): PurchaseDraft {
+    const draft = { ...withLines(lineFromProduct(product(), { quantity: 10 })), date };
+    return draftReducer(draft, { type: "setPayment", patch });
+  }
+
+  it("asks only when something is paid now and the date isn't today", () => {
+    expect(needsCashboxQuestion(dated(today, { kind: "paid" }), today)).toBe(false);
+    expect(needsCashboxQuestion(dated("2026-10-05", { kind: "later" }), today)).toBe(false);
+    expect(needsCashboxQuestion(dated("2026-10-05", { kind: "paid" }), today)).toBe(true);
+    expect(needsCashboxQuestion(dated("2026-10-05", { kind: "partial", paidAmount: 1000 }), today)).toBe(true);
+  });
+
+  it("blocks the payment step until the source is chosen", () => {
+    const draft = dated("2000-01-01", { kind: "paid", method: "cash" });
+    expect(stepBlockers(draft, "payment")).toEqual(["cashboxSource"]);
+    expect(stepBlockers(draftReducer(draft, { type: "setPayment", patch: { fromCashboxToday: false } }), "payment")).toEqual([]);
+  });
+
+  it("forgets the answer when switching to pay later", () => {
+    let draft = dated("2000-01-01", { kind: "paid", fromCashboxToday: true });
+    draft = draftReducer(draft, { type: "setPayment", patch: { kind: "later" } });
+    expect(draft.payment.fromCashboxToday).toBeNull();
+  });
+
+  it("sends whether the payment touches today's cashbox", () => {
+    const now = new Date(2026, 9, 11, 10);
+    expect(toPurchaseCreate(dated(today, { kind: "paid" }), now).payment_affects_cashbox).toBe(true);
+    expect(toPurchaseCreate(dated("2026-10-05", { kind: "paid", fromCashboxToday: true }), now).payment_affects_cashbox).toBe(true);
+    expect(toPurchaseCreate(dated("2026-10-05", { kind: "paid", fromCashboxToday: false }), now).payment_affects_cashbox).toBe(false);
+    expect(toPurchaseCreate(dated("2026-10-05", { kind: "later" }), now).payment_affects_cashbox).toBeUndefined();
+  });
+
+  it("formats picked days without timezone shifts", () => {
+    expect(formatDateInputValue("2026-10-05", "es-PY")).toBe("05/10/2026");
   });
 });

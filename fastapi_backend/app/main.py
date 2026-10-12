@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .utils import simple_generate_unique_route_id
 from app.routes.items import router as items_router
 from app.routes.sales import router as sales_router
+from app.routes.inventory import router as inventory_router
 from app.routes.purchases import router as purchases_router
 from app.routes.customers import router as customers_router
 from app.routes.cashbox import router as cashbox_router
@@ -87,6 +88,7 @@ app.include_router(business_router, prefix="/business")
 app.include_router(admin_router, prefix="/admin")
 app.include_router(pos_router, prefix="/pos")
 app.include_router(purchasing_router, prefix="/purchasing")
+app.include_router(inventory_router, prefix="/inventory")
 add_pagination(app)
 
 # Expose only the store operations the chat assistant needs (no auth/users/chat routes)

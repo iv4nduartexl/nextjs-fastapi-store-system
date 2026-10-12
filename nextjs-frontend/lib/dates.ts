@@ -21,3 +21,9 @@ export function dateInputToIso(value: string, now: Date = new Date()): string | 
   const [, y, m, d] = match;
   return new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0).toISOString();
 }
+
+/** "2026-10-05" → "05/10/2026" in the given locale, without timezone shifts. */
+export function formatDateInputValue(value: string, locale: string): string {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
+}

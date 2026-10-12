@@ -49,7 +49,8 @@ class ItemBase(BaseModel):
 
 
 class ItemCreate(ItemBase):
-    pass
+    # Where it was created from, for the audit log (e.g. "pos" when created while selling)
+    source: Literal["pos", "products", "purchase"] | None = None
 
 
 class ItemRead(ItemBase):
@@ -356,6 +357,11 @@ class PurchaseCreate(BaseModel):
     invoice_total: Decimal | None = Field(
         None, ge=0, description="Total printed on the supplier's invoice, kept to check the lines against it"
     )
+    payment_affects_cashbox: bool | None = Field(
+        None,
+        description="Whether the money paid now leaves today's open cashbox. Defaults to true only when the "
+        "purchase is dated today (a past day's cashbox was already counted)",
+    )
     items: list[PurchaseItemCreate]
 
 
@@ -369,6 +375,29 @@ class PurchaseItemRead(BaseModel):
     subtotal: Decimal
 
     model_config = {"from_attributes": True}
+
+
+class SupplierPaymentRead(BaseModel):
+    id: UUID
+    amount: Decimal
+    method: str
+    paid_at: datetime
+    affects_cashbox: bool
+    notes: str | None = None
+    user_name: str | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SupplierPaymentCreate(BaseModel):
+    amount: Decimal = Field(gt=0, description="Amount paid now towards this purchase")
+    method: Literal["cash", "card", "transfer"] = "cash"
+    paid_at: datetime | None = Field(None, description="When the money left; defaults to now")
+    affects_cashbox: bool | None = Field(
+        None, description="Record it in today's open cashbox; defaults to true when paid today"
+    )
+    notes: str | None = Field(None, max_length=300)
 
 
 class PurchaseRead(BaseModel):
@@ -388,12 +417,17 @@ class PurchaseRead(BaseModel):
     cancel_reason: str | None = None
     paid_amount: Decimal | None = None
     invoice_total: Decimal | None = None
+    payments: list[SupplierPaymentRead] = []
     user_id: UUID | None = None
     user_name: str | None = None
     cancelled_by_name: str | None = None
     purchase_items: list[PurchaseItemRead]
 
     model_config = {"from_attributes": True}
+
+
+class SupplierDebtWriteOff(BaseModel):
+    reason: str | None = Field(None, max_length=500, description="Why the remaining balance is no longer owed")
 
 
 class PurchaseCancelRequest(BaseModel):
@@ -939,3 +973,73 @@ class AuditLogPage(BaseModel):
     total: int
     page: int
     size: int
+
+
+class PayableInvoice(BaseModel):
+    id: UUID
+    purchase_date: datetime
+    reference_number: str | None
+    total_cost: Decimal
+    paid_amount: Decimal
+    remaining: Decimal
+
+
+class SupplierPayables(BaseModel):
+    supplier_id: UUID | None
+    supplier_name: str | None
+    total_owed: Decimal
+    oldest_date: datetime
+    invoices: list[PayableInvoice]
+
+
+class PayablesSummary(BaseModel):
+    total_owed: Decimal
+    supplier_count: int
+    suppliers: list[SupplierPayables]
+
+
+# --- Inventory counts ---
+
+
+class InventoryCountLineIn(BaseModel):
+    item_id: UUID
+    # Grams for weighed products, like stock everywhere else
+    counted: Decimal = Field(ge=0)
+    # System stock the user saw when counting it (sales made afterwards are kept)
+    expected: Decimal
+
+
+class InventoryCountCreate(BaseModel):
+    category: str | None = None
+    notes: str | None = None
+    lines: list[InventoryCountLineIn] = Field(min_length=1, max_length=10000)
+    # Products in scope that were not counted are set to 0 (otherwise they stay as they are)
+    zero_uncounted: bool = False
+
+
+class InventoryCountLineRead(BaseModel):
+    item_id: UUID | None
+    item_name: str
+    unit_type: UnitType
+    expected: Decimal
+    counted: Decimal
+    previous_stock: Decimal
+    new_stock: Decimal
+
+    model_config = {"from_attributes": True}
+
+
+class InventoryCountSummary(BaseModel):
+    id: UUID
+    category: str | None
+    notes: str | None
+    lines_counted: int
+    lines_changed: int
+    applied_at: datetime
+    user_name: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class InventoryCountRead(InventoryCountSummary):
+    lines: list[InventoryCountLineRead] = []

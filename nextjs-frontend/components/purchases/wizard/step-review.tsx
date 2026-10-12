@@ -1,11 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, Package, Pencil, Sparkles, Tag } from "lucide-react";
 
 import { formatCurrency } from "@/lib/currency";
+import { formatDateInputValue } from "@/lib/dates";
 import { formatNumber } from "@/lib/format-number";
-import { draftWarnings, priceChanges, type Warning, type WizardStep } from "@/lib/purchases/checks";
+import { draftWarnings, needsCashboxQuestion, priceChanges, type Warning, type WizardStep } from "@/lib/purchases/checks";
 import { linesTotal, purchaseTotal, type DraftAction, type DraftLine, type PurchaseDraft, type PurchasingProduct } from "@/lib/purchases/draft";
 
 interface StepReviewProps {
@@ -30,6 +31,7 @@ function EditLink({ onClick, label }: { onClick: () => void; label: string }) {
 
 export function StepReview({ draft, dispatch, catalog, goTo }: StepReviewProps) {
   const t = useTranslations("purchases.wizard.review");
+  const locale = useLocale();
   const tPay = useTranslations("purchases.wizard.payment");
   const warnings = draftWarnings(draft, catalog);
   const newProducts = draft.lines.filter((l) => l.itemId == null);
@@ -217,6 +219,13 @@ export function StepReview({ draft, dispatch, catalog, goTo }: StepReviewProps) 
             </p>
             {kind === "partial" && (
               <p className="text-gray-500">{tPay("stillOwed", { amount: formatCurrency(Math.max(0, total - (paidAmount ?? 0))) })}</p>
+            )}
+            {(kind === "paid" || kind === "partial") && (
+              <p className="text-gray-500">
+                {needsCashboxQuestion(draft) && draft.payment.fromCashboxToday === false
+                  ? t("paidBackThen", { date: formatDateInputValue(draft.date, locale) })
+                  : t("fromCashboxToday", { amount: formatCurrency(kind === "paid" ? total : paidAmount ?? 0) })}
+              </p>
             )}
           </div>
           <EditLink onClick={() => goTo("payment")} label={t("edit")} />

@@ -97,7 +97,9 @@ def _purchase(item, **extra):
 
 
 async def _purchase_outflow(db_session):
-    rows = (await db_session.execute(select(CashboxTransaction).where(CashboxTransaction.type == "purchase"))).scalars().all()
+    rows = (
+        await db_session.execute(select(CashboxTransaction).where(CashboxTransaction.type == "supplier_payment"))
+    ).scalars().all()
     return sum((r.amount for r in rows), Decimal("0"))
 
 

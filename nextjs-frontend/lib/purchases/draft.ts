@@ -55,6 +55,8 @@ export interface PurchaseDraft {
     kind: PaymentKind | null;
     method: PayMethod;
     paidAmount: number | null;
+    /** Purchase dated in the past: did the money leave today's cashbox (true) or was it paid back then (false)? */
+    fromCashboxToday: boolean | null;
     hasTax: boolean;
     tax: number | null;
     notes: string;
@@ -71,7 +73,7 @@ export function emptyDraft(today: string): PurchaseDraft {
     invoiceTotal: null,
     costMode: "unit",
     lines: [],
-    payment: { kind: null, method: "cash", paidAmount: null, hasTax: false, tax: null, notes: "" },
+    payment: { kind: null, method: "cash", paidAmount: null, fromCashboxToday: null, hasTax: false, tax: null, notes: "" },
   };
 }
 
@@ -199,6 +201,7 @@ export function draftReducer(draft: PurchaseDraft, action: DraftAction): Purchas
     case "setPayment": {
       const payment = { ...draft.payment, ...action.patch };
       if (payment.kind !== "partial") payment.paidAmount = null;
+      if (payment.kind === "later") payment.fromCashboxToday = null;
       if (!payment.hasTax) payment.tax = null;
       return { ...draft, payment };
     }

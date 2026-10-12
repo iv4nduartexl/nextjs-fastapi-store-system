@@ -9,16 +9,22 @@ import {
   TrendingUp,
   ArrowRight,
   AlertTriangle,
+  HandCoins,
 } from "lucide-react";
 import { fetchCurrentSession } from "@/components/actions/cashbox-action";
+import { fetchPayables } from "@/components/actions/purchasing-action";
+import { formatCurrency } from "@/lib/currency";
+import { getMe } from "@/lib/session";
 import CashboxCloseReminder from "./CashboxCloseReminder";
 
 export default async function DashboardPage() {
-  const [t, locale, session] = await Promise.all([
+  const [t, locale, session, me] = await Promise.all([
     getTranslations("dashboard"),
     getLocale(),
     fetchCurrentSession(),
+    getMe(),
   ]);
+  const payables = me?.role === "owner" ? (await fetchPayables()).data : null;
 
   const cashboxOpen = session?.status === "open";
 
@@ -143,6 +149,30 @@ export default async function DashboardPage() {
           <ShoppingCart className="h-48 w-48 text-white" strokeWidth={1} />
         </div>
       </Link>
+
+      {/* What is owed to suppliers (owners only) */}
+      {payables && payables.supplier_count > 0 && (
+        <Link
+          href="/purchases/payables"
+          className="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 transition-all hover:border-amber-300"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <HandCoins className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+              {t("payablesTitle")}
+            </p>
+            <p className="text-lg font-bold text-gray-900 tabular-nums">
+              {formatCurrency(payables.total_owed)}
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                {t("payablesSuppliers", { count: payables.supplier_count })}
+              </span>
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      )}
 
       {/* Module grid */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">

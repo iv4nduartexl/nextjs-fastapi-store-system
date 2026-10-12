@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
+  ClipboardCheck,
   LayoutDashboard,
   MessageSquare,
   ShoppingBag,
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS: { href: string; key: string; icon: LucideIcon; ownerOnly?: boolean }[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/products", key: "products", icon: ShoppingBag },
+  { href: "/products/inventory", key: "inventory", icon: ClipboardCheck, ownerOnly: true },
   { href: "/sales", key: "sales", icon: ShoppingCart },
   { href: "/purchases", key: "purchases", icon: Truck },
   { href: "/customers", key: "customers", icon: Users },
@@ -73,7 +75,9 @@ export function AppSidebar() {
 
       <nav className="flex flex-col gap-1">
         {NAV_ITEMS.filter((item) => isOwner || !item.ownerOnly).map(({ href, key, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
+          // The most specific match wins (/products/inventory isn't also "Productos")
+          const matches = (h: string) => pathname === h || pathname.startsWith(`${h}/`);
+          const active = matches(href) && !NAV_ITEMS.some((other) => other.href.length > href.length && matches(other.href));
           return (
             <Link
               key={href}

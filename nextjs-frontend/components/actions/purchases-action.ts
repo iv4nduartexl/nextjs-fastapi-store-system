@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { apiFetch } from "@/lib/api-server";
 import { UUID } from "crypto";
 
 export type PurchaseStatus = "received" | "partial" | "cancelled";
@@ -42,6 +43,8 @@ export interface PurchaseCreate {
   paid_amount?: number;
   /** Total printed on the supplier's invoice (for checking) */
   invoice_total?: number;
+  /** Whether what's paid now leaves today's open cashbox (false = paid back on the purchase date) */
+  payment_affects_cashbox?: boolean;
   items: PurchaseItemCreate[];
 }
 
@@ -72,6 +75,7 @@ export interface PurchaseRead {
   cancel_reason?: string | null;
   paid_amount?: string | null;
   invoice_total?: string | null;
+  payments?: SupplierPaymentRead[];
   user_id?: string | null;
   /** Who registered / cancelled the purchase */
   user_name?: string | null;
@@ -91,6 +95,18 @@ export interface CancelPurchaseResult {
   error?: string;
   code?: "already_cancelled" | "negative_stock";
   items?: NegativeStockItem[];
+}
+
+export interface SupplierPaymentRead {
+  id: string;
+  amount: string;
+  /** "write_off": the balance was declared no longer owed (no money moved) */
+  method: "cash" | "card" | "transfer" | "write_off";
+  paid_at: string;
+  affects_cashbox: boolean;
+  notes: string | null;
+  user_name: string | null;
+  created_at: string;
 }
 
 export interface PurchasesPage {
@@ -214,4 +230,51 @@ export async function cancelPurchase(
   revalidatePath("/[locale]/purchases/[id]", "page");
   revalidatePath("/[locale]/cashbox", "page");
   return { data };
+}
+
+/** Pay (part of) what is still owed on a purchase. */
+export async function addSupplierPayment(
+  purchaseId: string,
+  input: { amount: number; method: "cash" | "card" | "transfer"; paid_at?: string; affects_cashbox?: boolean; notes?: string },
+): Promise<{ data?: PurchaseRead; error?: string }> {
+  const result = await apiFetch<PurchaseRead>(`/purchases/${purchaseId}/payments`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (result.data) {
+    revalidatePath("/[locale]/purchases", "page");
+    revalidatePath("/[locale]/purchases/[id]", "page");
+    revalidatePath("/[locale]/cashbox", "page");
+  }
+  return { data: result.data, error: result.error };
+}
+
+/** Undo a mistaken supplier payment (owners). */
+export async function deleteSupplierPayment(
+  purchaseId: string,
+  paymentId: string,
+): Promise<{ data?: PurchaseRead; error?: string }> {
+  const result = await apiFetch<PurchaseRead>(`/purchases/${purchaseId}/payments/${paymentId}`, { method: "DELETE" });
+  if (result.data) {
+    revalidatePath("/[locale]/purchases", "page");
+    revalidatePath("/[locale]/purchases/[id]", "page");
+    revalidatePath("/[locale]/cashbox", "page");
+  }
+  return { data: result.data, error: result.error };
+}
+
+/** The rest of a purchase is no longer owed (owners). The purchase and its stock stay. */
+export async function writeOffSupplierDebt(
+  purchaseId: string,
+  reason?: string,
+): Promise<{ data?: PurchaseRead; error?: string }> {
+  const result = await apiFetch<PurchaseRead>(`/purchases/${purchaseId}/write-off`, {
+    method: "POST",
+    body: JSON.stringify({ reason: reason ?? null }),
+  });
+  if (result.data) {
+    revalidatePath("/[locale]/purchases", "page");
+    revalidatePath("/[locale]/purchases/[id]", "page");
+  }
+  return { data: result.data, error: result.error };
 }

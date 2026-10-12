@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRightLeft, Banknote, CalendarClock, CircleDollarSign, CreditCard, Info, PieChart } from "lucide-react";
 
 import { hasOpenCashbox } from "@/components/actions/purchasing-action";
 import { NumberField } from "@/components/purchases/wizard/number-field";
 import { Link } from "@/i18n/routing";
 import { currencySymbol, formatCurrency } from "@/lib/currency";
+import { formatDateInputValue } from "@/lib/dates";
+import { needsCashboxQuestion } from "@/lib/purchases/checks";
 import { purchaseTotal, type DraftAction, type PaymentKind, type PayMethod, type PurchaseDraft } from "@/lib/purchases/draft";
 
 const KINDS: { kind: PaymentKind; icon: React.ElementType }[] = [
@@ -23,6 +25,7 @@ const METHODS: { method: PayMethod; icon: React.ElementType }[] = [
 
 export function StepPayment({ draft, dispatch }: { draft: PurchaseDraft; dispatch: (action: DraftAction) => void }) {
   const t = useTranslations("purchases.wizard.payment");
+  const locale = useLocale();
   const { kind, method, paidAmount, hasTax, tax, notes } = draft.payment;
   const total = purchaseTotal(draft);
   const paysNow = kind === "paid" ? total : kind === "partial" ? paidAmount ?? 0 : 0;
@@ -34,6 +37,9 @@ export function StepPayment({ draft, dispatch }: { draft: PurchaseDraft; dispatc
   }, []);
 
   const set = (patch: Partial<PurchaseDraft["payment"]>) => dispatch({ type: "setPayment", patch });
+  // Past-dated purchase paid now: where did the money come from?
+  const askCashbox = needsCashboxQuestion(draft);
+  const fromToday = askCashbox ? draft.payment.fromCashboxToday : true;
   const partialInvalid = kind === "partial" && touchedPaid && !(paidAmount && paidAmount > 0 && paidAmount < total);
 
   return (
@@ -99,7 +105,33 @@ export function StepPayment({ draft, dispatch }: { draft: PurchaseDraft; dispatc
               </button>
             ))}
           </div>
-          {method === "cash" && paysNow > 0 && cashboxOpen != null && (
+          {askCashbox && (
+            <div className="space-y-2 rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
+              <p className="text-sm font-semibold text-gray-900">
+                {t("cashboxQuestion", { date: formatDateInputValue(draft.date, locale) })} <span className="text-red-500">*</span>
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {([true, false] as const).map((value) => (
+                  <button
+                    key={String(value)}
+                    type="button"
+                    onClick={() => set({ fromCashboxToday: value })}
+                    className={`rounded-xl border-2 p-3 text-left transition ${
+                      draft.payment.fromCashboxToday === value
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-200 bg-white hover:border-gray-400"
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold">{t(value ? "fromToday" : "paidBackThen")}</span>
+                    <span className={`block text-xs ${draft.payment.fromCashboxToday === value ? "text-gray-300" : "text-gray-500"}`}>
+                      {t(value ? "fromTodayHint" : "paidBackThenHint")}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {method === "cash" && paysNow > 0 && cashboxOpen != null && fromToday === true && (
             <p
               className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${
                 cashboxOpen ? "bg-gray-50 text-gray-700" : "bg-amber-50 text-amber-900"

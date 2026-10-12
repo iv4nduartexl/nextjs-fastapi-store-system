@@ -127,6 +127,15 @@ import type {
   CancelPurchaseData,
   CancelPurchaseError,
   CancelPurchaseResponse,
+  AddSupplierPaymentData,
+  AddSupplierPaymentError,
+  AddSupplierPaymentResponse,
+  WriteOffSupplierDebtData,
+  WriteOffSupplierDebtError,
+  WriteOffSupplierDebtResponse,
+  DeleteSupplierPaymentData,
+  DeleteSupplierPaymentError,
+  DeleteSupplierPaymentResponse,
   ListCustomersData,
   ListCustomersError,
   ListCustomersResponse,
@@ -277,6 +286,16 @@ import type {
   UsualProductsData,
   UsualProductsError,
   UsualProductsResponse,
+  PayablesError,
+  PayablesResponse,
+  ListCountsError,
+  ListCountsResponse,
+  ApplyCountData,
+  ApplyCountError,
+  ApplyCountResponse,
+  GetCountData,
+  GetCountError,
+  GetCountResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -959,6 +978,58 @@ export const cancelPurchase = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/purchases/{purchase_id}/cancel",
+  });
+};
+
+/**
+ * Add Supplier Payment
+ * Pay (part of) what is still owed on a purchase.
+ */
+export const addSupplierPayment = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<AddSupplierPaymentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    AddSupplierPaymentResponse,
+    AddSupplierPaymentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/{purchase_id}/payments",
+  });
+};
+
+/**
+ * Write Off Supplier Debt
+ * The rest is no longer owed (supplier forgave it, wrong amount…): the purchase and its stock stay.
+ * Recorded as a non-cash entry in the payment history, so deleting it brings the debt back.
+ */
+export const writeOffSupplierDebt = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<WriteOffSupplierDebtData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    WriteOffSupplierDebtResponse,
+    WriteOffSupplierDebtError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/{purchase_id}/write-off",
+  });
+};
+
+/**
+ * Delete Supplier Payment
+ * Undo a mistaken payment: reverses its cashbox entry in today's session and reopens the debt.
+ */
+export const deleteSupplierPayment = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DeleteSupplierPaymentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    DeleteSupplierPaymentResponse,
+    DeleteSupplierPaymentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchases/{purchase_id}/payments/{payment_id}",
   });
 };
 
@@ -1827,5 +1898,72 @@ export const usualProducts = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/purchasing/suppliers/{supplier_id}/usual-products",
+  });
+};
+
+/**
+ * Payables
+ * What is still owed to suppliers: open invoices grouped by supplier, oldest first.
+ */
+export const payables = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PayablesResponse,
+    PayablesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/purchasing/payables",
+  });
+};
+
+/**
+ * List Counts
+ */
+export const listCounts = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ListCountsResponse,
+    ListCountsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/inventory/counts",
+  });
+};
+
+/**
+ * Apply Count
+ * Apply a count. Each product moves by (counted − stock seen when counting), never below 0,
+ * so sales made while counting are not lost.
+ */
+export const applyCount = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ApplyCountData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ApplyCountResponse,
+    ApplyCountError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/inventory/counts",
+  });
+};
+
+/**
+ * Get Count
+ */
+export const getCount = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetCountData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetCountResponse,
+    GetCountError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/inventory/counts/{count_id}",
   });
 };

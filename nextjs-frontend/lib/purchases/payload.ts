@@ -1,11 +1,14 @@
 // Turns a finished wizard draft into the existing POST /purchases/ request.
 import type { PurchaseCreate, SupplierCreate } from "@/components/actions/purchases-action";
-import { dateInputToIso } from "@/lib/dates";
+import { dateInputToIso, toDateInputValue } from "@/lib/dates";
 import { priceChanged, purchaseTotal, type PurchaseDraft } from "@/lib/purchases/draft";
 
 export function toPurchaseCreate(draft: PurchaseDraft, now: Date = new Date()): PurchaseCreate {
-  const { kind, method, paidAmount, hasTax, tax, notes } = draft.payment;
+  const { kind, method, paidAmount, hasTax, tax, notes, fromCashboxToday } = draft.payment;
   const total = purchaseTotal(draft);
+  const paysNow = kind === "paid" || kind === "partial";
+  // Dated today → today's cashbox. Past date → only if the user said the money left today's cashbox.
+  const affectsCashbox = paysNow ? draft.date === toDateInputValue(now) || fromCashboxToday === true : undefined;
 
   return {
     supplier: draft.supplier
@@ -20,6 +23,7 @@ export function toPurchaseCreate(draft: PurchaseDraft, now: Date = new Date()): 
     tax: hasTax ? tax ?? 0 : 0,
     notes: notes.trim() || undefined,
     invoice_total: draft.invoiceTotal ?? undefined,
+    payment_affects_cashbox: affectsCashbox,
     items: draft.lines.map((line) => {
       const isNew = line.itemId == null;
       const updatePrice = !isNew && priceChanged(line) && line.applyPriceChange;

@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
 import LocalDateSpan from "@/lib/LocalDateSpan";
 import { CancelRecordButton } from "@/components/cancel-record-button";
+import { PaymentsSection } from "@/components/purchases/payments-section";
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -163,13 +164,6 @@ export default async function PurchaseDetailPage({ params }: Props) {
               <Clock size={13} />
               {paymentStatus.label}
             </span>
-            {purchase.payment_status === "partial" && purchase.paid_amount != null && (
-              <span className="text-sm text-gray-600">
-                {t("form.paidAmountHint", {
-                  remaining: formatCurrency(parseFloat(purchase.total_cost) - parseFloat(purchase.paid_amount)),
-                })}
-              </span>
-            )}
             {purchase.status !== "cancelled" && (
               <CancelRecordButton kind="purchase" id={purchase.id} />
             )}
@@ -295,6 +289,9 @@ export default async function PurchaseDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Payments: paid / remaining, history, pay the rest */}
+      <PaymentsSection purchase={purchase} locale={locale} />
 
       {/* Items table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

@@ -240,7 +240,10 @@ async def create_sale(
 
         total += subtotal
         original_total += base_subtotal
-        item.stock = item.stock - quantity
+        # Out-of-stock products can still be sold, but stock never goes below 0;
+        # remember what was really taken so a cancellation only gives that back
+        stock_deducted = min(quantity, max(item.stock, Decimal("0")))
+        item.stock = item.stock - stock_deducted
         sale_item_objs.append(
             SaleItem(
                 item_id=item.id,
@@ -249,6 +252,7 @@ async def create_sale(
                 base_unit_price=base_unit_price,
                 unit_price=unit_price,
                 quantity=quantity,
+                stock_deducted=stock_deducted,
                 subtotal=subtotal,
                 pricing_source=pricing_source,
                 discount_rule_name=discount_rule_name,
@@ -623,9 +627,9 @@ async def cancel_sale(
 
         for sale_item in sale.sale_items:
             if sale_item.item_id and sale_item.item_id in items_map:
-                items_map[sale_item.item_id].stock = (
-                    items_map[sale_item.item_id].stock + sale_item.quantity
-                )
+                # Older sales (before the stock floor) took the full quantity
+                returned = sale_item.stock_deducted if sale_item.stock_deducted is not None else sale_item.quantity
+                items_map[sale_item.item_id].stock = items_map[sale_item.item_id].stock + returned
 
     reason = ((data.reason if data else None) or "").strip() or None
     sale.status = SaleStatus.cancelled

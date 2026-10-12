@@ -122,7 +122,9 @@
       "gram": "G",
       "liter": "L",
       "pack": "PKT"
-    }
+    },
+    "payablesTitle": "Owed to suppliers",
+    "payablesSuppliers": "{count, plural, one {to # supplier} other {to # suppliers}}"
   },
   "sales": {
     "title": "Sales",
@@ -255,7 +257,53 @@
       "applyPrice": "Apply",
       "overrideSubtotal": "Override subtotal",
       "overrideSubtotalPlaceholder": "New subtotal",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "noStockHint": "0 in stock",
+      "quickCreate": {
+        "createWithCode": "Create product",
+        "createNamed": "Create “{name}”",
+        "title": "New product",
+        "subtitle": "It's created and added to the sale",
+        "close": "Close",
+        "codeExists": "Code {code} already belongs to “{name}”.",
+        "addExisting": "Add “{name}”",
+        "name": "Name",
+        "namePlaceholder": "E.g. María cookies 200g",
+        "similar": "Is it “{name}”?",
+        "useThis": "Use that one",
+        "unit": "Sold by",
+        "units": {
+          "unit": "Unit",
+          "gram": "Kg",
+          "liter": "Liter",
+          "pack": "Pack"
+        },
+        "priceLabel": {
+          "unit": "Price per unit",
+          "gram": "Price per kg",
+          "liter": "Price per liter",
+          "pack": "Price per pack"
+        },
+        "code": "Barcode",
+        "optional": "optional",
+        "moreOptions": "More options",
+        "category": "Category",
+        "stock": "How many do you have?",
+        "stockUnit": {
+          "unit": "u.",
+          "gram": "kg",
+          "liter": "L",
+          "pack": "pk."
+        },
+        "errors": {
+          "name": "Enter the name",
+          "price": "Enter the price",
+          "generic": "Couldn't create the product. Try again."
+        },
+        "cancel": "Cancel",
+        "createAndAdd": "Create and add",
+        "createAndAddPrice": "Create and add · {price}"
+      }
     }
   },
   "products": {
@@ -297,7 +345,8 @@
     "deleteConfirmTitle": "Delete Product?",
     "deleteConfirmDesc": "This product will be hidden from sales but purchase and sale history will be preserved.",
     "deleteConfirm": "Delete",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "takeInventory": "Take inventory"
   },
   "purchases": {
     "wizard": {
@@ -325,7 +374,8 @@
         "newProductPrice": "New products need a sell price",
         "choosePayment": "Choose how you paid",
         "partialAmount": "Enter how much you paid (less than the total)",
-        "taxAmount": "Enter the tax amount"
+        "taxAmount": "Enter the tax amount",
+        "cashboxSource": "Say where the money came from"
       },
       "submitError": "Couldn't register the purchase. Please try again.",
       "resume": {
@@ -480,7 +530,12 @@
         "hasTax": "The invoice shows tax separately",
         "tax": "Tax amount",
         "notes": "Note",
-        "optional": "optional"
+        "optional": "optional",
+        "cashboxQuestion": "This purchase is from {date}. Where did the money come from?",
+        "fromToday": "From today's cashbox",
+        "fromTodayHint": "Recorded as an outflow in the cashbox open now.",
+        "paidBackThen": "It was paid that day",
+        "paidBackThenHint": "Marked as paid, but today's cashbox isn't touched (that day is already closed)."
       },
       "review": {
         "title": "Is everything right?",
@@ -511,7 +566,9 @@
         "stockChanges": "Stock that will be added",
         "paymentTitle": "Payment",
         "paidAll": "Paid in full by {method}",
-        "paidPartial": "Paid {amount} by {method}"
+        "paidPartial": "Paid {amount} by {method}",
+        "paidBackThen": "Paid on {date} · the cashbox isn't changed",
+        "fromCashboxToday": "{amount} will leave today's cashbox"
       }
     },
     "title": "Purchases",
@@ -537,7 +594,8 @@
       "paymentStatus": "Payment Status",
       "status": "Status",
       "actions": "Actions",
-      "view": "View"
+      "view": "View",
+      "owed": "Owed"
     },
     "paymentMethod": {
       "cash": "Cash",
@@ -647,6 +705,81 @@
       "noSupplier": "No supplier",
       "noReference": "—",
       "linked": "Linked to catalog"
+    },
+    "payments": {
+      "title": "Payments",
+      "paidOf": "Paid {paid} of {total}",
+      "missing": "{amount} owed",
+      "register": "Record payment",
+      "none": "No payments recorded yet.",
+      "inCashbox": "In cashbox",
+      "outsideCashbox": "Outside cashbox",
+      "delete": "Delete payment",
+      "confirmDelete": "Delete this payment? If it came from the cashbox, it will be returned to the open cashbox.",
+      "dialogTitle": "Record payment",
+      "owed": "You owe {amount}",
+      "close": "Close",
+      "amount": "Amount",
+      "allOwed": "Everything owed {amount}",
+      "half": "Half",
+      "date": "Payment date",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "sourceQuestion": "Did the money come from today's cashbox?",
+      "willOwe": "{amount} will still be owed",
+      "willBePaid": "It will be fully paid",
+      "cashboxImpact": "{amount} will leave today's cashbox",
+      "noCashboxImpact": "The cashbox isn't changed",
+      "cancel": "Cancel",
+      "confirm": "Record payment",
+      "payablesTitle": "To pay",
+      "backToPurchases": "Back to purchases",
+      "youOwe": "You owe {amount} to {count, plural, one {# supplier} other {# suppliers}}",
+      "seePayables": "See which invoices are still unpaid",
+      "nothingOwed": "You don't owe your suppliers anything.",
+      "allPaid": "All paid! No pending invoices.",
+      "noSupplier": "No supplier",
+      "owesTotal": "You owe",
+      "daysAgo": "{days, plural, =0 {today} one {# day ago} other {# days ago}}",
+      "pay": "Pay",
+      "errors": {
+        "tooMuch": "It can't be more than what's owed ({remaining})",
+        "amount": "Enter an amount greater than 0",
+        "source": "Say where the money came from",
+        "payment_exceeds_remaining": "The payment is more than what's owed.",
+        "payment_date_in_future": "The payment date can't be in the future.",
+        "purchase_cancelled": "This purchase is cancelled.",
+        "generic": "Couldn't record the payment. Try again."
+      },
+      "writtenOff": "Balance written off",
+      "void": {
+        "button": "Void",
+        "title": "Void debt",
+        "owed": "You owe {amount}",
+        "close": "Close",
+        "question": "What happened?",
+        "writeOff": {
+          "label": "It's no longer owed",
+          "hint": "The supplier forgave the balance or the amount was wrong. The purchase and stock stay; only the {amount} owed is removed."
+        },
+        "cancelPurchase": {
+          "label": "Cancel the whole purchase",
+          "hint": "The goods never arrived or it was registered by mistake. Stock is taken out and today's payments go back to the cashbox."
+        },
+        "reason": "Reason",
+        "reasonPlaceholder": "E.g. the supplier gave a discount",
+        "errors": {
+          "choose": "Choose what happened",
+          "reason": "Write the reason",
+          "generic": "Couldn't void it. Try again."
+        },
+        "stockWarning": "Part of this purchase was already sold. If you continue, these products will be left at 0:",
+        "stockLine": "current stock {stock}, purchased {quantity}",
+        "keep": "Back",
+        "confirm": "Void",
+        "forceConfirm": "Void anyway",
+        "optional": "optional"
+      }
     }
   },
   "addItem": {
@@ -1050,7 +1183,9 @@
       "credit_sale": "Credit Sale",
       "owner_withdrawal": "Owner Withdrawal",
       "sale_cancel": "Sale cancelled",
-      "purchase_cancel": "Purchase cancelled"
+      "purchase_cancel": "Purchase cancelled",
+      "supplier_payment": "Supplier payment",
+      "supplier_payment_cancel": "Supplier payment cancelled"
     },
     "txDescription": {
       "paymentFrom": "Payment from {name}"
@@ -1098,8 +1233,8 @@
     "reasonPlaceholder": "e.g. wrong product, duplicated entry…",
     "confirm": "Confirm cancellation",
     "keep": "Keep it",
-    "negativeStockTitle": "Some products would end up with negative stock",
-    "negativeStockDescription": "Part of this purchase has already been sold. If you continue, these products will have negative stock:",
+    "negativeStockTitle": "Some products will run out of stock",
+    "negativeStockDescription": "Part of this purchase has already been sold. If you continue, these products will be left at 0:",
     "negativeStockLine": "current stock {stock}, purchased {quantity}",
     "forceConfirm": "Cancel anyway",
     "alreadyCancelled": "This record was already cancelled.",
@@ -1253,7 +1388,8 @@
     "statistics": "Statistics",
     "cashbox": "Cash box",
     "chat": "Assistant",
-    "team": "Team"
+    "team": "Team",
+    "inventory": "Inventory"
   },
   "account": {
     "roles": {
@@ -1421,6 +1557,109 @@
         "sale_cancelled": "Sale cancelled",
         "purchase_cancelled": "Purchase cancelled"
       }
+    }
+  },
+  "inventory": {
+    "start": {
+      "title": "Take inventory",
+      "subtitle": "Count what's on the shelves and fix the stock in one step.",
+      "resume": "You have an unfinished count: {count, plural, one {# product counted} other {# products counted}} ({scope}).",
+      "resumeButton": "Continue count",
+      "discard": "Discard",
+      "question": "What are you counting?",
+      "everything": "All inventory",
+      "products": "{count, plural, one {# product} other {# products}}",
+      "orCategory": "Or one category"
+},
+    "history": {
+      "title": "Previous counts",
+      "none": "You haven't taken inventory yet.",
+      "changes": "{changed} changes of {counted} counted"
+    },
+    "count": {
+      "progress": "{counted} of {total} counted",
+      "changeScope": "Change what to count",
+      "searchPlaceholder": "Scan or search a product…",
+      "notFound": "We couldn't find “{code}”",
+      "hint": "Scan: each scan adds 1. For kg or liters, type the amount and press Enter.",
+      "filter": {
+        "pending": "To count",
+        "counted": "Counted",
+        "differences": "With differences"
+      },
+      "noResults": "No product matches the search.",
+      "empty": {
+        "pending": "You counted everything! Review and apply.",
+        "counted": "Nothing counted yet.",
+        "differences": "No differences so far."
+      },
+      "showMore": "Show {count} more",
+      "footer": "{counted} counted · {differences} with differences",
+      "review": "Review",
+      "unit": {
+        "unit": "u.",
+        "gram": "kg",
+        "liter": "L",
+        "pack": "pk."
+      },
+      "countedPlaceholder": "Counted",
+      "countedFor": "Counted amount of {name}",
+      "columns": {
+        "product": "Product",
+        "system": "In system",
+        "counted": "Counted",
+        "difference": "Difference"
+      },
+      "sameAsSystem": "Same as system",
+      "discard": "Remove {name} from the count",
+      "save": "Save",
+      "unsavedDifference": "Not saved: press Enter or ✓ to save"
+    },
+    "review": {
+      "backToCount": "Back to counting",
+      "title": "Review inventory",
+      "subtitle": "{counted, plural, one {# product counted} other {# products counted}}. Only products with differences change.",
+      "changes": "Changes",
+      "value": "Difference at sale price",
+      "missingGoods": "Goods are missing",
+      "extraGoods": "There are more goods than recorded",
+      "noValueChange": "Everything matches",
+      "noChanges": "Everything you counted matches the system.",
+      "zeroUncounted": "Set the {count, plural, one {# uncounted product} other {# uncounted products}} to 0",
+      "zeroUncountedHint": "Only if you counted everything and what's missing is really gone. Otherwise they stay as they are.",
+      "notes": "Notes",
+      "optional": "optional",
+      "apply": "Apply inventory",
+      "errors": {
+        "generic": "Couldn't apply the inventory. Your count is still saved; try again."
+      },
+      "show": {
+        "differences": "With differences ({count})",
+        "all": "All counted ({count})"
+      },
+      "nothingCounted": "No counted products left.",
+      "undoDiscard": "Undo",
+      "searchPlaceholder": "Search the count…",
+      "clearSearch": "Clear search",
+      "noMatches": "No counted product matches the search.",
+      "pageRange": "{from}–{to} of {total}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "footer": "{counted} counted · {changes} changes"
+    },
+    "done": {
+      "title": "Inventory applied",
+      "summary": "{counted} products counted, {changed} with corrected stock.",
+      "seeDetail": "See detail",
+      "newCount": "New count"
+    },
+    "detail": {
+      "back": "Back to inventory",
+      "product": "Product",
+      "counted": "Counted",
+      "before": "Before",
+      "after": "After",
+      "difference": "Difference"
     }
   }
 }

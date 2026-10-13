@@ -30,7 +30,7 @@ export interface SaleRead {
   created_at: string;
   total: string;
   status: "completed" | "cancelled" | "refunded";
-  payment_method: "cash" | "card" | "other" | "credit";
+  payment_method: "cash" | "card" | "other" | "credit" | "internal";
   amount_tendered: string | null;
   change_given: string | null;
   notes: string | null;
@@ -63,7 +63,8 @@ const API = process.env.API_BASE_URL;
 
 export async function createSale(input: {
   items: SaleItemCreate[];
-  payment_method: "cash" | "card" | "other" | "credit" | "internal";
+  /** "card" also covers transfers; "other" only exists on old sales */
+  payment_method: "cash" | "card" | "credit" | "internal";
   amount_tendered?: number;
   notes?: string;
   customer_id?: string;

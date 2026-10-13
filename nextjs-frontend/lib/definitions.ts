@@ -34,35 +34,3 @@ export const loginSchema = z.object({
 
 export const unitTypes = ["unit", "gram", "liter", "pack"] as const;
 export type UnitType = (typeof unitTypes)[number];
-
-export const itemSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  description: z.string().optional(),
-  sku: z.string().optional(),
-  category: z.string().optional(),
-  unit_type: z.enum(unitTypes, { message: "Invalid unit type" }),
-  stock: z
-    .string()
-    .min(1, { message: "Stock is required" })
-    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-      message: "Stock must be a non-negative number",
-    }),
-  min_stock: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
-      {
-        message: "Min stock must be a non-negative number",
-      },
-    ),
-  price: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
-      {
-        message: "Price must be a non-negative number",
-      },
-    ),
-});

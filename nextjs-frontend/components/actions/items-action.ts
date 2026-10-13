@@ -1,10 +1,9 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { readItem, deleteItem, createItem } from "@/app/clientService";
+import { readItem, deleteItem } from "@/app/clientService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { itemSchema } from "@/lib/definitions";
 import { ItemUpdate } from "@/app/openapi-client";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://backend:8000";
@@ -228,67 +227,4 @@ export async function deleteDiscountRule(
 
   revalidatePath("/[locale]/products", "page");
   return {};
-}
-
-export async function addItem(prevState: {}, formData: FormData) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
-
-  if (!token) {
-    return { message: "No access token found" };
-  }
-
-  const validatedFields = itemSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description") || undefined,
-    sku: formData.get("sku") || undefined,
-    category: formData.get("category") || undefined,
-    unit_type: formData.get("unit_type"),
-    stock: formData.get("stock"),
-    min_stock: formData.get("min_stock") || undefined,
-    price: formData.get("price") || undefined,
-  });
-
-  if (!validatedFields.success) {
-    return { errors: validatedFields.error.flatten().fieldErrors };
-  }
-
-  const {
-    name,
-    description,
-    sku,
-    category,
-    unit_type,
-    stock,
-    min_stock,
-    price,
-  } = validatedFields.data;
-
-  const input = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: {
-      name,
-      description,
-      sku,
-      category,
-      unit_type: unit_type as import("@/app/openapi-client").UnitType,
-      stock: parseFloat(stock),
-      min_stock: min_stock ? parseFloat(min_stock) : undefined,
-      price: price ? parseFloat(price) : undefined,
-    },
-  };
-  const { error } = await createItem(input);
-  if (error) {
-    const detail = (error as { detail?: unknown }).detail;
-    return {
-      success: false,
-      message:
-        typeof detail === "string"
-          ? detail
-          : (JSON.stringify(detail) ?? "Unknown error"),
-    };
-  }
-  return { success: true, message: "" }; 
 }

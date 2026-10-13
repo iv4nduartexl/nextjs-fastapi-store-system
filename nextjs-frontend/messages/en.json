@@ -169,7 +169,7 @@
     },
     "paymentMethod": {
       "cash": "Cash",
-      "card": "Card",
+      "card": "Card / Transfer",
       "other": "Other",
       "credit": "Credit",
       "internal": "Internal Consumption"
@@ -183,9 +183,8 @@
       "title": "New Sale",
       "searchPlaceholder": "Search product or scan barcode…",
       "exactAmount": "Exact",
-      "pressEnterToCharge": "Press Enter again to charge {total} · Esc to cancel",
       "codeNotFound": "Code “{code}” not found",
-      "shortcutsHint": "Scan or type · ↑↓ Enter to add · 3* = quantity · +/− Del last line · F2 cash · F3 card · F4 credit · F9 or Enter twice (empty search) charge",
+      "shortcutsHint": "Scan or type · ↑↓ Enter to add · 3* = quantity · +/− Del last line · F9 or Enter (empty search) to charge",
       "stepProducts": "Products",
       "stepPayment": "Payment",
       "stepDone": "Done",
@@ -259,6 +258,43 @@
       "overrideSubtotalPlaceholder": "New subtotal",
       "cancel": "Cancel",
       "noStockHint": "0 in stock",
+      "charge": "Charge {total}",
+      "itemsCount": "{count, plural, one {# product} other {# products}}",
+      "toCharge": "Total to charge",
+      "summary": "Summary",
+      "backToProducts": "Edit products",
+      "adjustedTotal": "Adjusted total · {reason}",
+      "originalTotal": "Was {total}",
+      "howToPay": "How are they paying?",
+      "checkoutHint": "F2–F5 or 1–4 picks the payment · Enter confirms · Esc goes back",
+      "confirmSale": "Confirm sale · {total}",
+      "confirmInternal": "Register consumption · {total}",
+      "methods": {
+        "cash": "Cash",
+        "card": "Card / Transfer",
+        "credit": "Credit (tab)",
+        "internal": "Owner use"
+      },
+      "methodHints": {
+        "cash": "Works out the change",
+        "card": "Debit, credit or bank transfer",
+        "credit": "Goes on the customer's account",
+        "internal": "No charge · leaves the cashbox"
+      },
+      "blocked": {
+        "emptyCart": "Add products",
+        "overrideReason": "A manual price is missing its reason",
+        "notEnoughCash": "The amount received is not enough",
+        "chooseCustomer": "Choose a customer",
+        "partialExceedsTotal": "The partial payment is more than the total"
+      },
+      "doneTitle": "Sale registered!",
+      "changeDue": "Change",
+      "noChange": "No change due",
+      "nextSale": "New sale",
+      "nextSaleHint": "Enter, Esc or scan to continue",
+      "priceChangeReason": "Price change",
+      "roundingReason": "Rounding",
       "quickCreate": {
         "createWithCode": "Create product",
         "createNamed": "Create “{name}”",
@@ -434,11 +470,6 @@
         "tipsDismiss": "Got it",
         "usualTitle": "You usually buy from {supplier}",
         "linesTitle": "{count, plural, =1 {1 product} other {# products}} in this purchase",
-        "costModeLabel": "How the invoice shows the cost",
-        "costMode": {
-          "unit": "Cost per unit",
-          "line": "Line total"
-        },
         "empty": "Search a product you already sell to <b>add stock</b>, or type a new one to <b>create it</b>."
       },
       "line": {
@@ -472,9 +503,9 @@
         "stockNow": "Current stock: {stock}",
         "lastCost": "last cost {cost}",
         "quantity": "Quantity",
-        "lineTotal": "Line total",
-        "lineTotalIs": "= {total} in total",
-        "unitCostIs": "= {cost} per {unit}",
+        "total": "Total",
+        "calculated": "Calculated",
+        "unitCostShort": "{cost} / {unit}",
         "sellPrice": "Sell price",
         "was": "was {price}",
         "editPrice": "Change price",
@@ -783,6 +814,163 @@
     }
   },
   "addItem": {
+    "wizard": {
+      "steps": {
+        "product": "Product",
+        "price": "Price",
+        "stock": "Stock",
+        "review": "Review"
+      },
+      "product": {
+        "title": "What product is it?",
+        "subtitle": "Start with the code: scan it or type it.",
+        "sku": "Barcode",
+        "skuHint": "Scan it or type it (optional)",
+        "skuPlaceholder": "E.g. 7790001234567",
+        "skuTaken": "This code already belongs to “{name}”.",
+        "editExisting": "Edit that product",
+        "useOtherCode": "Use another code",
+        "name": "Name",
+        "namePlaceholder": "E.g. Coca Cola 2L",
+        "similar": "Does “{name}” already exist? Check it isn't a duplicate.",
+        "category": "Category",
+        "categoryPlaceholder": "E.g. Drinks, Groceries, Dairy",
+        "moreDetails": "More details",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional"
+      },
+      "price": {
+        "title": "How is it sold?",
+        "subtitle": "Pick the unit and the price charged at the register.",
+        "unit": "Sold by",
+        "units": {
+          "unit": "Unit",
+          "gram": "Kg (by weight)",
+          "liter": "Liter",
+          "pack": "Pack"
+        },
+        "unitHints": {
+          "unit": "Charged per piece",
+          "gram": "Weighed when sold, price per kilo",
+          "liter": "Price per liter",
+          "pack": "Closed box, pack or bag"
+        },
+        "priceLabel": {
+          "unit": "Price per unit",
+          "gram": "Price per kg",
+          "liter": "Price per liter",
+          "pack": "Price per pack"
+        },
+        "noPrice": "Without a price it can't be sold at the register. You can add it later."
+      },
+      "stock": {
+        "title": "How many do you have?",
+        "subtitle": "What's in the store right now.",
+        "current": "Current stock",
+        "hint": "If it will come in with a purchase, leave it at 0.",
+        "min": "Warn me when fewer than",
+        "minHint": "Optional: shows as “low stock” at the register and dashboard.",
+        "units": {
+          "unit": "u.",
+          "gram": "kg",
+          "liter": "L",
+          "pack": "pk."
+        }
+      },
+      "review": {
+        "title": "Review and create",
+        "subtitle": "This is how it will show at the register.",
+        "change": "Change",
+        "noCategory": "No category",
+        "noCode": "No code",
+        "noPriceShort": "No price",
+        "code": "Code",
+        "category": "Category",
+        "price": "Price",
+        "stock": "Stock",
+        "min": "Minimum stock",
+        "description": "Description",
+        "warnings": {
+          "similarName": "Looks like “{existing}”, which already exists.",
+          "noPrice": "It has no price: it can't be sold until it gets one."
+        }
+      },
+      "blocked": {
+        "nameRequired": "Enter the name",
+        "skuTaken": "That code is already in use",
+        "invalidPrice": "The price can't be negative",
+        "invalidStock": "Stock can't be negative"
+      },
+      "nav": {
+        "back": "Back",
+        "next": "Next: {step}",
+        "skipPrice": "Continue without price",
+        "submit": "Create product",
+        "exit": "Exit"
+      },
+      "resume": {
+        "message": "You have an unfinished product: “{name}”.",
+        "unnamed": "unnamed",
+        "continue": "Continue",
+        "discard": "Discard"
+      },
+      "done": {
+        "title": "“{name}” created",
+        "summary": "{price} · {stock} in stock",
+        "another": "Add another",
+        "anotherInCategory": "Add another in “{category}”",
+        "products": "View products"
+      },
+      "submitError": "Couldn't create the product. Try again.",
+      "offer": {
+        "question": "Does it have a quantity deal?",
+        "questionHint": "For example “3 for {example}” or buy 2 get 1. It's optional.",
+        "yes": "Yes, add a deal",
+        "no": "No, done",
+        "needsPrice": "Give the product a price to create deals.",
+        "title": "Quantity deal",
+        "kinds": {
+          "pack": "Pack price",
+          "buyGet": "Take more, pay less",
+          "percent": "% off"
+        },
+        "kindExamples": {
+          "pack": "E.g. 3 for {price}",
+          "buyGet": "E.g. 3 for 2, 2 for 1",
+          "percent": "E.g. 10% when buying 6"
+        },
+        "sentence": {
+          "packBefore": "Buying",
+          "packMiddle": "they pay",
+          "packAfter": "in total",
+          "buyTake": "Take",
+          "buyPay": "pay for",
+          "percentFrom": "From",
+          "percentOff": "off"
+        },
+        "previewTitle": "How the register charges it",
+        "previewApplies": "Buying {qty}: they pay {total} instead of {normal} · save {savings}",
+        "previewPerUnit": "({price} each)",
+        "previewPerKg": "({price} per kg)",
+        "previewBelow": "Buying {qty}: normal price {total}",
+        "errors": {
+          "qty": "Enter how many (at least 2)",
+          "qtyWeight": "Enter the amount in kg",
+          "packPrice": "The pack price must be lower than {normal} ({qty} × {price})",
+          "pay": "“Pay for” must be lower than “take”",
+          "percent": "The discount goes from 1 to 99%"
+        },
+        "names": {
+          "per": "for",
+          "from": "from"
+        },
+        "save": "Save deal",
+        "cancel": "Cancel",
+        "saved": "Deal saved: {name}",
+        "another": "Another deal",
+        "saveError": "Couldn't save the deal. The product is already created; try again or do it later from Products."
+      }
+    },
     "title": "Create New Product",
     "subtitle": "Enter the details of the new product below.",
     "name": "Product Name",

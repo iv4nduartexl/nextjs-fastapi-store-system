@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { apiFetch } from "@/lib/api-server";
 import type { PosProduct } from "@/lib/pos/catalog-search";
 import { toPosProduct } from "@/lib/pos/quick-create";
@@ -37,4 +39,36 @@ export async function quickCreateItem(
     return { existing: toPosProduct(detail.item), error: "sku_exists" };
   }
   return { error: detail?.code ?? result.error ?? "generic" };
+}
+
+export interface CreateProduct {
+  name: string;
+  unit_type: "unit" | "gram" | "liter" | "pack";
+  sku?: string;
+  category?: string;
+  description?: string;
+  price?: number;
+  /** Grams for weighed products */
+  stock: number;
+  min_stock?: number;
+  source: "products";
+}
+
+/**
+ * Create a product from the "new product" wizard. A code that is already taken
+ * (the catalog may have been stale) comes back as `existing`.
+ */
+export async function createProduct(
+  body: CreateProduct,
+): Promise<{ data?: PosProduct; existing?: PosProduct; error?: string }> {
+  const result = await apiFetch<ApiItem>("/items/", { method: "POST", body: JSON.stringify(body) });
+  if (result.data) {
+    revalidatePath("/[locale]/products", "page");
+    return { data: toPosProduct(result.data) };
+  }
+  const detail = result.detail as { code?: string; message?: string; item?: ApiItem } | undefined;
+  if (result.status === 409 && detail?.code === "sku_exists" && detail.item) {
+    return { existing: toPosProduct(detail.item), error: "sku_exists" };
+  }
+  return { error: detail?.message ?? result.error ?? "generic" };
 }

@@ -50,9 +50,46 @@ describe("lines", () => {
     draft = draftReducer(draft, { type: "updateLine", key, patch: { quantity: 2500 }, changed: "quantity" });
     expect(draft.lines[0].lineTotal).toBe(150000); // 2.5 kg × 60.000
 
-    draft = draftReducer(draft, { type: "setCostMode", mode: "line" });
     draft = draftReducer(draft, { type: "updateLine", key, patch: { lineTotal: 100000 }, changed: "lineTotal" });
     expect(draft.lines[0].unitCost).toBe(40000);
+  });
+
+  it("keeps the typed total when the quantity changes and recalculates the unit cost", () => {
+    let draft = withLines(lineFromProduct(catalog[1], { quantity: 2500 }));
+    const key = draft.lines[0].key;
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { lineTotal: 100000 }, changed: "lineTotal" });
+    expect(draft.lines[0].costSource).toBe("line");
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { quantity: 2000 }, changed: "quantity" });
+    expect(draft.lines[0].lineTotal).toBe(100000);
+    expect(draft.lines[0].unitCost).toBe(50000);
+  });
+
+  it("keeps the typed unit cost when the quantity changes and recalculates the total", () => {
+    let draft = withLines(lineFromProduct(product(), { quantity: 2 }));
+    const key = draft.lines[0].key;
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { lineTotal: 30000 }, changed: "lineTotal" });
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { unitCost: 9000 }, changed: "unitCost" });
+    expect(draft.lines[0].costSource).toBe("unit");
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { quantity: 3 }, changed: "quantity" });
+    expect(draft.lines[0].unitCost).toBe(9000);
+    expect(draft.lines[0].lineTotal).toBe(27000);
+  });
+
+  it("works with decimal costs", () => {
+    let draft = withLines(lineFromProduct(product(), { quantity: 3 }));
+    const key = draft.lines[0].key;
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { unitCost: 1234.56 }, changed: "unitCost" });
+    expect(draft.lines[0].lineTotal).toBe(3703.68);
+    draft = draftReducer(draft, { type: "updateLine", key, patch: { lineTotal: 100 }, changed: "lineTotal" });
+    expect(draft.lines[0].unitCost).toBe(33.33);
+    expect(draft.lines[0].lineTotal).toBe(100);
+  });
+
+  it("treats lines from old saved drafts (no cost source) as unit cost", () => {
+    const old = { ...lineFromProduct(product(), { quantity: 2 }), costSource: undefined };
+    let draft = withLines(old);
+    draft = draftReducer(draft, { type: "updateLine", key: old.key, patch: { quantity: 4 }, changed: "quantity" });
+    expect(draft.lines[0].lineTotal).toBe(34000);
   });
 
   it("finds an existing line so a product isn't added twice", () => {

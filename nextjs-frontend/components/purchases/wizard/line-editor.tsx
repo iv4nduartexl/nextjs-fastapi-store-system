@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Check, ChevronDown, Lightbulb, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Check, ChevronDown, Lightbulb, Trash2 } from "lucide-react";
 
 import { NumberField } from "@/components/purchases/wizard/number-field";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,13 @@ import { Input } from "@/components/ui/input";
 import { currencySymbol, formatCurrency } from "@/lib/currency";
 import { formatNumber } from "@/lib/format-number";
 import { findSimilarProduct } from "@/lib/purchases/checks";
-import type { CostMode, DraftAction, DraftLine, PurchasingProduct, UnitType } from "@/lib/purchases/draft";
+import type { DraftAction, DraftLine, PurchasingProduct, UnitType } from "@/lib/purchases/draft";
 import { margin, suggestPriceForCost, suggestPriceForNewProduct } from "@/lib/purchases/pricing";
 
 const UNIT_TYPES: UnitType[] = ["unit", "gram", "liter", "pack"];
 
 interface LineEditorProps {
   line: DraftLine;
-  costMode: CostMode;
   dispatch: (action: DraftAction) => void;
   catalog: PurchasingProduct[];
   categories: string[];
@@ -35,7 +34,6 @@ function UnitBadge({ children }: { children: React.ReactNode }) {
 /** Editing one line. Enter = "Listo" (or jumps to the next missing field). */
 export function LineEditor({
   line,
-  costMode,
   dispatch,
   catalog,
   categories,
@@ -51,6 +49,7 @@ export function LineEditor({
   const nameRef = useRef<HTMLInputElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
   const costRef = useRef<HTMLInputElement>(null);
+  const totalRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [editingPrice, setEditingPrice] = useState(isNew);
@@ -87,7 +86,8 @@ export function LineEditor({
     const order: [keyof typeof missing, React.RefObject<HTMLInputElement | null>][] = [
       ["name", nameRef],
       ["quantity", qtyRef],
-      ["cost", costRef],
+      // The cost field the user works with on this line
+      ["cost", line.costSource === "line" ? totalRef : costRef],
       ["price", priceRef],
     ];
     const firstMissing = order.find(([field]) => missing[field]);
@@ -190,65 +190,77 @@ export function LineEditor({
                 stock: formatNumber(isWeight ? line.currentStock / 1000 : line.currentStock, 3),
               })}
               <UnitBadge>{qtyUnit}</UnitBadge>
-              {line.lastUnitCost != null && <span>· {t("lastCost", { cost: formatCurrency(line.lastUnitCost) })}</span>}
+              {line.lastUnitCost != null && <span>· {t("lastCost", { cost: formatCurrency(line.lastUnitCost, 2) })}</span>}
             </p>
           )}
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700" htmlFor={`qty-${line.key}`}>
-            {t("quantity")} <UnitBadge>{t("in", { unit: qtyUnit })}</UnitBadge>
-            <span className="text-red-500">*</span>
-          </label>
-          <NumberField
-            id={`qty-${line.key}`}
-            ref={qtyRef}
-            autoFocus={!isNew || !!line.name}
-            decimals={isWeight || line.unitType === "liter" ? 3 : 2}
-            // Weighed products are entered in kg; stored in grams
-            value={line.quantity == null ? null : isWeight ? line.quantity / 1000 : line.quantity}
-            onValueChange={(v) => update({ quantity: v == null ? null : isWeight ? Math.round(v * 1000) : v }, "quantity")}
-            unit={qtyUnit}
-            invalid={show("quantity")}
-            onBlur={() => touch("quantity")}
-          />
-          {show("quantity") && <p className="text-xs text-red-600">{t("errors.quantity")}</p>}
-        </div>
+      <div className="space-y-1 sm:max-w-[calc(50%-1.5rem)]">
+        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700" htmlFor={`qty-${line.key}`}>
+          {t("quantity")} <UnitBadge>{t("in", { unit: qtyUnit })}</UnitBadge>
+          <span className="text-red-500">*</span>
+        </label>
+        <NumberField
+          id={`qty-${line.key}`}
+          ref={qtyRef}
+          autoFocus={!isNew || !!line.name}
+          decimals={isWeight || line.unitType === "liter" ? 3 : 2}
+          // Weighed products are entered in kg; stored in grams
+          value={line.quantity == null ? null : isWeight ? line.quantity / 1000 : line.quantity}
+          onValueChange={(v) => update({ quantity: v == null ? null : isWeight ? Math.round(v * 1000) : v }, "quantity")}
+          unit={qtyUnit}
+          invalid={show("quantity")}
+          onBlur={() => touch("quantity")}
+        />
+        {show("quantity") && <p className="text-xs text-red-600">{t("errors.quantity")}</p>}
+      </div>
 
-        <div className="space-y-1">
-          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700" htmlFor={`cost-${line.key}`}>
-            {costMode === "unit" ? (
-              <>
-                {t("cost")} <UnitBadge>{t("per", { unit: qtyUnit })}</UnitBadge>
-              </>
-            ) : (
-              t("lineTotal")
+      {/* Cost per unit and line total: type whichever the invoice shows, the other is calculated */}
+      <div className="space-y-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2">
+          <div className="space-y-1">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700" htmlFor={`cost-${line.key}`}>
+              {t("cost")} <UnitBadge>{t("per", { unit: qtyUnit })}</UnitBadge>
+              <span className="text-red-500">*</span>
+            </label>
+            <NumberField
+              id={`cost-${line.key}`}
+              ref={costRef}
+              prefix={currencySymbol}
+              decimals={2}
+              value={line.unitCost}
+              onValueChange={(v) => update({ unitCost: v }, "unitCost")}
+              invalid={show("cost")}
+              onBlur={() => touch("cost")}
+              className={line.costSource === "line" ? "bg-gray-50" : ""}
+            />
+            {line.costSource === "line" && line.unitCost != null && (
+              <p className="text-xs text-gray-400">{t("calculated")}</p>
             )}
-            <span className="text-red-500">*</span>
-          </label>
-          <NumberField
-            id={`cost-${line.key}`}
-            ref={costRef}
-            prefix={currencySymbol}
-            value={costMode === "unit" ? line.unitCost : line.lineTotal}
-            onValueChange={(v) =>
-              costMode === "unit" ? update({ unitCost: v }, "unitCost") : update({ lineTotal: v }, "lineTotal")
-            }
-            invalid={show("cost")}
-            onBlur={() => touch("cost")}
-          />
-          {show("cost") ? (
-            <p className="text-xs text-red-600">{t("errors.cost")}</p>
-          ) : (
-            <p className="text-xs text-gray-500">
-              {costMode === "unit"
-                ? line.lineTotal != null && t("lineTotalIs", { total: formatCurrency(line.lineTotal) })
-                : line.unitCost != null && t("unitCostIs", { cost: formatCurrency(line.unitCost), unit: qtyUnit })}
-            </p>
-          )}
+          </div>
+          <ArrowLeftRight className="mt-9 h-4 w-4 text-gray-300" aria-hidden />
+          <div className="space-y-1">
+            <label className="flex items-center text-sm font-medium text-gray-700" htmlFor={`total-${line.key}`}>
+              {t("total")}
+            </label>
+            <NumberField
+              id={`total-${line.key}`}
+              ref={totalRef}
+              prefix={currencySymbol}
+              decimals={2}
+              value={line.lineTotal}
+              onValueChange={(v) => update({ lineTotal: v }, "lineTotal")}
+              invalid={show("cost")}
+              onBlur={() => touch("cost")}
+              className={line.costSource !== "line" ? "bg-gray-50" : ""}
+            />
+            {line.costSource !== "line" && line.lineTotal != null && (
+              <p className="text-xs text-gray-400">{t("calculated")}</p>
+            )}
+          </div>
         </div>
+        {show("cost") && <p className="text-xs text-red-600">{t("errors.cost")}</p>}
       </div>
 
       {/* Sell price: shown for existing products, required for new ones */}

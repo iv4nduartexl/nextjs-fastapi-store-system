@@ -114,7 +114,7 @@ export function StepReview({ draft, dispatch, catalog, goTo }: StepReviewProps) 
                   )}
                 </td>
                 <td className="py-2 text-right text-gray-500 tabular-nums">{qty(line)}</td>
-                <td className="py-2 pl-3 text-right font-medium tabular-nums">{formatCurrency(line.lineTotal ?? 0)}</td>
+                <td className="py-2 pl-3 text-right font-medium tabular-nums">{formatCurrency(line.lineTotal ?? 0, 2)}</td>
               </tr>
             ))}
           </tbody>
@@ -127,7 +127,7 @@ export function StepReview({ draft, dispatch, catalog, goTo }: StepReviewProps) 
             )}
             <tr>
               <td colSpan={2} className="pt-2 text-base font-semibold">{t("total")}</td>
-              <td className="pt-2 text-right text-base font-bold tabular-nums">{formatCurrency(total)}</td>
+              <td className="pt-2 text-right text-base font-bold tabular-nums">{formatCurrency(total, 2)}</td>
             </tr>
             {draft.invoiceTotal != null && (
               <tr>

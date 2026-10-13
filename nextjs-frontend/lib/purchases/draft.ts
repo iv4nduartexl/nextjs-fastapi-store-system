@@ -30,6 +30,8 @@ export interface DraftLine {
   /** Per unit, or per kg for weighed products */
   unitCost: number | null;
   lineTotal: number | null;
+  /** The cost field the user typed (the other one is calculated); missing on old saved drafts = "unit" */
+  costSource?: CostMode;
   /** Desired sell price (per kg for weighed products) */
   sellPrice: number | null;
   /** Catalog values at the time the line was added (linked products) */
@@ -49,7 +51,6 @@ export interface PurchaseDraft {
   date: string;
   invoiceNumber: string;
   invoiceTotal: number | null;
-  costMode: CostMode;
   lines: DraftLine[];
   payment: {
     kind: PaymentKind | null;
@@ -71,7 +72,6 @@ export function emptyDraft(today: string): PurchaseDraft {
     date: today,
     invoiceNumber: "",
     invoiceTotal: null,
-    costMode: "unit",
     lines: [],
     payment: { kind: null, method: "cash", paidAmount: null, fromCashboxToday: null, hasTax: false, tax: null, notes: "" },
   };
@@ -102,18 +102,24 @@ export function newLineKey(): string {
   return `l${Date.now().toString(36)}${keyCounter}`;
 }
 
-/** Recompute the dependent cost field after quantity / unit cost / line total changes. */
-export function syncLine(line: DraftLine, changed: "quantity" | "unitCost" | "lineTotal", mode: CostMode): DraftLine {
+/**
+ * Recompute the calculated cost field. Typing a unit cost or a total makes it the source;
+ * a quantity change keeps the source and recalculates the other one.
+ */
+export function syncLine(line: DraftLine, changed: "quantity" | "unitCost" | "lineTotal"): DraftLine {
+  const source: CostMode =
+    changed === "unitCost" ? "unit" : changed === "lineTotal" ? "line" : line.costSource ?? "unit";
   const units = line.quantity != null ? priceUnits(line.quantity, line.unitType) : null;
-  if (changed === "unitCost" || (changed === "quantity" && mode === "unit")) {
+  if (source === "unit") {
     return {
       ...line,
+      costSource: source,
       lineTotal: line.unitCost != null && units != null ? round2(line.unitCost * units) : line.lineTotal,
     };
   }
-  // line total edited, or quantity edited while entering line totals
   return {
     ...line,
+    costSource: source,
     unitCost: line.lineTotal != null && units ? round2(line.lineTotal / units) : line.unitCost,
   };
 }
@@ -140,7 +146,7 @@ export function lineFromProduct(
     category: product.category ?? "",
     applyPriceChange: true,
   };
-  return syncLine(base, "unitCost", "unit");
+  return syncLine(base, "unitCost");
 }
 
 export function newProductLine(name: string, sku = ""): DraftLine {
@@ -152,6 +158,7 @@ export function newProductLine(name: string, sku = ""): DraftLine {
     quantity: null,
     unitCost: null,
     lineTotal: null,
+    costSource: "unit",
     sellPrice: null,
     currentPrice: null,
     currentStock: null,
@@ -167,7 +174,6 @@ export type DraftAction =
   | { type: "setSupplier"; supplier: { id?: string; name: string } | null }
   | { type: "setNoSupplier"; value: boolean }
   | { type: "setHeader"; patch: Partial<Pick<PurchaseDraft, "date" | "invoiceNumber" | "invoiceTotal">> }
-  | { type: "setCostMode"; mode: CostMode }
   | { type: "addLine"; line: DraftLine }
   | { type: "updateLine"; key: string; patch: Partial<DraftLine>; changed?: "quantity" | "unitCost" | "lineTotal" }
   | { type: "removeLine"; key: string }
@@ -183,8 +189,6 @@ export function draftReducer(draft: PurchaseDraft, action: DraftAction): Purchas
       return { ...draft, noSupplier: action.value, supplier: action.value ? null : draft.supplier };
     case "setHeader":
       return { ...draft, ...action.patch };
-    case "setCostMode":
-      return { ...draft, costMode: action.mode };
     case "addLine":
       return { ...draft, lines: [...draft.lines, action.line] };
     case "updateLine":
@@ -193,7 +197,7 @@ export function draftReducer(draft: PurchaseDraft, action: DraftAction): Purchas
         lines: draft.lines.map((line) => {
           if (line.key !== action.key) return line;
           const next = { ...line, ...action.patch };
-          return action.changed ? syncLine(next, action.changed, draft.costMode) : next;
+          return action.changed ? syncLine(next, action.changed) : next;
         }),
       };
     case "removeLine":

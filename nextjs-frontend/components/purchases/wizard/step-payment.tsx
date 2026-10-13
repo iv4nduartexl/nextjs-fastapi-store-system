@@ -46,7 +46,7 @@ export function StepPayment({ draft, dispatch }: { draft: PurchaseDraft; dispatc
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="text-sm text-gray-500">{t("subtitle", { total: formatCurrency(total) })}</p>
+        <p className="text-sm text-gray-500">{t("subtitle", { total: formatCurrency(total, 2) })}</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-3">

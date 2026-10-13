@@ -169,7 +169,7 @@
     },
     "paymentMethod": {
       "cash": "Efectivo",
-      "card": "Tarjeta",
+      "card": "Tarjeta / Transferencia",
       "other": "Otro",
       "credit": "Crédito",
       "internal": "Consumo Interno"
@@ -183,9 +183,8 @@
       "title": "Nueva Venta",
       "searchPlaceholder": "Buscar producto o escanear código…",
       "exactAmount": "Exacto",
-      "pressEnterToCharge": "Presiona Enter otra vez para cobrar {total} · Esc cancela",
       "codeNotFound": "Código “{code}” no encontrado",
-      "shortcutsHint": "Escanea o escribe · ↑↓ Enter agrega · 3* = cantidad · +/− Supr última línea · F2 efectivo · F3 tarjeta · F4 crédito · F9 o Enter dos veces (búsqueda vacía) cobra",
+      "shortcutsHint": "Escanea o escribe · ↑↓ Enter agrega · 3* = cantidad · +/− Supr última línea · F9 o Enter (búsqueda vacía) cobra",
       "stepProducts": "Productos",
       "stepPayment": "Cobro",
       "stepDone": "Listo",
@@ -259,6 +258,43 @@
       "overrideSubtotalPlaceholder": "Nuevo subtotal",
       "cancel": "Cancelar",
       "noStockHint": "0 en stock",
+      "charge": "Cobrar {total}",
+      "itemsCount": "{count, plural, one {# producto} other {# productos}}",
+      "toCharge": "Total a cobrar",
+      "summary": "Resumen",
+      "backToProducts": "Editar productos",
+      "adjustedTotal": "Total ajustado · {reason}",
+      "originalTotal": "Antes {total}",
+      "howToPay": "¿Cómo paga?",
+      "checkoutHint": "F2–F5 o 1–4 elige el pago · Enter confirma · Esc vuelve",
+      "confirmSale": "Confirmar venta · {total}",
+      "confirmInternal": "Registrar consumo · {total}",
+      "methods": {
+        "cash": "Efectivo",
+        "card": "Tarjeta / Transf.",
+        "credit": "Crédito (fiado)",
+        "internal": "Consumo dueño"
+      },
+      "methodHints": {
+        "cash": "Calcula el vuelto",
+        "card": "Débito, crédito o transferencia",
+        "credit": "Queda en la cuenta del cliente",
+        "internal": "Sin cobro · sale de la caja"
+      },
+      "blocked": {
+        "emptyCart": "Agrega productos",
+        "overrideReason": "Falta el motivo de un precio manual",
+        "notEnoughCash": "El monto recibido no alcanza",
+        "chooseCustomer": "Elige un cliente",
+        "partialExceedsTotal": "El pago parcial supera el total"
+      },
+      "doneTitle": "¡Venta registrada!",
+      "changeDue": "Vuelto",
+      "noChange": "Sin vuelto",
+      "nextSale": "Nueva venta",
+      "nextSaleHint": "Enter, Esc o escanea para seguir",
+      "priceChangeReason": "Cambio de precio",
+      "roundingReason": "Redondeo",
       "quickCreate": {
         "createWithCode": "Crear producto",
         "createNamed": "Crear «{name}»",
@@ -434,11 +470,6 @@
         "tipsDismiss": "Entendido",
         "usualTitle": "Sueles comprarle a {supplier}",
         "linesTitle": "{count, plural, =1 {1 producto} other {# productos}} en esta compra",
-        "costModeLabel": "Cómo viene el costo en la factura",
-        "costMode": {
-          "unit": "Costo por unidad",
-          "line": "Total de la línea"
-        },
         "empty": "Busca un producto que ya vendes para <b>sumar stock</b>, o escribe uno nuevo para <b>crearlo</b>."
       },
       "line": {
@@ -472,9 +503,9 @@
         "stockNow": "Stock actual: {stock}",
         "lastCost": "último costo {cost}",
         "quantity": "Cantidad",
-        "lineTotal": "Total de la línea",
-        "lineTotalIs": "= {total} en total",
-        "unitCostIs": "= {cost} por {unit}",
+        "total": "Total",
+        "calculated": "Calculado",
+        "unitCostShort": "{cost} / {unit}",
         "sellPrice": "Precio de venta",
         "was": "antes {price}",
         "editPrice": "Cambiar precio",
@@ -783,6 +814,163 @@
     }
   },
   "addItem": {
+    "wizard": {
+      "steps": {
+        "product": "Producto",
+        "price": "Precio",
+        "stock": "Stock",
+        "review": "Revisar"
+      },
+      "product": {
+        "title": "¿Qué producto es?",
+        "subtitle": "Empieza por el código: escanéalo o escríbelo.",
+        "sku": "Código de barras",
+        "skuHint": "Escanéalo o escríbelo (opcional)",
+        "skuPlaceholder": "Ej.: 7790001234567",
+        "skuTaken": "Este código ya es de «{name}».",
+        "editExisting": "Editar ese producto",
+        "useOtherCode": "Usar otro código",
+        "name": "Nombre",
+        "namePlaceholder": "Ej.: Coca Cola 2L",
+        "similar": "¿Ya existe «{name}»? Revisa que no esté repetido.",
+        "category": "Categoría",
+        "categoryPlaceholder": "Ej.: Bebidas, Almacén, Lácteos",
+        "moreDetails": "Más detalles",
+        "description": "Descripción",
+        "descriptionPlaceholder": "Opcional"
+      },
+      "price": {
+        "title": "¿Cómo se vende?",
+        "subtitle": "Elige la unidad y el precio que se cobra en la caja.",
+        "unit": "Se vende por",
+        "units": {
+          "unit": "Unidad",
+          "gram": "Kg (por peso)",
+          "liter": "Litro",
+          "pack": "Paquete"
+        },
+        "unitHints": {
+          "unit": "Se cobra por pieza",
+          "gram": "Se pesa al vender, precio por kilo",
+          "liter": "Precio por litro",
+          "pack": "Caja, pack o bolsa cerrada"
+        },
+        "priceLabel": {
+          "unit": "Precio por unidad",
+          "gram": "Precio por kg",
+          "liter": "Precio por litro",
+          "pack": "Precio por paquete"
+        },
+        "noPrice": "Sin precio no se podrá vender en la caja. Puedes ponerlo después."
+      },
+      "stock": {
+        "title": "¿Cuántos tienes?",
+        "subtitle": "Lo que hay ahora en el local.",
+        "current": "Stock actual",
+        "hint": "Si lo vas a cargar con una compra, déjalo en 0.",
+        "min": "Avisarme cuando queden menos de",
+        "minHint": "Opcional: aparece como «stock bajo» en la caja y el panel.",
+        "units": {
+          "unit": "u.",
+          "gram": "kg",
+          "liter": "L",
+          "pack": "paq."
+        }
+      },
+      "review": {
+        "title": "Revisa y crea",
+        "subtitle": "Así va a aparecer en la caja.",
+        "change": "Cambiar",
+        "noCategory": "Sin categoría",
+        "noCode": "Sin código",
+        "noPriceShort": "Sin precio",
+        "code": "Código",
+        "category": "Categoría",
+        "price": "Precio",
+        "stock": "Stock",
+        "min": "Stock mínimo",
+        "description": "Descripción",
+        "warnings": {
+          "similarName": "Se parece a «{existing}», que ya existe.",
+          "noPrice": "No tiene precio: no se podrá vender hasta ponérselo."
+        }
+      },
+      "blocked": {
+        "nameRequired": "Escribe el nombre",
+        "skuTaken": "Ese código ya está en uso",
+        "invalidPrice": "El precio no puede ser negativo",
+        "invalidStock": "El stock no puede ser negativo"
+      },
+      "nav": {
+        "back": "Atrás",
+        "next": "Siguiente: {step}",
+        "skipPrice": "Continuar sin precio",
+        "submit": "Crear producto",
+        "exit": "Salir"
+      },
+      "resume": {
+        "message": "Tienes un producto sin terminar: «{name}».",
+        "unnamed": "sin nombre",
+        "continue": "Continuar",
+        "discard": "Descartar"
+      },
+      "done": {
+        "title": "«{name}» creado",
+        "summary": "{price} · {stock} en stock",
+        "another": "Agregar otro",
+        "anotherInCategory": "Agregar otro en «{category}»",
+        "products": "Ver productos"
+      },
+      "submitError": "No se pudo crear el producto. Inténtalo de nuevo.",
+      "offer": {
+        "question": "¿Tiene alguna oferta por cantidad?",
+        "questionHint": "Por ejemplo «3 por {example}» o un 2x1. Es opcional.",
+        "yes": "Sí, agregar oferta",
+        "no": "No, listo",
+        "needsPrice": "Ponle precio al producto para poder crear ofertas.",
+        "title": "Oferta por cantidad",
+        "kinds": {
+          "pack": "Precio por pack",
+          "buyGet": "Lleva y paga menos",
+          "percent": "% de descuento"
+        },
+        "kindExamples": {
+          "pack": "Ej.: 3 por {price}",
+          "buyGet": "Ej.: 3x2, 2x1",
+          "percent": "Ej.: 10% llevando 6"
+        },
+        "sentence": {
+          "packBefore": "Llevando",
+          "packMiddle": "pagan",
+          "packAfter": "en total",
+          "buyTake": "Lleva",
+          "buyPay": "paga",
+          "percentFrom": "Desde",
+          "percentOff": "de descuento"
+        },
+        "previewTitle": "Así se cobra en la caja",
+        "previewApplies": "Si llevan {qty}: pagan {total} en vez de {normal} · ahorran {savings}",
+        "previewPerUnit": "({price} c/u)",
+        "previewPerKg": "({price} el kg)",
+        "previewBelow": "Si llevan {qty}: precio normal {total}",
+        "errors": {
+          "qty": "Indica cuántos (al menos 2)",
+          "qtyWeight": "Indica la cantidad en kg",
+          "packPrice": "El precio del pack debe ser menor que {normal} ({qty} × {price})",
+          "pay": "«Paga» debe ser menor que «lleva»",
+          "percent": "El descuento va de 1 a 99%"
+        },
+        "names": {
+          "per": "por",
+          "from": "desde"
+        },
+        "save": "Guardar oferta",
+        "cancel": "Cancelar",
+        "saved": "Oferta guardada: {name}",
+        "another": "Otra oferta",
+        "saveError": "No se pudo guardar la oferta. El producto ya está creado; puedes intentarlo de nuevo o hacerlo después desde Productos."
+      }
+    },
     "title": "Crear Nuevo Producto",
     "subtitle": "Ingresa los detalles del nuevo producto.",
     "name": "Nombre del Producto",

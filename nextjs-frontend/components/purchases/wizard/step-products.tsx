@@ -163,18 +163,6 @@ export function StepProducts({ draft, dispatch, catalog, usual, focusLineKey }: 
       {draft.lines.length > 0 && (
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-gray-700">{t("linesTitle", { count: draft.lines.length })}</p>
-          <div className="inline-flex rounded-lg border bg-white p-0.5 text-xs font-medium" role="group" aria-label={t("costModeLabel")}>
-            {(["unit", "line"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => dispatch({ type: "setCostMode", mode })}
-                className={`rounded-md px-2.5 py-1.5 ${draft.costMode === mode ? "bg-gray-900 text-white" : "text-gray-600"}`}
-              >
-                {t(`costMode.${mode}`)}
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
@@ -190,7 +178,6 @@ export function StepProducts({ draft, dispatch, catalog, usual, focusLineKey }: 
               <li key={line.key}>
                 <LineEditor
                   line={line}
-                  costMode={draft.costMode}
                   dispatch={dispatch}
                   catalog={catalog}
                   categories={categories}
@@ -253,8 +240,16 @@ export function StepProducts({ draft, dispatch, catalog, usual, focusLineKey }: 
                       )}
                     </span>
                     <span className="block font-semibold text-gray-900 tabular-nums">
-                      {line.lineTotal != null ? formatCurrency(line.lineTotal) : <span className="text-red-600">{tLine("missingCost")}</span>}
+                      {line.lineTotal != null ? formatCurrency(line.lineTotal, 2) : <span className="text-red-600">{tLine("missingCost")}</span>}
                     </span>
+                    {line.unitCost != null && line.lineTotal != null && (
+                      <span className="block text-xs text-gray-500 tabular-nums">
+                        {tLine("unitCostShort", {
+                          cost: formatCurrency(line.unitCost, 2),
+                          unit: line.unitType === "gram" ? "kg" : tLine(`unitShort.${line.unitType}`),
+                        })}
+                      </span>
+                    )}
                   </span>
                 </button>
               </li>

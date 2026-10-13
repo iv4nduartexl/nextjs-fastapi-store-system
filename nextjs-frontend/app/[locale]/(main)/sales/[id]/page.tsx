@@ -13,6 +13,7 @@ import {
   Receipt,
   Hash,
   Users,
+  Crown,
 } from "lucide-react";
 import { fetchSale, SaleRead } from "@/components/actions/sales-action";
 import { formatCurrency } from "@/lib/currency";
@@ -62,6 +63,7 @@ export default async function SaleDetailPage({ params }: Props) {
     card: CreditCard,
     other: RefreshCcw,
     credit: Users,
+    internal: Crown,
   } as const;
 
   const status = statusConfig[sale.status] ?? statusConfig.completed;

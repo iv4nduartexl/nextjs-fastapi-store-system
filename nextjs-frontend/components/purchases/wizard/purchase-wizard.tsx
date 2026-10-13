@@ -256,7 +256,7 @@ export function PurchaseWizard() {
             <div className="w-full text-sm">
               <span className="text-gray-600">{t("totals.lines", { count: draft.lines.length })}</span>
               <span className="mx-2 text-gray-300">·</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(purchaseTotal(draft))}</span>
+              <span className="font-semibold text-gray-900">{formatCurrency(purchaseTotal(draft), 2)}</span>
               {draft.invoiceTotal != null && draft.invoiceTotal > 0 && (
                 <InvoiceCheck invoiceTotal={draft.invoiceTotal} total={purchaseTotal(draft)} />
               )}

@@ -2,7 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { Wallet, ArrowLeft, ArrowRight } from "lucide-react";
 import { fetchCurrentSession } from "@/components/actions/cashbox-action";
-import POSClient from "./POSClient";
+import { SaleFlow } from "@/components/pos/sale/sale-flow";
 
 export default async function NewSalePage() {
   const [session, t, locale] = await Promise.all([
@@ -50,5 +50,5 @@ export default async function NewSalePage() {
     );
   }
 
-  return <POSClient />;
+  return <SaleFlow />;
 }
